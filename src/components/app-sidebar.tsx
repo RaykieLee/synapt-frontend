@@ -12,6 +12,8 @@ import {
   PieChart,
   Settings2,
   SquareTerminal,
+  Users,
+  Shield,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -51,6 +53,25 @@ const data = {
     },
   ],
   navMain: [
+    {
+      title: "系统管理",
+      url: "#",
+      icon: Shield,
+      items: [
+        {
+          title: "用户管理",
+          url: "/dashboard/system/users",
+        },
+        {
+          title: "角色管理",
+          url: "/dashboard/system/roles",
+        },
+        {
+          title: "菜单管理",
+          url: "/dashboard/system/menus",
+        },
+      ],
+    },
     {
       title: "Playground",
       url: "#",
