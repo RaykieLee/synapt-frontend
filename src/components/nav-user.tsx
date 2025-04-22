@@ -29,6 +29,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useRouter } from "next/navigation"
 
 export function NavUser({
   user,
@@ -40,6 +41,33 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const router = useRouter()
+  
+  const handleLogout = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+      const token = localStorage.getItem("token");
+      
+      await fetch(`${apiUrl}/api/v1/logout`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+        credentials: 'include',
+      });
+      
+      // 清除本地存储的token
+      localStorage.removeItem("token");
+      
+      // 跳转到登录页面
+      router.push("/login");
+    } catch (error) {
+      console.error("登出失败:", error);
+      // 即使失败也清除本地令牌并重定向到登录页面
+      localStorage.removeItem("token");
+      router.push("/login");
+    }
+  };
 
   return (
     <SidebarMenu>
@@ -102,9 +130,9 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
-              Log out
+              退出登录
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -30,8 +30,8 @@ export default function LoginPage() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-      console.log('Attempting to login with URL:', `${apiUrl}/api/auth/login`);
-      const response = await fetch(`${apiUrl}/api/auth/login`, {
+      console.log('Attempting to login with URL:', `${apiUrl}/api/v1/login`);
+      const response = await fetch(`${apiUrl}/api/v1/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -40,7 +40,7 @@ export default function LoginPage() {
           username: formData.username,
           password: formData.password,
         }).toString(),
-        credentials: 'include',
+        credentials: 'same-origin',
       });
 
       console.log('Response status:', response.status);

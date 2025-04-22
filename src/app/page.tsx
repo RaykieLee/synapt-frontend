@@ -52,7 +52,7 @@ export default function Home() {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/items`);
+      const response = await fetch(`${API_BASE_URL}/api/v1/items`);
       if (!response.ok) {
         throw new Error(`Error: ${response.status}`);
       }
@@ -73,7 +73,7 @@ export default function Home() {
   // 添加新项目
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/items`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/items`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -99,7 +99,7 @@ export default function Home() {
       const item = items.find(item => item.id === id);
       if (!item) return;
 
-      const response = await fetch(`${API_BASE_URL}/api/items/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/items/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -123,7 +123,7 @@ export default function Home() {
   // 删除项目
   const deleteItem = async (id: number) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/items/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/items/${id}`, {
         method: "DELETE",
       });
       
