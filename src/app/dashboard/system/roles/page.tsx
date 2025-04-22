@@ -1,9 +1,448 @@
 "use client"
 
 import * as React from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { useToast } from "@/components/ui/use-toast"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from "@/components/ui/card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
+import { TreeCheckbox } from "@/components/ui/tree-checkbox"
+import { Copy, Edit, MoreHorizontal, Plus, Trash, UserPlus } from "lucide-react"
+
+// 角色类型定义
+interface Role {
+  role_id: number
+  role_name: string
+  role_key: string
+  role_sort: number
+  status: string
+  remark?: string
+  create_time: string
+  update_time: string
+  menu_ids: number[]
+}
+
+// 菜单树类型定义
+interface MenuNode {
+  id: number
+  label: string
+  children?: MenuNode[]
+}
 
 export default function RolesPage() {
+  // 状态管理
+  const { toast } = useToast()
+  const [roles, setRoles] = useState<Role[]>([])
+  const [filteredRoles, setFilteredRoles] = useState<Role[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [isLoading, setIsLoading] = useState(true)
+  const [showAddDialog, setShowAddDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [currentRole, setCurrentRole] = useState<Role | null>(null)
+  const [menuTree, setMenuTree] = useState<MenuNode[]>([])
+  const [selectedMenuIds, setSelectedMenuIds] = useState<number[]>([])
+  
+  // 新角色默认值
+  const [newRole, setNewRole] = useState<Partial<Role>>({
+    role_name: "",
+    role_key: "",
+    role_sort: 0,
+    status: "0",
+    remark: "",
+    menu_ids: []
+  })
+
+  // 获取认证令牌
+  const getToken = () => {
+    const token = localStorage.getItem("token")
+    if (!token) {
+      toast({
+        title: "认证失败",
+        description: "请重新登录",
+        variant: "destructive",
+      })
+      throw new Error("认证失败")
+    }
+    return token
+  }
+
+  // 获取所有角色
+  const fetchRoles = async () => {
+    try {
+      setIsLoading(true)
+      const token = getToken()
+      
+      const response = await fetch("/api/system/role/list", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      })
+      
+      if (response.status === 401) {
+        toast({
+          title: "认证失败",
+          description: "请重新登录",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      const data = await response.json()
+      
+      if (data.code === 200) {
+        setRoles(data.data)
+        setFilteredRoles(data.data)
+      } else {
+        toast({
+          title: "获取角色失败",
+          description: data.msg || "请稍后重试",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "获取角色失败",
+        description: error instanceof Error ? error.message : "请检查网络连接",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 获取菜单树
+  const fetchMenuTree = async () => {
+    try {
+      const token = getToken()
+      
+      const response = await fetch("/api/system/menu/treeselect", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      })
+      
+      if (response.status === 401) {
+        toast({
+          title: "认证失败",
+          description: "请重新登录",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      const data = await response.json()
+      
+      if (data.code === 200) {
+        setMenuTree(data.data)
+      } else {
+        toast({
+          title: "获取菜单树失败",
+          description: data.msg || "请稍后重试",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "获取菜单树失败",
+        description: error instanceof Error ? error.message : "请检查网络连接",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // 获取角色详情
+  const fetchRoleDetail = async (roleId: number) => {
+    try {
+      const token = getToken()
+      
+      const response = await fetch(`/api/system/role/${roleId}`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      })
+      
+      if (response.status === 401) {
+        toast({
+          title: "认证失败",
+          description: "请重新登录",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      const data = await response.json()
+      
+      if (data.code === 200) {
+        setCurrentRole(data.data)
+        setSelectedMenuIds(data.data.menu_ids || [])
+      } else {
+        toast({
+          title: "获取角色详情失败",
+          description: data.msg || "请稍后重试",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "获取角色详情失败",
+        description: error instanceof Error ? error.message : "请检查网络连接",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // 初始加载数据
+  useEffect(() => {
+    fetchRoles()
+    fetchMenuTree()
+  }, [])
+
+  // 处理搜索和筛选
+  useEffect(() => {
+    let result = roles
+
+    // 搜索过滤
+    if (searchTerm) {
+      result = result.filter(
+        (role) =>
+          role.role_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          role.role_key.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    // 状态过滤
+    if (statusFilter !== "all") {
+      result = result.filter((role) => role.status === statusFilter)
+    }
+
+    setFilteredRoles(result)
+  }, [roles, searchTerm, statusFilter])
+
+  // 处理搜索输入
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+  }
+
+  // 添加角色
+  const handleAddRole = async () => {
+    try {
+      if (!newRole.role_name || !newRole.role_key) {
+        toast({
+          title: "请完善必填信息",
+          description: "角色名称和权限标识为必填项",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const token = getToken()
+      
+      const response = await fetch("/api/system/role", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ...newRole,
+          menu_ids: selectedMenuIds
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.code === 200) {
+        toast({
+          title: "添加成功",
+          description: "角色已成功添加",
+        })
+        
+        // 重置表单
+        setNewRole({
+          role_name: "",
+          role_key: "",
+          role_sort: 0,
+          status: "0",
+          remark: ""
+        })
+        setSelectedMenuIds([])
+        setShowAddDialog(false)
+        
+        // 刷新角色列表
+        fetchRoles()
+      } else {
+        toast({
+          title: "添加失败",
+          description: data.msg || "请稍后重试",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "添加失败",
+        description: error instanceof Error ? error.message : "请检查网络连接",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // 编辑角色
+  const handleEditRole = async () => {
+    try {
+      if (!currentRole || !currentRole.role_name || !currentRole.role_key) {
+        toast({
+          title: "请完善必填信息",
+          description: "角色名称和权限标识为必填项",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const token = getToken()
+      
+      const response = await fetch(`/api/system/role/${currentRole.role_id}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ...currentRole,
+          menu_ids: selectedMenuIds
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.code === 200) {
+        toast({
+          title: "更新成功",
+          description: "角色信息已更新",
+        })
+        
+        setShowEditDialog(false)
+        
+        // 刷新角色列表
+        fetchRoles()
+      } else {
+        toast({
+          title: "更新失败",
+          description: data.msg || "请稍后重试",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "更新失败",
+        description: error instanceof Error ? error.message : "请检查网络连接",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // 删除角色
+  const handleDeleteRole = async (id: number) => {
+    try {
+      if (!confirm("确定要删除此角色吗？")) {
+        return
+      }
+
+      const token = getToken()
+      
+      const response = await fetch(`/api/system/role/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      })
+      
+      const data = await response.json()
+      
+      if (data.code === 200) {
+        toast({
+          title: "删除成功",
+          description: "角色已删除",
+        })
+        
+        // 刷新角色列表
+        fetchRoles()
+      } else {
+        toast({
+          title: "删除失败",
+          description: data.msg || "请稍后重试",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "删除失败",
+        description: error instanceof Error ? error.message : "请检查网络连接",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // 打开编辑对话框
+  const openEditDialog = async (role: Role) => {
+    await fetchRoleDetail(role.role_id)
+    setShowEditDialog(true)
+  }
+
+  // 渲染状态徽章
+  const renderStatusBadge = (status: string) => {
+    if (status === "0") {
+      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">正常</Badge>
+    }
+    return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">禁用</Badge>
+  }
+
   return (
     <div className="flex flex-col gap-4 p-4 md:p-8">
       <div className="flex items-center justify-between">
@@ -16,13 +455,332 @@ export default function RolesPage() {
       </div>
       
       <Card>
-        <CardHeader>
-          <CardTitle>角色列表</CardTitle>
+        <CardHeader className="px-6 py-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-1 items-center gap-2">
+              <Input
+                placeholder="搜索角色名称或权限标识..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="w-full max-w-sm"
+              />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="所有状态" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">所有状态</SelectItem>
+                  <SelectItem value="0">正常</SelectItem>
+                  <SelectItem value="1">禁用</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  添加角色
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>添加新角色</DialogTitle>
+                  <DialogDescription>
+                    创建新角色并配置权限
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="role_name" className="text-right">
+                      角色名称 *
+                    </Label>
+                    <Input
+                      id="role_name"
+                      value={newRole.role_name}
+                      onChange={(e) => setNewRole({ ...newRole, role_name: e.target.value })}
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="role_key" className="text-right">
+                      权限标识 *
+                    </Label>
+                    <Input
+                      id="role_key"
+                      value={newRole.role_key}
+                      onChange={(e) => setNewRole({ ...newRole, role_key: e.target.value })}
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="role_sort" className="text-right">
+                      显示顺序
+                    </Label>
+                    <Input
+                      id="role_sort"
+                      type="number"
+                      value={newRole.role_sort?.toString()}
+                      onChange={(e) => setNewRole({ ...newRole, role_sort: parseInt(e.target.value) || 0 })}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">
+                      状态
+                    </Label>
+                    <Select 
+                      value={newRole.status} 
+                      onValueChange={(value) => setNewRole({ ...newRole, status: value })}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="选择状态" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">正常</SelectItem>
+                        <SelectItem value="1">禁用</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-start gap-4">
+                    <Label htmlFor="remark" className="text-right pt-2">
+                      备注
+                    </Label>
+                    <Textarea
+                      id="remark"
+                      value={newRole.remark || ""}
+                      onChange={(e) => setNewRole({ ...newRole, remark: e.target.value })}
+                      className="col-span-3"
+                      rows={3}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-start gap-4">
+                    <Label className="text-right pt-2">
+                      菜单权限
+                    </Label>
+                    <div className="col-span-3 max-h-[300px] overflow-auto border rounded-md p-3">
+                      {menuTree.length > 0 ? (
+                        menuTree.map(node => (
+                          <TreeCheckbox
+                            key={node.id}
+                            node={node}
+                            selectedIds={selectedMenuIds}
+                            onSelectedChange={setSelectedMenuIds}
+                          />
+                        ))
+                      ) : (
+                        <p className="text-muted-foreground text-sm">加载菜单树中...</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">取消</Button>
+                  </DialogClose>
+                  <Button 
+                    onClick={handleAddRole} 
+                    disabled={!newRole.role_name || !newRole.role_key}
+                  >
+                    确认添加
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
-          <p>角色管理功能正在开发中...</p>
+          {isLoading ? (
+            <div className="flex h-[400px] items-center justify-center">
+              <div className="text-center">
+                <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                <p className="mt-2 text-sm text-muted-foreground">加载中...</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>角色名称</TableHead>
+                    <TableHead>权限标识</TableHead>
+                    <TableHead>显示顺序</TableHead>
+                    <TableHead>状态</TableHead>
+                    <TableHead className="hidden md:table-cell">创建时间</TableHead>
+                    <TableHead className="text-right">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredRoles.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center">
+                        没有找到符合条件的角色
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredRoles.map((role) => (
+                      <TableRow key={role.role_id}>
+                        <TableCell className="font-medium">{role.role_name}</TableCell>
+                        <TableCell>{role.role_key}</TableCell>
+                        <TableCell>{role.role_sort}</TableCell>
+                        <TableCell>{renderStatusBadge(role.status)}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {new Date(role.create_time).toLocaleString('zh-CN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openEditDialog(role)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                编辑
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(role.role_id.toString())}>
+                                <Copy className="mr-2 h-4 w-4" />
+                                复制ID
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                className="text-red-600"
+                                onClick={() => handleDeleteRole(role.role_id)}
+                              >
+                                <Trash className="mr-2 h-4 w-4" />
+                                删除
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </>
+          )}
         </CardContent>
       </Card>
+
+      {/* 编辑角色对话框 */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>编辑角色</DialogTitle>
+            <DialogDescription>
+              修改角色信息和权限配置
+            </DialogDescription>
+          </DialogHeader>
+          {currentRole && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-role-name" className="text-right">
+                  角色名称 *
+                </Label>
+                <Input
+                  id="edit-role-name"
+                  value={currentRole.role_name}
+                  onChange={(e) => setCurrentRole({ ...currentRole, role_name: e.target.value })}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-role-key" className="text-right">
+                  权限标识 *
+                </Label>
+                <Input
+                  id="edit-role-key"
+                  value={currentRole.role_key}
+                  onChange={(e) => setCurrentRole({ ...currentRole, role_key: e.target.value })}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-role-sort" className="text-right">
+                  显示顺序
+                </Label>
+                <Input
+                  id="edit-role-sort"
+                  type="number"
+                  value={currentRole.role_sort.toString()}
+                  onChange={(e) => setCurrentRole({ ...currentRole, role_sort: parseInt(e.target.value) || 0 })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">
+                  状态
+                </Label>
+                <Select 
+                  value={currentRole.status} 
+                  onValueChange={(value) => setCurrentRole({ ...currentRole, status: value })}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="选择状态" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">正常</SelectItem>
+                    <SelectItem value="1">禁用</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="edit-remark" className="text-right pt-2">
+                  备注
+                </Label>
+                <Textarea
+                  id="edit-remark"
+                  value={currentRole.remark || ""}
+                  onChange={(e) => setCurrentRole({ ...currentRole, remark: e.target.value })}
+                  className="col-span-3"
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label className="text-right pt-2">
+                  菜单权限
+                </Label>
+                <div className="col-span-3 max-h-[300px] overflow-auto border rounded-md p-3">
+                  {menuTree.length > 0 ? (
+                    menuTree.map(node => (
+                      <TreeCheckbox
+                        key={node.id}
+                        node={node}
+                        selectedIds={selectedMenuIds}
+                        onSelectedChange={setSelectedMenuIds}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground text-sm">加载菜单树中...</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">取消</Button>
+            </DialogClose>
+            <Button 
+              onClick={handleEditRole} 
+              disabled={!currentRole || !currentRole.role_name || !currentRole.role_key}
+            >
+              保存修改
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 

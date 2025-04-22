@@ -163,14 +163,22 @@ export default function UsersPage() {
         throw new Error("未找到认证令牌，请重新登录");
       }
       
-      const url = `${API_BASE_URL}/api/v1/users?page_num=${pagination.pageNum}&page_size=${pagination.pageSize}${searchTerm ? `&user_name=${searchTerm}` : ''}`;
+      const url = `${API_BASE_URL}/api/v1/users/list`;
       console.log("请求URL:", url);
       
       const response = await fetch(url, {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          page_num: pagination.pageNum,
+          page_size: pagination.pageSize,
+          search_params: {
+            user_name: searchTerm || undefined
+          }
+        }),
       });
 
       console.log("响应状态:", response.status);
