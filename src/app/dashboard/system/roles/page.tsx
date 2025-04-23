@@ -1,8 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
+import { 
+  Copy, 
+  Edit, 
+  MoreHorizontal, 
+  Plus, 
+  Trash 
+} from "lucide-react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+
 import {
   Card,
   CardContent,
@@ -46,44 +55,25 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { TreeCheckbox } from "@/components/ui/tree-checkbox"
-import { Copy, Edit, MoreHorizontal, Plus, Trash, UserPlus } from "lucide-react"
 
-// 角色类型定义
-interface Role {
-  role_id: number
-  role_name: string
-  role_key: string
-  role_sort: number
-  status: string
-  remark?: string
-  create_time: string
-  update_time: string
-  menu_ids: number[]
-}
-
-// 菜单树类型定义
-interface MenuNode {
-  id: number
-  label: string
-  children?: MenuNode[]
-}
+// 导入类型和API服务
+import { MenuNode, Role, RoleCreateDto, RoleUpdateDto } from "@/types/role"
+import { roleApi } from "@/api/role"
 
 export default function RolesPage() {
-  // 状态管理
   const { toast } = useToast()
-  const [roles, setRoles] = useState<Role[]>([])
-  const [filteredRoles, setFilteredRoles] = useState<Role[]>([])
+  const queryClient = useQueryClient()
+  
+  // 状态管理
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [isLoading, setIsLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState<string>("all")
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [currentRole, setCurrentRole] = useState<Role | null>(null)
-  const [menuTree, setMenuTree] = useState<MenuNode[]>([])
   const [selectedMenuIds, setSelectedMenuIds] = useState<number[]>([])
   
   // 新角色默认值
-  const [newRole, setNewRole] = useState<Partial<Role>>({
+  const [newRole, setNewRole] = useState<Partial<RoleCreateDto>>({
     role_name: "",
     role_key: "",
     role_sort: 0,
@@ -92,159 +82,112 @@ export default function RolesPage() {
     menu_ids: []
   })
 
-  // 获取认证令牌
-  const getToken = () => {
-    const token = localStorage.getItem("token")
-    if (!token) {
-      toast({
-        title: "认证失败",
-        description: "请重新登录",
-        variant: "destructive",
-      })
-      throw new Error("认证失败")
-    }
-    return token
-  }
+  // 获取角色列表查询
+  const { data: roles = [], isLoading } = useQuery<Role[]>({
+    queryKey: ['roles'],
+    queryFn: () => roleApi.getList(),
+    staleTime: 1000 * 60 * 5, // 5分钟内不重新获取数据
+  })
+  
+  // 获取菜单树查询
+  const { data: menuTree = [] } = useQuery<MenuNode[]>({
+    queryKey: ['menuTree'],
+    queryFn: () => roleApi.getMenuTree(),
+    staleTime: 1000 * 60 * 5, // 5分钟内不重新获取数据
+  })
 
-  // 获取所有角色
-  const fetchRoles = async () => {
-    try {
-      setIsLoading(true)
-      const token = getToken()
-      
-      const response = await fetch("/api/system/role/list", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      })
-      
-      if (response.status === 401) {
-        toast({
-          title: "认证失败",
-          description: "请重新登录",
-          variant: "destructive",
-        })
-        return
-      }
-      
-      const data = await response.json()
-      
-      if (data.code === 200) {
-        setRoles(data.data)
-        setFilteredRoles(data.data)
-      } else {
-        toast({
-          title: "获取角色失败",
-          description: data.msg || "请稍后重试",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
+  // 添加角色的mutation
+  const addRoleMutation = useMutation({
+    mutationFn: (role: RoleCreateDto) => roleApi.create(role),
+    onSuccess: () => {
       toast({
-        title: "获取角色失败",
-        description: error instanceof Error ? error.message : "请检查网络连接",
-        variant: "destructive",
+        title: "添加成功",
+        description: "角色已成功添加",
       })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // 获取菜单树
-  const fetchMenuTree = async () => {
-    try {
-      const token = getToken()
-      
-      const response = await fetch("/api/system/menu/treeselect", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
+      setShowAddDialog(false)
+      // 重置表单
+      setNewRole({
+        role_name: "",
+        role_key: "",
+        role_sort: 0,
+        status: "0",
+        remark: "",
+        menu_ids: []
       })
-      
-      if (response.status === 401) {
-        toast({
-          title: "认证失败",
-          description: "请重新登录",
-          variant: "destructive",
-        })
-        return
-      }
-      
-      const data = await response.json()
-      
-      if (data.code === 200) {
-        setMenuTree(data.data)
-      } else {
-        toast({
-          title: "获取菜单树失败",
-          description: data.msg || "请稍后重试",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
+      setSelectedMenuIds([])
+      // 刷新角色列表
+      queryClient.invalidateQueries({ queryKey: ['roles'] })
+    },
+    onError: (error: Error) => {
       toast({
-        title: "获取菜单树失败",
-        description: error instanceof Error ? error.message : "请检查网络连接",
+        title: "添加失败",
+        description: error.message || "请稍后重试",
         variant: "destructive",
       })
     }
-  }
+  })
 
-  // 获取角色详情
-  const fetchRoleDetail = async (roleId: number) => {
-    try {
-      const token = getToken()
-      
-      const response = await fetch(`/api/system/role/${roleId}`, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
+  // 修改角色的mutation
+  const updateRoleMutation = useMutation({
+    mutationFn: (data: { roleId: number; role: RoleUpdateDto }) => 
+      roleApi.update(data.roleId, data.role),
+    onSuccess: () => {
+      toast({
+        title: "更新成功",
+        description: "角色信息已更新",
       })
-      
-      if (response.status === 401) {
-        toast({
-          title: "认证失败",
-          description: "请重新登录",
-          variant: "destructive",
-        })
-        return
-      }
-      
-      const data = await response.json()
-      
-      if (data.code === 200) {
-        setCurrentRole(data.data)
-        setSelectedMenuIds(data.data.menu_ids || [])
-      } else {
-        toast({
-          title: "获取角色详情失败",
-          description: data.msg || "请稍后重试",
-          variant: "destructive",
-        })
-      }
+      setShowEditDialog(false)
+      // 刷新角色列表
+      queryClient.invalidateQueries({ queryKey: ['roles'] })
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "更新失败",
+        description: error.message || "请稍后重试",
+        variant: "destructive",
+      })
+    }
+  })
+
+  // 删除角色的mutation
+  const deleteRoleMutation = useMutation({
+    mutationFn: (roleId: number) => roleApi.delete(roleId),
+    onSuccess: () => {
+      toast({
+        title: "删除成功",
+        description: "角色已删除",
+      })
+      // 刷新角色列表
+      queryClient.invalidateQueries({ queryKey: ['roles'] })
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "删除失败",
+        description: error.message || "请稍后重试",
+        variant: "destructive",
+      })
+    }
+  })
+
+  // 获取角色详情的查询
+  const getRoleDetail = async (roleId: number) => {
+    try {
+      const data = await roleApi.getDetail(roleId)
+      setCurrentRole(data)
+      setSelectedMenuIds(data.menu_ids || [])
+      return data
     } catch (error) {
+      console.error("获取角色详情失败", error)
       toast({
         title: "获取角色详情失败",
-        description: error instanceof Error ? error.message : "请检查网络连接",
+        description: error instanceof Error ? error.message : "请稍后重试",
         variant: "destructive",
       })
     }
   }
 
-  // 初始加载数据
-  useEffect(() => {
-    fetchRoles()
-    fetchMenuTree()
-  }, [])
-
-  // 处理搜索和筛选
-  useEffect(() => {
+  // 过滤角色列表
+  const filteredRoles = React.useMemo(() => {
     let result = roles
 
     // 搜索过滤
@@ -261,7 +204,7 @@ export default function RolesPage() {
       result = result.filter((role) => role.status === statusFilter)
     }
 
-    setFilteredRoles(result)
+    return result
   }, [roles, searchTerm, statusFilter])
 
   // 处理搜索输入
@@ -271,167 +214,52 @@ export default function RolesPage() {
 
   // 添加角色
   const handleAddRole = async () => {
-    try {
-      if (!newRole.role_name || !newRole.role_key) {
-        toast({
-          title: "请完善必填信息",
-          description: "角色名称和权限标识为必填项",
-          variant: "destructive",
-        })
-        return
-      }
-
-      const token = getToken()
-      
-      const response = await fetch("/api/system/role", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          ...newRole,
-          menu_ids: selectedMenuIds
-        })
-      })
-      
-      const data = await response.json()
-      
-      if (data.code === 200) {
-        toast({
-          title: "添加成功",
-          description: "角色已成功添加",
-        })
-        
-        // 重置表单
-        setNewRole({
-          role_name: "",
-          role_key: "",
-          role_sort: 0,
-          status: "0",
-          remark: ""
-        })
-        setSelectedMenuIds([])
-        setShowAddDialog(false)
-        
-        // 刷新角色列表
-        fetchRoles()
-      } else {
-        toast({
-          title: "添加失败",
-          description: data.msg || "请稍后重试",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
+    if (!newRole.role_name || !newRole.role_key) {
       toast({
-        title: "添加失败",
-        description: error instanceof Error ? error.message : "请检查网络连接",
+        title: "请完善必填信息",
+        description: "角色名称和权限标识为必填项",
         variant: "destructive",
       })
+      return
     }
+
+    addRoleMutation.mutate({
+      ...newRole,
+      menu_ids: selectedMenuIds
+    } as RoleCreateDto)
   }
 
   // 编辑角色
   const handleEditRole = async () => {
-    try {
-      if (!currentRole || !currentRole.role_name || !currentRole.role_key) {
-        toast({
-          title: "请完善必填信息",
-          description: "角色名称和权限标识为必填项",
-          variant: "destructive",
-        })
-        return
-      }
-
-      const token = getToken()
-      
-      const response = await fetch(`/api/system/role/${currentRole.role_id}`, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          ...currentRole,
-          menu_ids: selectedMenuIds
-        })
-      })
-      
-      const data = await response.json()
-      
-      if (data.code === 200) {
-        toast({
-          title: "更新成功",
-          description: "角色信息已更新",
-        })
-        
-        setShowEditDialog(false)
-        
-        // 刷新角色列表
-        fetchRoles()
-      } else {
-        toast({
-          title: "更新失败",
-          description: data.msg || "请稍后重试",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
+    if (!currentRole || !currentRole.role_name || !currentRole.role_key) {
       toast({
-        title: "更新失败",
-        description: error instanceof Error ? error.message : "请检查网络连接",
+        title: "请完善必填信息",
+        description: "角色名称和权限标识为必填项",
         variant: "destructive",
       })
+      return
     }
+
+    updateRoleMutation.mutate({
+      roleId: currentRole.role_id,
+      role: {
+        ...currentRole,
+        menu_ids: selectedMenuIds
+      } as RoleUpdateDto
+    })
   }
 
   // 删除角色
   const handleDeleteRole = async (id: number) => {
-    try {
-      if (!confirm("确定要删除此角色吗？")) {
-        return
-      }
-
-      const token = getToken()
-      
-      const response = await fetch(`/api/system/role/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      })
-      
-      const data = await response.json()
-      
-      if (data.code === 200) {
-        toast({
-          title: "删除成功",
-          description: "角色已删除",
-        })
-        
-        // 刷新角色列表
-        fetchRoles()
-      } else {
-        toast({
-          title: "删除失败",
-          description: data.msg || "请稍后重试",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      toast({
-        title: "删除失败",
-        description: error instanceof Error ? error.message : "请检查网络连接",
-        variant: "destructive",
-      })
+    if (!confirm("确定要删除此角色吗？")) {
+      return
     }
+    deleteRoleMutation.mutate(id)
   }
 
   // 打开编辑对话框
   const openEditDialog = async (role: Role) => {
-    await fetchRoleDetail(role.role_id)
+    await getRoleDetail(role.role_id)
     setShowEditDialog(true)
   }
 

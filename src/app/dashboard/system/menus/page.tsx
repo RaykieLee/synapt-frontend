@@ -1,8 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
+import { 
+  Copy, 
+  Edit, 
+  MoreHorizontal, 
+  Plus, 
+  Trash 
+} from "lucide-react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+
 import {
   Card,
   CardContent,
@@ -45,45 +54,24 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { Copy, Edit, MoreHorizontal, Plus, Trash } from "lucide-react"
 
-// 菜单类型定义
-interface Menu {
-  menu_id: number
-  menu_name: string
-  parent_id: number
-  order_num: number
-  path: string
-  component?: string
-  query?: string
-  is_frame: number
-  is_cache: number
-  menu_type: string
-  visible: string
-  status: string
-  perms?: string
-  icon: string
-  create_time: string
-  update_time: string
-  remark?: string
-  children?: Menu[]
-}
+// 导入类型和API服务
+import { Menu, MenuCreateDto, MenuUpdateDto, ParentMenu } from "@/types/menu"
+import { menuApi } from "@/api/menu"
 
 export default function MenusPage() {
-  // 状态管理
   const { toast } = useToast()
-  const [menus, setMenus] = useState<Menu[]>([])
-  const [filteredMenus, setFilteredMenus] = useState<Menu[]>([])
+  const queryClient = useQueryClient()
+  
+  // 状态管理
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [isLoading, setIsLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState<string>("all")
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [currentMenu, setCurrentMenu] = useState<Menu | null>(null)
-  const [parentMenus, setParentMenus] = useState<{ id: number, name: string }[]>([])
   
   // 新菜单默认值
-  const [newMenu, setNewMenu] = useState<Partial<Menu>>({
+  const [newMenu, setNewMenu] = useState<Partial<MenuCreateDto>>({
     menu_name: "",
     parent_id: 0,
     order_num: 0,
@@ -99,168 +87,121 @@ export default function MenusPage() {
     remark: ""
   })
 
-  // 获取认证令牌
-  const getToken = () => {
-    const token = localStorage.getItem("token")
-    if (!token) {
-      toast({
-        title: "认证失败",
-        description: "请重新登录",
-        variant: "destructive",
+  // 获取菜单列表查询
+  const { data: menus = [], isLoading } = useQuery<Menu[]>({
+    queryKey: ['menus'],
+    queryFn: () => menuApi.getList(),
+    staleTime: 1000 * 60 * 5, // 5分钟内不重新获取数据
+  })
+  
+  // 生成父菜单选项
+  const parentMenus = React.useMemo(() => {
+    const parentOptions = [{ id: 0, name: "作为一级菜单" }]
+    menus
+      .filter((menu: Menu) => menu.menu_type !== "F") // 排除按钮类型
+      .forEach((menu: Menu) => {
+        parentOptions.push({ id: menu.menu_id, name: menu.menu_name })
       })
-      throw new Error("认证失败")
-    }
-    return token
-  }
+    return parentOptions
+  }, [menus])
 
-  // 获取所有菜单
-  const fetchMenus = async () => {
-    try {
-      setIsLoading(true)
-      const token = getToken()
-      
-      const response = await fetch("/api/system/menu/list", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      })
-      
-      if (response.status === 401) {
-        toast({
-          title: "认证失败",
-          description: "请重新登录",
-          variant: "destructive",
-        })
-        return
-      }
-      
-      const data = await response.json()
-      
-      if (data.code === 200) {
-        setMenus(data.data)
-        setFilteredMenus(data.data)
-        
-        // 生成父菜单选项
-        const parentOptions = [{ id: 0, name: "作为一级菜单" }]
-        data.data
-          .filter((menu: Menu) => menu.menu_type !== "F") // 排除按钮类型
-          .forEach((menu: Menu) => {
-            parentOptions.push({ id: menu.menu_id, name: menu.menu_name })
-          })
-        setParentMenus(parentOptions)
-        
-        // 获取菜单树结构
-        fetchMenuTree()
-      } else {
-        toast({
-          title: "获取菜单失败",
-          description: data.msg || "请稍后重试",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
+  // 添加菜单的mutation
+  const addMenuMutation = useMutation({
+    mutationFn: (menu: MenuCreateDto) => menuApi.create(menu),
+    onSuccess: () => {
       toast({
-        title: "获取菜单失败",
-        description: error instanceof Error ? error.message : "请检查网络连接",
-        variant: "destructive",
+        title: "添加成功",
+        description: "菜单已成功添加",
       })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // 获取菜单树
-  const fetchMenuTree = async () => {
-    try {
-      const token = getToken()
-      
-      const response = await fetch("/api/system/menu/tree", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
+      setShowAddDialog(false)
+      // 重置表单
+      setNewMenu({
+        menu_name: "",
+        parent_id: 0,
+        order_num: 0,
+        path: "",
+        component: "",
+        is_frame: 1,
+        is_cache: 0,
+        menu_type: "M",
+        visible: "0",
+        status: "0",
+        perms: "",
+        icon: "#",
+        remark: ""
       })
-      
-      if (response.status === 401) {
-        toast({
-          title: "认证失败",
-          description: "请重新登录",
-          variant: "destructive",
-        })
-        return
-      }
-      
-      const data = await response.json()
-      
-      if (data.code !== 200) {
-        toast({
-          title: "获取菜单树失败",
-          description: data.msg || "请稍后重试",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
+      // 刷新菜单列表
+      queryClient.invalidateQueries({ queryKey: ['menus'] })
+    },
+    onError: (error: Error) => {
       toast({
-        title: "获取菜单树失败",
-        description: error instanceof Error ? error.message : "请检查网络连接",
+        title: "添加失败",
+        description: error.message || "请稍后重试",
         variant: "destructive",
       })
     }
-  }
+  })
 
-  // 获取菜单详情
-  const fetchMenuDetail = async (menuId: number) => {
-    try {
-      const token = getToken()
-      
-      const response = await fetch(`/api/system/menu/${menuId}`, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
+  // 修改菜单的mutation
+  const updateMenuMutation = useMutation({
+    mutationFn: (data: { menuId: number; menu: MenuUpdateDto }) => 
+      menuApi.update(data.menuId, data.menu),
+    onSuccess: () => {
+      toast({
+        title: "更新成功",
+        description: "菜单信息已更新",
       })
-      
-      if (response.status === 401) {
-        toast({
-          title: "认证失败",
-          description: "请重新登录",
-          variant: "destructive",
-        })
-        return
-      }
-      
-      const data = await response.json()
-      
-      if (data.code === 200) {
-        setCurrentMenu(data.data)
-      } else {
-        toast({
-          title: "获取菜单详情失败",
-          description: data.msg || "请稍后重试",
-          variant: "destructive",
-        })
-      }
+      setShowEditDialog(false)
+      // 刷新菜单列表
+      queryClient.invalidateQueries({ queryKey: ['menus'] })
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "更新失败",
+        description: error.message || "请稍后重试",
+        variant: "destructive",
+      })
+    }
+  })
+
+  // 删除菜单的mutation
+  const deleteMenuMutation = useMutation({
+    mutationFn: (menuId: number) => menuApi.delete(menuId),
+    onSuccess: () => {
+      toast({
+        title: "删除成功",
+        description: "菜单已删除",
+      })
+      // 刷新菜单列表
+      queryClient.invalidateQueries({ queryKey: ['menus'] })
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "删除失败",
+        description: error.message || "请稍后重试",
+        variant: "destructive",
+      })
+    }
+  })
+
+  // 获取菜单详情的查询
+  const getMenuDetail = async (menuId: number) => {
+    try {
+      const data = await menuApi.getDetail(menuId)
+      setCurrentMenu(data)
+      return data
     } catch (error) {
+      console.error("获取菜单详情失败", error)
       toast({
         title: "获取菜单详情失败",
-        description: error instanceof Error ? error.message : "请检查网络连接",
+        description: error instanceof Error ? error.message : "请稍后重试",
         variant: "destructive",
       })
     }
   }
 
-  // 初始加载数据
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    fetchMenus()
-  }, [])
-
-  // 处理搜索和筛选
-  useEffect(() => {
+  // 过滤菜单列表
+  const filteredMenus = React.useMemo(() => {
     let result = menus
 
     // 搜索过滤
@@ -277,7 +218,7 @@ export default function MenusPage() {
       result = result.filter((menu) => menu.status === statusFilter)
     }
 
-    setFilteredMenus(result)
+    return result
   }, [menus, searchTerm, statusFilter])
 
   // 处理搜索输入
@@ -287,169 +228,47 @@ export default function MenusPage() {
 
   // 添加菜单
   const handleAddMenu = async () => {
-    try {
-      if (!newMenu.menu_name) {
-        toast({
-          title: "请完善必填信息",
-          description: "菜单名称为必填项",
-          variant: "destructive",
-        })
-        return
-      }
-
-      const token = getToken()
-      
-      const response = await fetch("/api/system/menu", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(newMenu)
-      })
-      
-      const data = await response.json()
-      
-      if (data.code === 200) {
-        toast({
-          title: "添加成功",
-          description: "菜单已成功添加",
-        })
-        
-        // 重置表单
-        setNewMenu({
-          menu_name: "",
-          parent_id: 0,
-          order_num: 0,
-          path: "",
-          component: "",
-          is_frame: 1,
-          is_cache: 0,
-          menu_type: "M",
-          visible: "0",
-          status: "0",
-          perms: "",
-          icon: "#",
-          remark: ""
-        })
-        setShowAddDialog(false)
-        
-        // 刷新菜单列表
-        fetchMenus()
-      } else {
-        toast({
-          title: "添加失败",
-          description: data.msg || "请稍后重试",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
+    if (!newMenu.menu_name) {
       toast({
-        title: "添加失败",
-        description: error instanceof Error ? error.message : "请检查网络连接",
+        title: "请完善必填信息",
+        description: "菜单名称为必填项",
         variant: "destructive",
       })
+      return
     }
+
+    addMenuMutation.mutate(newMenu as MenuCreateDto)
   }
 
   // 打开编辑对话框
   const openEditDialog = async (menu: Menu) => {
-    await fetchMenuDetail(menu.menu_id)
+    await getMenuDetail(menu.menu_id)
     setShowEditDialog(true)
   }
 
   // 编辑菜单
   const handleEditMenu = async () => {
-    try {
-      if (!currentMenu || !currentMenu.menu_name) {
-        toast({
-          title: "请完善必填信息",
-          description: "菜单名称为必填项",
-          variant: "destructive",
-        })
-        return
-      }
-
-      const token = getToken()
-      
-      const response = await fetch(`/api/system/menu/${currentMenu.menu_id}`, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(currentMenu)
-      })
-      
-      const data = await response.json()
-      
-      if (data.code === 200) {
-        toast({
-          title: "更新成功",
-          description: "菜单信息已更新",
-        })
-        
-        setShowEditDialog(false)
-        
-        // 刷新菜单列表
-        fetchMenus()
-      } else {
-        toast({
-          title: "更新失败",
-          description: data.msg || "请稍后重试",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
+    if (!currentMenu || !currentMenu.menu_name) {
       toast({
-        title: "更新失败",
-        description: error instanceof Error ? error.message : "请检查网络连接",
+        title: "请完善必填信息",
+        description: "菜单名称为必填项",
         variant: "destructive",
       })
+      return
     }
+
+    updateMenuMutation.mutate({
+      menuId: currentMenu.menu_id,
+      menu: currentMenu as MenuUpdateDto
+    })
   }
 
   // 删除菜单
   const handleDeleteMenu = async (id: number) => {
-    try {
-      if (!confirm("确定要删除此菜单吗？删除后不可恢复。")) {
-        return
-      }
-
-      const token = getToken()
-      
-      const response = await fetch(`/api/system/menu/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      })
-      
-      const data = await response.json()
-      
-      if (data.code === 200) {
-        toast({
-          title: "删除成功",
-          description: "菜单已删除",
-        })
-        
-        // 刷新菜单列表
-        fetchMenus()
-      } else {
-        toast({
-          title: "删除失败",
-          description: data.msg || "请稍后重试",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      toast({
-        title: "删除失败",
-        description: error instanceof Error ? error.message : "请检查网络连接",
-        variant: "destructive",
-      })
+    if (!confirm("确定要删除此菜单吗？删除后不可恢复。")) {
+      return
     }
+    deleteMenuMutation.mutate(id)
   }
 
   // 渲染菜单类型
@@ -590,7 +409,7 @@ export default function MenusPage() {
                     <Input
                       id="menu-name"
                       value={newMenu.menu_name}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMenu({ ...newMenu, menu_name: e.target.value })}
+                      onChange={(e) => setNewMenu({ ...newMenu, menu_name: e.target.value })}
                       className="col-span-3"
                       required
                     />
@@ -603,24 +422,12 @@ export default function MenusPage() {
                       id="order-num"
                       type="number"
                       value={newMenu.order_num?.toString()}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMenu({ ...newMenu, order_num: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => setNewMenu({ ...newMenu, order_num: parseInt(e.target.value) || 0 })}
                       className="col-span-3"
                     />
                   </div>
                   {newMenu.menu_type !== "F" && (
                     <>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="icon" className="text-right">
-                          图标
-                        </Label>
-                        <Input
-                          id="icon"
-                          value={newMenu.icon}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMenu({ ...newMenu, icon: e.target.value })}
-                          className="col-span-3"
-                          placeholder="输入图标类名或符号"
-                        />
-                      </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="path" className="text-right">
                           路由地址
@@ -628,93 +435,54 @@ export default function MenusPage() {
                         <Input
                           id="path"
                           value={newMenu.path}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMenu({ ...newMenu, path: e.target.value })}
+                          onChange={(e) => setNewMenu({ ...newMenu, path: e.target.value })}
                           className="col-span-3"
-                          placeholder={newMenu.menu_type === "M" ? "例如: system" : "例如: user"}
                         />
                       </div>
+                      {newMenu.menu_type === "C" && (
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="component" className="text-right">
+                            组件路径
+                          </Label>
+                          <Input
+                            id="component"
+                            value={newMenu.component || ""}
+                            onChange={(e) => setNewMenu({ ...newMenu, component: e.target.value })}
+                            className="col-span-3"
+                          />
+                        </div>
+                      )}
                     </>
                   )}
-                  
-                  {newMenu.menu_type === "C" && (
+                  {newMenu.menu_type === "F" && (
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="component" className="text-right">
-                        组件路径
+                      <Label htmlFor="perms" className="text-right">
+                        权限标识
                       </Label>
                       <Input
-                        id="component"
-                        value={newMenu.component}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMenu({ ...newMenu, component: e.target.value })}
+                        id="perms"
+                        value={newMenu.perms || ""}
+                        onChange={(e) => setNewMenu({ ...newMenu, perms: e.target.value })}
                         className="col-span-3"
-                        placeholder="例如: system/user/index"
                       />
                     </div>
                   )}
-                  
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="perms" className="text-right">
-                      权限标识
+                    <Label className="text-right">
+                      状态
                     </Label>
-                    <Input
-                      id="perms"
-                      value={newMenu.perms}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMenu({ ...newMenu, perms: e.target.value })}
-                      className="col-span-3"
-                      placeholder={newMenu.menu_type === "F" ? "例如: system:user:add" : ""}
-                    />
-                  </div>
-                  
-                  {newMenu.menu_type !== "F" && (
-                    <>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">
-                          显示状态
-                        </Label>
-                        <Select 
-                          value={newMenu.visible} 
-                          onValueChange={(value) => setNewMenu({ ...newMenu, visible: value })}
-                        >
-                          <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="选择显示状态" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="0">显示</SelectItem>
-                            <SelectItem value="1">隐藏</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">
-                          菜单状态
-                        </Label>
-                        <Select 
-                          value={newMenu.status} 
-                          onValueChange={(value) => setNewMenu({ ...newMenu, status: value })}
-                        >
-                          <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="选择菜单状态" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="0">正常</SelectItem>
-                            <SelectItem value="1">停用</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </>
-                  )}
-                  
-                  <div className="grid grid-cols-4 items-start gap-4">
-                    <Label htmlFor="remark" className="text-right pt-2">
-                      备注
-                    </Label>
-                    <Textarea
-                      id="remark"
-                      value={newMenu.remark || ""}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewMenu({ ...newMenu, remark: e.target.value })}
-                      className="col-span-3"
-                      rows={3}
-                    />
+                    <Select 
+                      value={newMenu.status} 
+                      onValueChange={(value) => setNewMenu({ ...newMenu, status: value })}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="选择状态" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">正常</SelectItem>
+                        <SelectItem value="1">停用</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <DialogFooter>
@@ -722,7 +490,7 @@ export default function MenusPage() {
                     <Button variant="outline">取消</Button>
                   </DialogClose>
                   <Button 
-                    onClick={handleAddMenu}
+                    onClick={handleAddMenu} 
                     disabled={!newMenu.menu_name}
                   >
                     确认添加
@@ -741,70 +509,68 @@ export default function MenusPage() {
               </div>
             </div>
           ) : (
-            <>
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>菜单名称</TableHead>
+                  <TableHead>类型</TableHead>
+                  <TableHead>排序</TableHead>
+                  <TableHead>权限标识</TableHead>
+                  <TableHead>路径</TableHead>
+                  <TableHead>状态</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredMenus.length === 0 ? (
                   <TableRow>
-                    <TableHead>菜单名称</TableHead>
-                    <TableHead>图标</TableHead>
-                    <TableHead>排序</TableHead>
-                    <TableHead>权限标识</TableHead>
-                    <TableHead>路径</TableHead>
-                    <TableHead>类型</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead className="text-right">操作</TableHead>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      没有找到符合条件的菜单
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredMenus.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="h-24 text-center">
-                        没有找到符合条件的菜单
+                ) : (
+                  filteredMenus.map((menu) => (
+                    <TableRow key={menu.menu_id}>
+                      <TableCell className="font-medium">
+                        <span className="ml-2">{menu.menu_name}</span>
+                      </TableCell>
+                      <TableCell>{renderMenuType(menu.menu_type)}</TableCell>
+                      <TableCell>{menu.order_num}</TableCell>
+                      <TableCell>{menu.perms || "-"}</TableCell>
+                      <TableCell>{menu.path || "-"}</TableCell>
+                      <TableCell>{renderStatusBadge(menu.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditDialog(menu)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              编辑
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(menu.menu_id.toString())}>
+                              <Copy className="mr-2 h-4 w-4" />
+                              复制ID
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              className="text-red-600"
+                              onClick={() => handleDeleteMenu(menu.menu_id)}
+                            >
+                              <Trash className="mr-2 h-4 w-4" />
+                              删除
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    filteredMenus.map((menu) => (
-                      <TableRow key={menu.menu_id}>
-                        <TableCell className="font-medium">{menu.menu_name}</TableCell>
-                        <TableCell>{menu.icon}</TableCell>
-                        <TableCell>{menu.order_num}</TableCell>
-                        <TableCell>{menu.perms || '-'}</TableCell>
-                        <TableCell>{menu.path || '-'}</TableCell>
-                        <TableCell>{renderMenuType(menu.menu_type)}</TableCell>
-                        <TableCell>{renderStatusBadge(menu.status)}</TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => openEditDialog(menu)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                编辑
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(menu.menu_id.toString())}>
-                                <Copy className="mr-2 h-4 w-4" />
-                                复制ID
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                className="text-red-600"
-                                onClick={() => handleDeleteMenu(menu.menu_id)}
-                              >
-                                <Trash className="mr-2 h-4 w-4" />
-                                删除
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
@@ -858,13 +624,11 @@ export default function MenusPage() {
                     <SelectValue placeholder="选择上级菜单" />
                   </SelectTrigger>
                   <SelectContent>
-                    {parentMenus
-                      .filter(menu => menu.id !== currentMenu.menu_id) // 防止选择自己为父菜单
-                      .map(menu => (
-                        <SelectItem key={menu.id} value={menu.id.toString()}>
-                          {menu.name}
-                        </SelectItem>
-                      ))}
+                    {parentMenus.map(menu => (
+                      <SelectItem key={menu.id} value={menu.id.toString()}>
+                        {menu.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -875,7 +639,7 @@ export default function MenusPage() {
                 <Input
                   id="edit-menu-name"
                   value={currentMenu.menu_name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentMenu({ ...currentMenu, menu_name: e.target.value })}
+                  onChange={(e) => setCurrentMenu({ ...currentMenu, menu_name: e.target.value })}
                   className="col-span-3"
                   required
                 />
@@ -888,24 +652,12 @@ export default function MenusPage() {
                   id="edit-order-num"
                   type="number"
                   value={currentMenu.order_num.toString()}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentMenu({ ...currentMenu, order_num: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => setCurrentMenu({ ...currentMenu, order_num: parseInt(e.target.value) || 0 })}
                   className="col-span-3"
                 />
               </div>
               {currentMenu.menu_type !== "F" && (
                 <>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="edit-icon" className="text-right">
-                      图标
-                    </Label>
-                    <Input
-                      id="edit-icon"
-                      value={currentMenu.icon}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentMenu({ ...currentMenu, icon: e.target.value })}
-                      className="col-span-3"
-                      placeholder="输入图标类名或符号"
-                    />
-                  </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="edit-path" className="text-right">
                       路由地址
@@ -913,93 +665,54 @@ export default function MenusPage() {
                     <Input
                       id="edit-path"
                       value={currentMenu.path}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentMenu({ ...currentMenu, path: e.target.value })}
+                      onChange={(e) => setCurrentMenu({ ...currentMenu, path: e.target.value })}
                       className="col-span-3"
-                      placeholder={currentMenu.menu_type === "M" ? "例如: system" : "例如: user"}
                     />
                   </div>
+                  {currentMenu.menu_type === "C" && (
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="edit-component" className="text-right">
+                        组件路径
+                      </Label>
+                      <Input
+                        id="edit-component"
+                        value={currentMenu.component || ""}
+                        onChange={(e) => setCurrentMenu({ ...currentMenu, component: e.target.value })}
+                        className="col-span-3"
+                      />
+                    </div>
+                  )}
                 </>
               )}
-              
-              {currentMenu.menu_type === "C" && (
+              {currentMenu.menu_type === "F" && (
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-component" className="text-right">
-                    组件路径
+                  <Label htmlFor="edit-perms" className="text-right">
+                    权限标识
                   </Label>
                   <Input
-                    id="edit-component"
-                    value={currentMenu.component || ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentMenu({ ...currentMenu, component: e.target.value })}
+                    id="edit-perms"
+                    value={currentMenu.perms || ""}
+                    onChange={(e) => setCurrentMenu({ ...currentMenu, perms: e.target.value })}
                     className="col-span-3"
-                    placeholder="例如: system/user/index"
                   />
                 </div>
               )}
-              
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-perms" className="text-right">
-                  权限标识
+                <Label className="text-right">
+                  状态
                 </Label>
-                <Input
-                  id="edit-perms"
-                  value={currentMenu.perms || ""}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentMenu({ ...currentMenu, perms: e.target.value })}
-                  className="col-span-3"
-                  placeholder={currentMenu.menu_type === "F" ? "例如: system:user:add" : ""}
-                />
-              </div>
-              
-              {currentMenu.menu_type !== "F" && (
-                <>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label className="text-right">
-                      显示状态
-                    </Label>
-                    <Select 
-                      value={currentMenu.visible} 
-                      onValueChange={(value) => setCurrentMenu({ ...currentMenu, visible: value })}
-                    >
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="选择显示状态" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0">显示</SelectItem>
-                        <SelectItem value="1">隐藏</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label className="text-right">
-                      菜单状态
-                    </Label>
-                    <Select 
-                      value={currentMenu.status} 
-                      onValueChange={(value) => setCurrentMenu({ ...currentMenu, status: value })}
-                    >
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="选择菜单状态" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0">正常</SelectItem>
-                        <SelectItem value="1">停用</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
-              
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="edit-remark" className="text-right pt-2">
-                  备注
-                </Label>
-                <Textarea
-                  id="edit-remark"
-                  value={currentMenu.remark || ""}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCurrentMenu({ ...currentMenu, remark: e.target.value })}
-                  className="col-span-3"
-                  rows={3}
-                />
+                <Select 
+                  value={currentMenu.status} 
+                  onValueChange={(value) => setCurrentMenu({ ...currentMenu, status: value })}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="选择状态" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">正常</SelectItem>
+                    <SelectItem value="1">停用</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
@@ -1008,7 +721,7 @@ export default function MenusPage() {
               <Button variant="outline">取消</Button>
             </DialogClose>
             <Button 
-              onClick={handleEditMenu}
+              onClick={handleEditMenu} 
               disabled={!currentMenu || !currentMenu.menu_name}
             >
               保存修改
