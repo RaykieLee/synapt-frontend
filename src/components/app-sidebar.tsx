@@ -27,168 +27,81 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { useMenuData } from "@/hooks/use-menu-data"
+import { useEffect, useState } from "react"
 
-// This is sample data.
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
-  navMain: [
-    {
-      title: "系统管理",
-      url: "#",
-      icon: Shield,
-      items: [
-        {
-          title: "用户管理",
-          url: "/dashboard/system/users",
-        },
-        {
-          title: "角色管理",
-          url: "/dashboard/system/roles",
-        },
-        {
-          title: "菜单管理",
-          url: "/dashboard/system/menus",
-        },
-      ],
-    },
-    {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
+// 获取用户信息
+const getUserInfo = () => {
+  if (typeof window === 'undefined') return null
+  
+  const userInfoString = localStorage.getItem('userInfo')
+  if (!userInfoString) return null
+  
+  try {
+    const userInfo = JSON.parse(userInfoString)
+    return {
+      name: userInfo.nickName || userInfo.userName || "用户",
+      email: userInfo.email || "",
+      avatar: userInfo.avatar || "/avatars/user.png",
+    }
+  } catch (error) {
+    console.error('Failed to parse user info:', error)
+    return null
+  }
 }
 
+// 默认团队数据
+const defaultTeams = [
+  {
+    name: "人工智能应用平台",
+    logo: GalleryVerticalEnd,
+    plan: "Enterprise",
+  }
+]
+
+// 默认项目数据
+const defaultProjects = [
+  {
+    name: "应用开发",
+    url: "#",
+    icon: Frame,
+  },
+  {
+    name: "分析报表",
+    url: "#",
+    icon: PieChart,
+  },
+  {
+    name: "文档中心",
+    url: "#",
+    icon: Map,
+  },
+]
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  // 使用自定义hook获取菜单数据
+  const { menuItems, loading } = useMenuData()
+  const [user, setUser] = useState({ name: "加载中...", email: "", avatar: "/avatars/user.png" })
+  
+  useEffect(() => {
+    const userInfo = getUserInfo()
+    if (userInfo) {
+      setUser(userInfo)
+    }
+  }, [])
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher teams={defaultTeams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* 使用动态加载的菜单数据 */}
+        <NavMain items={menuItems} />
+        <NavProjects projects={defaultProjects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

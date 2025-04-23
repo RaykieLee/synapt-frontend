@@ -8,9 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { saveLoginInfo } from "@/services/auth";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
@@ -51,14 +54,27 @@ export default function LoginPage() {
         throw new Error(data.detail || "登录失败");
       }
 
-      // 存储token
-      localStorage.setItem("token", data.access_token);
+      // 使用auth服务保存登录信息（包括token和用户数据）
+      saveLoginInfo(data);
+      
+      // 显示成功提示
+      toast({
+        title: "登录成功",
+        description: `欢迎回来，${data.user_info.nickName || data.user_info.userName}`,
+      });
       
       // 跳转到仪表板
       router.push("/dashboard");
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : "登录时发生错误");
+      
+      // 显示错误提示
+      toast({
+        title: "登录失败",
+        description: err instanceof Error ? err.message : "登录时发生错误",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +85,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-6">
-            <h2 className="text-2xl font-bold">顺畅人工智能应用平台</h2>
+            <h2 className="text-2xl font-bold">人工智能应用平台</h2>
           </div>
           <CardTitle className="text-xl">登录系统</CardTitle>
           <CardDescription>请输入您的账号和密码登录系统</CardDescription>
@@ -109,7 +125,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col">
           <p className="text-sm text-center text-gray-500 mt-4">
-            © {new Date().getFullYear()} 顺畅人工智能应用平台. 版权所有.
+            © {new Date().getFullYear()} 人工智能应用平台. 版权所有.
           </p>
         </CardFooter>
       </Card>
