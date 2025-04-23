@@ -53,9 +53,9 @@ const getUserInfo = () => {
 // 默认团队数据
 const defaultTeams = [
   {
-    name: "人工智能应用平台",
+    name: "顺畅人工智能应用平台",
     logo: GalleryVerticalEnd,
-    plan: "Enterprise",
+    plan: "人工智能团队",
   }
 ]
 

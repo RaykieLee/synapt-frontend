@@ -719,6 +719,19 @@ export default function MenusPage() {
                       />
                     </div>
                   </div>
+                  <div className="grid grid-cols-4 items-start gap-4">
+                    <Label htmlFor="remark" className="text-right pt-2">
+                      备注
+                    </Label>
+                    <Textarea
+                      id="remark"
+                      value={newMenu.remark || ""}
+                      onChange={(e) => setNewMenu({ ...newMenu, remark: e.target.value })}
+                      className="col-span-3"
+                      rows={3}
+                      placeholder="请输入备注信息..."
+                    />
+                  </div>
                 </div>
                 <DialogFooter>
                   <DialogClose asChild>
@@ -753,13 +766,14 @@ export default function MenusPage() {
                   <TableHead>权限标识</TableHead>
                   <TableHead>路径</TableHead>
                   <TableHead>状态</TableHead>
+                  <TableHead>备注</TableHead>
                   <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredMenus.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       没有找到符合条件的菜单
                     </TableCell>
                   </TableRow>
@@ -793,6 +807,7 @@ export default function MenusPage() {
                       <TableCell>{menu.perms || "-"}</TableCell>
                       <TableCell>{menu.path || "-"}</TableCell>
                       <TableCell>{renderStatusBadge(menu.status)}</TableCell>
+                      <TableCell className="max-w-[150px] truncate" title={menu.remark || "-"}>{menu.remark || "-"}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -961,6 +976,19 @@ export default function MenusPage() {
                     onChange={(value) => setCurrentMenu({ ...currentMenu, icon: value })}
                   />
                 </div>
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="edit-remark" className="text-right pt-2">
+                  备注
+                </Label>
+                <Textarea
+                  id="edit-remark"
+                  value={currentMenu.remark || ""}
+                  onChange={(e) => setCurrentMenu({ ...currentMenu, remark: e.target.value })}
+                  className="col-span-3"
+                  rows={3}
+                  placeholder="请输入备注信息..."
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right">

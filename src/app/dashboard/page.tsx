@@ -1,55 +1,57 @@
-import { AppSidebar } from "@/components/app-sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
+"use client"
 
-export default function Page() {
+import { Card } from "@/components/ui/card"
+import { ContentSequence } from "@/components/ui/content-transition"
+
+export default function DashboardPage() {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">
-                    Building Your Application
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
+    <div className="grid auto-rows-min gap-4 md:grid-cols-3">
+      <ContentSequence staggerDelay={0.1}>
+        <Card className="p-6 bg-white shadow-sm rounded-lg">
+          <h3 className="font-medium mb-2">系统概览</h3>
+          <div className="text-3xl font-bold">27</div>
+          <p className="text-sm text-muted-foreground mt-1">应用总数</p>
+        </Card>
+        
+        <Card className="p-6 bg-white shadow-sm rounded-lg">
+          <h3 className="font-medium mb-2">用户统计</h3>
+          <div className="text-3xl font-bold">143</div>
+          <p className="text-sm text-muted-foreground mt-1">活跃用户</p>
+        </Card>
+        
+        <Card className="p-6 bg-white shadow-sm rounded-lg">
+          <h3 className="font-medium mb-2">系统状态</h3>
+          <div className="text-3xl font-bold text-green-600">正常</div>
+          <p className="text-sm text-muted-foreground mt-1">所有服务运行良好</p>
+        </Card>
+        
+        <Card className="p-6 bg-white shadow-sm rounded-lg md:col-span-3">
+          <h3 className="font-medium mb-4">最近活动</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between border-b pb-2">
+              <div>
+                <div className="font-medium">系统更新</div>
+                <div className="text-sm text-muted-foreground">AI模型库已更新到最新版本</div>
+              </div>
+              <div className="text-sm text-muted-foreground">今天 10:23</div>
+            </div>
+            <div className="flex justify-between border-b pb-2">
+              <div>
+                <div className="font-medium">新用户注册</div>
+                <div className="text-sm text-muted-foreground">5名新用户加入了平台</div>
+              </div>
+              <div className="text-sm text-muted-foreground">昨天 14:35</div>
+            </div>
+            <div className="flex justify-between border-b pb-2">
+              <div>
+                <div className="font-medium">性能优化</div>
+                <div className="text-sm text-muted-foreground">系统响应时间提升了15%</div>
+              </div>
+              <div className="text-sm text-muted-foreground">2天前</div>
+            </div>
           </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-            <div className="bg-muted/50 aspect-video rounded-xl" />
-            <div className="bg-muted/50 aspect-video rounded-xl" />
-            <div className="bg-muted/50 aspect-video rounded-xl" />
-          </div>
-          <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </Card>
+      </ContentSequence>
+    </div>
   )
 }
