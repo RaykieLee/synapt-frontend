@@ -3,7 +3,7 @@ export interface User {
   user_name: string;
   nick_name: string;
   email?: string;
-  phone?: string;
+  phonenumber?: string;
   sex: string;
   avatar?: string;
   status: string;
@@ -16,13 +16,18 @@ export interface User {
   dept_name?: string;
   role_ids?: number[];
   post_ids?: number[];
+  roles: Array<{
+    role_id: number;
+    role_name: string;
+    role_key: string;
+  }>;
 }
 
 export interface UserQuery {
   page_num?: number;
   page_size?: number;
   user_name?: string;
-  phone?: string;
+  phonenumber?: string;
   status?: string;
   dept_id?: number;
 }
@@ -32,7 +37,7 @@ export interface UserCreateDto {
   nick_name: string;
   password?: string;
   email?: string;
-  phone?: string;
+  phonenumber?: string;
   sex: string;
   status: string;
   dept_id?: number;

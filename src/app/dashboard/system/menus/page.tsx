@@ -8,7 +8,34 @@ import {
   Edit, 
   MoreHorizontal, 
   Plus, 
-  Trash 
+  Trash,
+  ChevronDown,
+  ChevronRight,
+  Home,
+  Settings,
+  Users,
+  FileText,
+  Layers,
+  PieChart,
+  Bell,
+  ShieldAlert,
+  Wrench,
+  ChevronsUpDown,
+  Check,
+  FolderTree,
+  ListChecks,
+  LayoutDashboard,
+  Server,
+  Database,
+  Activity,
+  Github,
+  Info,
+  Lock,
+  Mail,
+  MessageSquare,
+  Search,
+  CreditCard,
+  Calendar
 } from "lucide-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
@@ -59,6 +86,91 @@ import { Textarea } from "@/components/ui/textarea"
 import { Menu, MenuCreateDto, MenuUpdateDto, ParentMenu } from "@/types/menu"
 import { menuApi } from "@/api/menu"
 
+// 添加图标选择组件
+const IconSelector = ({ 
+  value, 
+  onChange 
+}: { 
+  value: string, 
+  onChange: (value: string) => void 
+}) => {
+  const [open, setOpen] = useState(false);
+  
+  // 图标映射
+  const iconMap: { [key: string]: React.ReactNode } = {
+    'home': <Home className="h-4 w-4" />,
+    'settings': <Settings className="h-4 w-4" />,
+    'users': <Users className="h-4 w-4" />,
+    'file': <FileText className="h-4 w-4" />,
+    'layers': <Layers className="h-4 w-4" />,
+    'chart': <PieChart className="h-4 w-4" />,
+    'bell': <Bell className="h-4 w-4" />,
+    'shield': <ShieldAlert className="h-4 w-4" />,
+    'wrench': <Wrench className="h-4 w-4" />,
+    'folder': <FolderTree className="h-4 w-4" />,
+    'list': <ListChecks className="h-4 w-4" />,
+    'dashboard': <LayoutDashboard className="h-4 w-4" />,
+    'server': <Server className="h-4 w-4" />,
+    'database': <Database className="h-4 w-4" />,
+    'activity': <Activity className="h-4 w-4" />,
+    'github': <Github className="h-4 w-4" />,
+    'info': <Info className="h-4 w-4" />,
+    'lock': <Lock className="h-4 w-4" />,
+    'mail': <Mail className="h-4 w-4" />,
+    'message': <MessageSquare className="h-4 w-4" />,
+    'search': <Search className="h-4 w-4" />,
+    'card': <CreditCard className="h-4 w-4" />,
+    'calendar': <Calendar className="h-4 w-4" />,
+  };
+  
+  // 获取当前选中的图标
+  const selectedIcon = iconMap[value] || <Layers className="h-4 w-4 text-gray-400" />;
+  
+  return (
+    <div className="relative">
+      <Button
+        variant="outline"
+        role="combobox"
+        aria-expanded={open}
+        className="w-full justify-between"
+        onClick={() => setOpen(!open)}
+      >
+        <div className="flex items-center">
+          <div className="mr-2">{selectedIcon}</div>
+          <span>{value || "选择图标"}</span>
+        </div>
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+      </Button>
+      {open && (
+        <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg">
+          <div className="p-4">
+            <div className="grid grid-cols-8 gap-2">
+              {Object.entries(iconMap).map(([key, icon]) => (
+                <Button
+                  key={key}
+                  variant="ghost"
+                  className={`h-10 w-10 p-0 ${value === key ? "bg-gray-100 border-gray-300" : ""}`}
+                  onClick={() => {
+                    onChange(key);
+                    setOpen(false);
+                  }}
+                >
+                  <div className="relative">
+                    {icon}
+                    {value === key && (
+                      <div className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-green-500"></div>
+                    )}
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function MenusPage() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -69,6 +181,7 @@ export default function MenusPage() {
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [currentMenu, setCurrentMenu] = useState<Menu | null>(null)
+  const [expandedMenus, setExpandedMenus] = useState<Set<number>>(new Set())
   
   // 新菜单默认值
   const [newMenu, setNewMenu] = useState<Partial<MenuCreateDto>>({
@@ -309,6 +422,117 @@ export default function MenusPage() {
     return parent ? parent.menu_name : `ID: ${parentId}`;
   }
 
+  // 添加切换展开/折叠的函数
+  const toggleMenuExpand = (menuId: number) => {
+    setExpandedMenus(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(menuId)) {
+        newSet.delete(menuId);
+      } else {
+        newSet.add(menuId);
+      }
+      return newSet;
+    });
+  };
+
+  // 修改树形结构构建函数
+  const buildMenuTree = (menus: Menu[]) => {
+    const menuMap = new Map<number, Menu & { level: number, children: (Menu & { level: number, children: any[] })[] }>();
+    const result: (Menu & { level: number, children: any[] })[] = [];
+
+    // 初始化带层级和子项的菜单对象
+    menus.forEach(menu => {
+      menuMap.set(menu.menu_id, { ...menu, level: 0, children: [] });
+    });
+
+    // 构建树形结构
+    menus.forEach(menu => {
+      const menuWithLevel = menuMap.get(menu.menu_id)!;
+      if (menu.parent_id === 0) {
+        // 根菜单
+        menuWithLevel.level = 0;
+        result.push(menuWithLevel);
+      } else {
+        // 子菜单
+        const parent = menuMap.get(menu.parent_id);
+        if (parent) {
+          menuWithLevel.level = parent.level + 1;
+          parent.children.push(menuWithLevel);
+        } else {
+          // 找不到父菜单，作为根菜单处理
+          menuWithLevel.level = 0;
+          result.push(menuWithLevel);
+        }
+      }
+    });
+
+    return result;
+  };
+
+  // 修改平铺函数修复类型问题
+  const flattenMenuTree = (menuTree: (Menu & { level: number, children: any[] })[]) => {
+    const result: (Menu & { level: number, hasChildren?: boolean, isParent?: boolean })[] = [];
+    
+    const flatten = (menus: (Menu & { level: number, children: any[] })[]) => {
+      menus.forEach(menu => {
+        const { children, ...rest } = menu;
+        const hasChildren = children && children.length > 0;
+        
+        // 添加是否有子菜单的标记
+        result.push({
+          ...rest,
+          hasChildren,
+          isParent: true
+        });
+        
+        // 只有当父菜单展开时才显示子菜单
+        if (hasChildren && expandedMenus.has(menu.menu_id)) {
+          flatten(children);
+        }
+      });
+    };
+    
+    flatten(menuTree);
+    return result;
+  };
+
+  // 渲染菜单图标
+  const renderMenuIcon = (icon: string) => {
+    const iconMap: { [key: string]: React.ReactNode } = {
+      'home': <Home className="h-4 w-4" />,
+      'settings': <Settings className="h-4 w-4" />,
+      'users': <Users className="h-4 w-4" />,
+      'file': <FileText className="h-4 w-4" />,
+      'layers': <Layers className="h-4 w-4" />,
+      'chart': <PieChart className="h-4 w-4" />,
+      'bell': <Bell className="h-4 w-4" />,
+      'shield': <ShieldAlert className="h-4 w-4" />,
+      'wrench': <Wrench className="h-4 w-4" />,
+      'folder': <FolderTree className="h-4 w-4" />,
+      'list': <ListChecks className="h-4 w-4" />,
+      'dashboard': <LayoutDashboard className="h-4 w-4" />,
+      'server': <Server className="h-4 w-4" />,
+      'database': <Database className="h-4 w-4" />,
+      'activity': <Activity className="h-4 w-4" />,
+      'github': <Github className="h-4 w-4" />,
+      'info': <Info className="h-4 w-4" />,
+      'lock': <Lock className="h-4 w-4" />,
+      'mail': <Mail className="h-4 w-4" />,
+      'message': <MessageSquare className="h-4 w-4" />,
+      'search': <Search className="h-4 w-4" />,
+      'card': <CreditCard className="h-4 w-4" />,
+      'calendar': <Calendar className="h-4 w-4" />,
+    };
+
+    // 如果图标在映射中，返回对应组件
+    if (icon && iconMap[icon]) {
+      return iconMap[icon];
+    }
+
+    // 默认图标
+    return <Layers className="h-4 w-4 text-gray-400" />;
+  };
+
   return (
     <div className="flex flex-col gap-4 p-4 md:p-8">
       <div className="flex items-center justify-between">
@@ -484,6 +708,17 @@ export default function MenusPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="icon" className="text-right">
+                      菜单图标
+                    </Label>
+                    <div className="col-span-3">
+                      <IconSelector
+                        value={newMenu.icon || ""}
+                        onChange={(value) => setNewMenu({ ...newMenu, icon: value })}
+                      />
+                    </div>
+                  </div>
                 </div>
                 <DialogFooter>
                   <DialogClose asChild>
@@ -529,10 +764,29 @@ export default function MenusPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredMenus.map((menu) => (
+                  flattenMenuTree(buildMenuTree(filteredMenus)).map((menu) => (
                     <TableRow key={menu.menu_id}>
                       <TableCell className="font-medium">
-                        <span className="ml-2">{menu.menu_name}</span>
+                        <div 
+                          className="flex items-center" 
+                          style={{ paddingLeft: `${menu.level * 20}px` }}
+                        >
+                          {menu.hasChildren && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 mr-1"
+                              onClick={() => toggleMenuExpand(menu.menu_id)}
+                            >
+                              {expandedMenus.has(menu.menu_id) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            </Button>
+                          )}
+                          {!menu.hasChildren && menu.level > 0 && (
+                            <div className="w-6 mr-1"></div>
+                          )}
+                          {renderMenuIcon(menu.icon)}
+                          <span className="ml-2">{menu.menu_name}</span>
+                        </div>
                       </TableCell>
                       <TableCell>{renderMenuType(menu.menu_type)}</TableCell>
                       <TableCell>{menu.order_num}</TableCell>
@@ -697,6 +951,17 @@ export default function MenusPage() {
                   />
                 </div>
               )}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-icon" className="text-right">
+                  菜单图标
+                </Label>
+                <div className="col-span-3">
+                  <IconSelector
+                    value={currentMenu.icon || ""}
+                    onChange={(value) => setCurrentMenu({ ...currentMenu, icon: value })}
+                  />
+                </div>
+              </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right">
                   状态

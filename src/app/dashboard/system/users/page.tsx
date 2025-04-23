@@ -1,24 +1,22 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
-import Link from "next/link"
+import { useState } from "react"
+import { useToast } from "@/components/ui/use-toast"
 import { 
   Copy, 
   Edit, 
   MoreHorizontal, 
   Trash, 
-  User, 
   UserPlus 
 } from "lucide-react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import {
   DropdownMenu,
@@ -56,45 +54,31 @@ import {
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { toast } from "@/components/ui/use-toast"
+import { userApi } from "@/api/user"
 
-// 用户类型定义
-interface User {
-  user_id: number
-  user_name: string
-  nick_name: string
-  email: string
-  phonenumber: string
-  status: string
-  sex: string
-  avatar: string
-  roles: Array<{
-    role_id: number
-    role_name: string
-    role_key: string
-  }>
-  create_time: string
-}
-
-// 角色类型定义
-interface Role {
-  role_id: number
-  role_name: string
-  role_key: string
-}
+// 导入类型，但使用导入类型语法避免命名冲突
+import type { User, UserCreateDto, UserUpdateDto } from "@/types/user"
+import type { Role } from "@/types/role"
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+  
+  // 状态管理
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [availableRoles, setAvailableRoles] = useState<Role[]>([])
   const [selectedRoles, setSelectedRoles] = useState<number[]>([])
-  const [newUser, setNewUser] = useState({
+  const [pagination, setPagination] = useState({
+    pageNum: 1,
+    pageSize: 10,
+    total: 0
+  })
+  
+  // 新用户默认值
+  const [newUser, setNewUser] = useState<Partial<UserCreateDto>>({
     user_name: "",
     nick_name: "",
     password: "",
@@ -103,427 +87,176 @@ export default function UsersPage() {
     sex: "0",
     status: "0",
   })
-  const [pagination, setPagination] = useState({
-    pageNum: 1,
-    pageSize: 10,
-    total: 0
+
+  // 获取用户列表查询
+  const { data: userData, isLoading } = useQuery({
+    queryKey: ['users', 'list', { page: pagination.pageNum, size: pagination.pageSize, userName: searchTerm, status: statusFilter }],
+    queryFn: () => userApi.getList({
+      page_num: pagination.pageNum,
+      page_size: pagination.pageSize,
+      user_name: searchTerm || undefined,
+      status: statusFilter !== "all" ? statusFilter : undefined
+    }),
+    staleTime: 1000 * 60 * 5, // 5分钟内不重新获取数据
+  })
+  
+  // 获取所有角色
+  const { data: roles = [] } = useQuery({
+    queryKey: ['roles', 'options'],
+    queryFn: () => userApi.getRoles(),
+    staleTime: 1000 * 60 * 5, // 5分钟内不重新获取数据
   })
 
-  // API基础URL
-  const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'
-
-  // 获取token
-  const getToken = () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('token') || ''
-    }
-    return ''
-  }
-
-  // 初始化加载用户数据
-  useEffect(() => {
-    fetchUsers()
-    fetchRoles()
-  }, [pagination.pageNum, pagination.pageSize])
-
-  // 过滤用户
-  useEffect(() => {
-    if (!isLoading) {
-      let result = [...users]
-
-      // 按搜索词过滤
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase()
-        result = result.filter(
-          (user) =>
-            user.user_name.toLowerCase().includes(term) ||
-            user.nick_name.toLowerCase().includes(term) ||
-            user.email.toLowerCase().includes(term) ||
-            user.phonenumber.includes(term)
-        )
-      }
-
-      // 按状态过滤
-      if (statusFilter !== "all") {
-        result = result.filter((user) => user.status === statusFilter)
-      }
-
-      setFilteredUsers(result)
-    }
-  }, [searchTerm, statusFilter, users, isLoading])
-
-  // 获取用户列表
-  const fetchUsers = async () => {
-    setIsLoading(true);
-    try {
-      const token = getToken();
-      console.log("使用的Token:", token ? token.substring(0, 15) + "..." : "无Token");
-      
-      if (!token) {
-        throw new Error("未找到认证令牌，请重新登录");
-      }
-      
-      const url = `${API_BASE_URL}/api/v1/users/list`;
-      console.log("请求URL:", url);
-      
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          page_num: pagination.pageNum,
-          page_size: pagination.pageSize,
-          search_params: {
-            user_name: searchTerm || undefined
-          }
-        }),
-      });
-
-      console.log("响应状态:", response.status);
-      
-      // 处理特定的HTTP状态码
-      if (response.status === 401 || response.status === 403) {
-        // 认证失败，可能是令牌过期
-        localStorage.removeItem("token");
-        console.error("认证失败，请重新登录");
-        toast({
-          title: "认证失败",
-          description: "请重新登录",
-          variant: "destructive",
-        });
-        // window.location.href = "/login";
-        return;
-      }
-      
-      if (response.status === 422) {
-        const errorData = await response.json();
-        console.error("请求参数验证失败:", errorData);
-        toast({
-          title: "请求参数错误",
-          description: "请求参数无效，详情请查看控制台",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`请求错误: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("API响应数据:", data);
-      
-      if (data.code === 200) {
-        setUsers(data.data.rows);
-        setPagination({
-          ...pagination,
-          total: data.data.total
-        });
-      } else {
-        throw new Error(data.msg || "获取用户列表失败");
-      }
-    } catch (error) {
-      console.error("获取用户列表失败:", error);
+  // 创建用户的mutation
+  const createUserMutation = useMutation({
+    mutationFn: (user: UserCreateDto) => userApi.create(user),
+    onSuccess: () => {
+      setShowAddDialog(false)
       toast({
-        title: "错误",
-        description: error instanceof Error ? error.message : "获取用户列表失败，请稍后重试",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  // 获取角色列表
-  const fetchRoles = async () => {
-    try {
-      const token = getToken();
-      console.log("获取角色列表使用的Token:", token ? token.substring(0, 15) + "..." : "无Token");
-      
-      if (!token) {
-        throw new Error("未找到认证令牌，请重新登录");
-      }
-      
-      const url = `${API_BASE_URL}/api/v1/users/roles`;
-      console.log("角色请求URL:", url);
-      
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      console.log("角色响应状态:", response.status);
-      
-      // 处理特定的HTTP状态码
-      if (response.status === 401 || response.status === 403) {
-        // 认证失败，可能是令牌过期
-        localStorage.removeItem("token");
-        console.error("认证失败，请重新登录");
-        toast({
-          title: "认证失败",
-          description: "请重新登录",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (response.status === 422) {
-        const errorData = await response.json();
-        console.error("角色请求参数验证失败:", errorData);
-        toast({
-          title: "请求参数错误", 
-          description: "角色请求参数无效，详情请查看控制台",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`请求错误: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("角色API响应数据:", data);
-      
-      if (data.code === 200) {
-        setAvailableRoles(data.data);
-      } else {
-        throw new Error(data.msg || "获取角色列表失败");
-      }
-    } catch (error) {
-      console.error("获取角色列表失败:", error);
-      toast({
-        title: "错误",
-        description: error instanceof Error ? error.message : "获取角色列表失败，请稍后重试",
-        variant: "destructive",
-      });
-    }
-  }
-
-  // 获取用户详情
-  const fetchUserDetail = async (userId: number) => {
-    try {
-      const token = getToken()
-      const response = await fetch(`${API_BASE_URL}/api/v1/users/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        title: "成功",
+        description: "用户创建成功",
       })
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`)
-      }
-
-      const data = await response.json()
-      if (data.code === 200) {
-        setCurrentUser(data.data)
-        setSelectedRoles(data.data.roles.map((role: any) => role.role_id))
-      } else {
-        throw new Error(data.msg || "获取用户详情失败")
-      }
-    } catch (error) {
-      console.error("获取用户详情失败:", error)
+      // 重置表单
+      setNewUser({
+        user_name: "",
+        nick_name: "",
+        password: "",
+        email: "",
+        phonenumber: "",
+        sex: "0",
+        status: "0",
+      })
+      setSelectedRoles([])
+      // 使相关查询失效，触发重新获取数据
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+    onError: (error: any) => {
       toast({
         title: "错误",
-        description: "获取用户详情失败，请稍后重试",
+        description: error?.message || "创建用户失败，请稍后重试",
         variant: "destructive",
       })
     }
-  }
+  })
+
+  // 更新用户的mutation
+  const updateUserMutation = useMutation({
+    mutationFn: (data: { userId: number, user: UserUpdateDto }) => 
+      userApi.update(data.userId, data.user),
+    onSuccess: () => {
+      setShowEditDialog(false)
+      toast({
+        title: "成功",
+        description: "用户更新成功",
+      })
+      // 重置表单
+      setCurrentUser(null)
+      setSelectedRoles([])
+      // 使相关查询失效，触发重新获取数据
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "错误",
+        description: error?.message || "更新用户失败，请稍后重试",
+        variant: "destructive",
+      })
+    }
+  })
+
+  // 删除用户的mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: (userId: number) => userApi.delete(userId),
+    onSuccess: () => {
+      toast({
+        title: "成功",
+        description: "用户删除成功",
+      })
+      // 使相关查询失效，触发重新获取数据
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "错误",
+        description: error?.message || "删除用户失败，请稍后重试",
+        variant: "destructive",
+      })
+    }
+  })
 
   // 处理搜索
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
   }
 
-  // 处理添加用户
+  // 添加用户
   const handleAddUser = async () => {
-    try {
-      const token = getToken()
-      
-      // 构建API URL查询参数
-      const roleIdsParams = selectedRoles.map(id => `role_ids=${id}`).join('&')
-      const apiUrl = `${API_BASE_URL}/api/v1/users${roleIdsParams ? `?${roleIdsParams}` : ''}`
-      
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newUser),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.msg || `Error: ${response.status}`)
-      }
-
-      const data = await response.json()
-      if (data.code === 200) {
-        toast({
-          title: "成功",
-          description: "添加用户成功",
-        })
-        setShowAddDialog(false)
-        
-        // 重置表单
-        setNewUser({
-          user_name: "",
-          nick_name: "",
-          password: "",
-          email: "",
-          phonenumber: "",
-          sex: "0",
-          status: "0",
-        })
-        setSelectedRoles([])
-        
-        // 刷新用户列表
-        fetchUsers()
-      } else {
-        throw new Error(data.msg || "添加用户失败")
-      }
-    } catch (error) {
-      console.error("添加用户失败:", error)
+    // 验证必填字段
+    if (!newUser.user_name || !newUser.password) {
       toast({
-        title: "错误",
-        description: error instanceof Error ? error.message : "添加用户失败，请稍后重试",
+        title: "验证失败",
+        description: "用户名和密码为必填项",
         variant: "destructive",
       })
+      return
     }
+
+    const user: UserCreateDto = {
+      ...newUser as UserCreateDto,
+      role_ids: selectedRoles
+    }
+
+    createUserMutation.mutate(user)
   }
 
-  // 处理编辑用户
+  // 编辑用户
   const handleEditUser = async () => {
     if (!currentUser) return
 
-    try {
-      const token = getToken()
-      
-      // 构建API URL查询参数
-      const roleIdsParams = selectedRoles.map(id => `role_ids=${id}`).join('&')
-      const apiUrl = `${API_BASE_URL}/api/v1/users/${currentUser.user_id}${roleIdsParams ? `?${roleIdsParams}` : ''}`
-      
-      // 准备更新的用户数据
-      const updateData = {
-        user_id: currentUser.user_id,
-        user_name: currentUser.user_name,
-        nick_name: currentUser.nick_name,
-        email: currentUser.email,
-        phonenumber: currentUser.phonenumber,
-        sex: currentUser.sex,
-        status: currentUser.status,
-        avatar: currentUser.avatar,
-      }
-      
-      const response = await fetch(apiUrl, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updateData),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.msg || `Error: ${response.status}`)
-      }
-
-      const data = await response.json()
-      if (data.code === 200) {
-        toast({
-          title: "成功",
-          description: "更新用户成功",
-        })
-        setShowEditDialog(false)
-        setCurrentUser(null)
-        setSelectedRoles([])
-        
-        // 刷新用户列表
-        fetchUsers()
-      } else {
-        throw new Error(data.msg || "更新用户失败")
-      }
-    } catch (error) {
-      console.error("更新用户失败:", error)
-      toast({
-        title: "错误",
-        description: error instanceof Error ? error.message : "更新用户失败，请稍后重试",
-        variant: "destructive",
-      })
+    const updatedUser: UserUpdateDto = {
+      user_id: currentUser.user_id,
+      user_name: currentUser.user_name,
+      nick_name: currentUser.nick_name,
+      email: currentUser.email || "",
+      phonenumber: currentUser.phonenumber || "",
+      sex: currentUser.sex,
+      status: currentUser.status,
+      role_ids: selectedRoles
     }
+
+    updateUserMutation.mutate({ 
+      userId: currentUser.user_id, 
+      user: updatedUser 
+    })
   }
 
-  // 处理删除用户
+  // 删除用户
   const handleDeleteUser = async (id: number) => {
-    if (!confirm("确定要删除此用户吗？")) {
-      return
-    }
-    
-    try {
-      const token = getToken()
-      const response = await fetch(`${API_BASE_URL}/api/v1/users/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.msg || `Error: ${response.status}`)
-      }
-
-      const data = await response.json()
-      if (data.code === 200) {
-        toast({
-          title: "成功",
-          description: "删除用户成功",
-        })
-        
-        // 刷新用户列表
-        fetchUsers()
-      } else {
-        throw new Error(data.msg || "删除用户失败")
-      }
-    } catch (error) {
-      console.error("删除用户失败:", error)
-      toast({
-        title: "错误",
-        description: error instanceof Error ? error.message : "删除用户失败，请稍后重试",
-        variant: "destructive",
-      })
-    }
+    deleteUserMutation.mutate(id)
   }
 
   // 打开编辑对话框
-  const openEditDialog = async (user: User) => {
-    await fetchUserDetail(user.user_id)
+  const openEditDialog = (user: User) => {
+    setCurrentUser(user)
+    setSelectedRoles(user.roles.map((role) => role.role_id))
     setShowEditDialog(true)
   }
 
-  // 渲染状态徽章
+  // 渲染状态标签
   const renderStatusBadge = (status: string) => {
-    if (status === "0") {
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">正常</Badge>
-    }
-    return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">禁用</Badge>
+    return status === "0" ? (
+      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">正常</Badge>
+    ) : (
+      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">停用</Badge>
+    )
   }
 
-  // 处理角色选择
+  // 处理角色选择变化
   const handleRoleChange = (roleId: number, checked: boolean) => {
     if (checked) {
-      setSelectedRoles([...selectedRoles, roleId])
+      setSelectedRoles(prev => [...prev, roleId])
     } else {
-      setSelectedRoles(selectedRoles.filter(id => id !== roleId))
+      setSelectedRoles(prev => prev.filter(id => id !== roleId))
     }
   }
 
@@ -534,6 +267,10 @@ export default function UsersPage() {
       pageNum
     })
   }
+
+  // 提取出来的用户列表渲染逻辑
+  const users = userData?.rows || []
+  const totalUsers = userData?.total || 0
 
   return (
     <div className="flex flex-col gap-4 p-4 md:p-8">
@@ -632,11 +369,11 @@ export default function UsersPage() {
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="phone" className="text-right">
+                    <Label htmlFor="phonenumber" className="text-right">
                       手机号
                     </Label>
                     <Input
-                      id="phone"
+                      id="phonenumber"
                       value={newUser.phonenumber}
                       onChange={(e) => setNewUser({ ...newUser, phonenumber: e.target.value })}
                       className="col-span-3"
@@ -682,7 +419,7 @@ export default function UsersPage() {
                       角色分配
                     </Label>
                     <div className="col-span-3 flex flex-col gap-3">
-                      {availableRoles.map((role) => (
+                      {roles.map((role) => (
                         <div key={role.role_id} className="flex items-center space-x-2">
                           <Checkbox 
                             id={`role-${role.role_id}`} 
@@ -741,14 +478,14 @@ export default function UsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.length === 0 ? (
+                  {users.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="h-24 text-center">
                         没有找到符合条件的用户
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredUsers.map((user) => (
+                    users.map((user) => (
                       <TableRow key={user.user_id}>
                         <TableCell className="font-medium">{user.user_name}</TableCell>
                         <TableCell>{user.nick_name}</TableCell>
@@ -807,7 +544,7 @@ export default function UsersPage() {
               </Table>
               <div className="flex items-center justify-between space-x-2 py-4">
                 <div className="text-sm text-muted-foreground">
-                  共 {pagination.total} 条数据
+                  共 {totalUsers} 条数据
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
@@ -819,13 +556,13 @@ export default function UsersPage() {
                     上一页
                   </Button>
                   <div className="text-sm">
-                    第 {pagination.pageNum} 页 / 共 {Math.ceil(pagination.total / pagination.pageSize)} 页
+                    第 {pagination.pageNum} 页 / 共 {Math.ceil(totalUsers / pagination.pageSize)} 页
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handlePagination(pagination.pageNum + 1)}
-                    disabled={pagination.pageNum >= Math.ceil(pagination.total / pagination.pageSize)}
+                    disabled={pagination.pageNum >= Math.ceil(totalUsers / pagination.pageSize)}
                   >
                     下一页
                   </Button>
@@ -884,11 +621,11 @@ export default function UsersPage() {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-phone" className="text-right">
+                <Label htmlFor="edit-phonenumber" className="text-right">
                   手机号
                 </Label>
                 <Input
-                  id="edit-phone"
+                  id="edit-phonenumber"
                   value={currentUser.phonenumber}
                   onChange={(e) => setCurrentUser({ ...currentUser, phonenumber: e.target.value })}
                   className="col-span-3"
@@ -934,7 +671,7 @@ export default function UsersPage() {
                   角色分配
                 </Label>
                 <div className="col-span-3 flex flex-col gap-3">
-                  {availableRoles.map((role) => (
+                  {roles.map((role) => (
                     <div key={role.role_id} className="flex items-center space-x-2">
                       <Checkbox 
                         id={`edit-role-${role.role_id}`} 
