@@ -1,0 +1,114 @@
+/**
+ * 字典类型查询参数
+ */
+export interface DictTypeQuery {
+  pageNum?: number;
+  pageSize?: number;
+  dictName?: string;
+  dictType?: string;
+  status?: string;
+}
+
+/**
+ * 字典类型实体
+ */
+export interface DictType {
+  dict_id: number;
+  dict_name: string;
+  dict_type: string;
+  status: string;
+  remark?: string;
+  create_by?: string;
+  create_time?: string;
+  update_by?: string;
+  update_time?: string;
+}
+
+/**
+ * 创建字典类型请求参数
+ */
+export interface DictTypeCreateDto {
+  dict_name: string;
+  dict_type: string;
+  status: string;
+  remark?: string;
+}
+
+/**
+ * 更新字典类型请求参数
+ */
+export interface DictTypeUpdateDto {
+  dict_name?: string;
+  dict_type?: string;
+  status?: string;
+  remark?: string;
+}
+
+/**
+ * 字典数据查询参数
+ */
+export interface DictDataQuery {
+  pageNum?: number;
+  pageSize?: number;
+  dictType?: string;
+  dictLabel?: string;
+  status?: string;
+}
+
+/**
+ * 字典数据实体
+ */
+export interface DictData {
+  dict_code: number;
+  dict_sort: number;
+  dict_label: string;
+  dict_value: string;
+  dict_type: string;
+  css_class?: string;
+  list_class?: string;
+  is_default: string;
+  status: string;
+  remark?: string;
+  create_by?: string;
+  create_time?: string;
+  update_by?: string;
+  update_time?: string;
+}
+
+/**
+ * 创建字典数据请求参数
+ */
+export interface DictDataCreateDto {
+  dict_sort: number;
+  dict_label: string;
+  dict_value: string;
+  dict_type: string;
+  css_class?: string;
+  list_class?: string;
+  is_default?: string;
+  status: string;
+  remark?: string;
+}
+
+/**
+ * 更新字典数据请求参数
+ */
+export interface DictDataUpdateDto {
+  dict_sort?: number;
+  dict_label?: string;
+  dict_value?: string;
+  dict_type?: string;
+  css_class?: string;
+  list_class?: string;
+  is_default?: string;
+  status?: string;
+  remark?: string;
+}
+
+/**
+ * 字典选项
+ */
+export interface DictOption {
+  label: string;
+  value: string;
+} 
