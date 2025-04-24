@@ -1,3 +1,5 @@
+import { BaseQuery, BaseResponse } from './base'
+
 /**
  * 字典类型查询参数
  */
@@ -111,4 +113,36 @@ export interface DictDataUpdateDto {
 export interface DictOption {
   label: string;
   value: string;
-} 
+}
+
+export interface Dict {
+  id: number
+  dict_name: string
+  dict_key: string
+  dict_value: string
+  status: number
+  remark?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface DictQuery extends BaseQuery {
+  dict_name?: string
+  dict_key?: string
+  dict_value?: string
+  status?: number
+}
+
+export interface DictCreateDto {
+  dict_name: string
+  dict_key: string
+  dict_value: string
+  status: number
+  remark?: string
+}
+
+export interface DictUpdateDto extends DictCreateDto {
+  id: number
+}
+
+export type DictResponse = BaseResponse<Dict> 

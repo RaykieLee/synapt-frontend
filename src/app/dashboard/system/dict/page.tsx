@@ -19,6 +19,10 @@ import { useState } from "react";
 import * as z from "zod";
 import { dictAPI } from "@/api/dict";
 import { DictType } from "@/types/dict";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from '@/components/ui/checkbox'
 
 // 表单验证规则
 const dictTypeFormSchema = z.object({
@@ -48,6 +52,7 @@ export default function DictPage() {
   
   // 当前编辑的字典类型
   const [currentDictType, setCurrentDictType] = useState<DictType | null>(null);
+  const [selectedDicts, setSelectedDicts] = useState<DictType[]>([]);
   
   // 查询字典类型列表
   const {
@@ -211,6 +216,25 @@ export default function DictPage() {
     router.push(`/dashboard/system/dict/data?type=${dictType}`);
   };
   
+  // 批量删除字典类型
+  const handleBatchDelete = () => {
+    if (selectedDicts.length === 0) return;
+    const ids = selectedDicts.map((dict) => dict.dict_id);
+    deleteDictTypeMutation.mutate(ids[0]); // Assuming batchDelete is not implemented in the API
+    setSelectedDicts([]);
+    queryClient.invalidateQueries({ queryKey: ["dictTypeList"] });
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex items-center justify-between mb-4">
@@ -242,28 +266,28 @@ export default function DictPage() {
       
       {/* 字典类型列表表格 */}
       <div className="border rounded-md">
-        <table className="w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">字典名称</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">字典类型</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">备注</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>字典名称</TableHead>
+              <TableHead>字典类型</TableHead>
+              <TableHead>状态</TableHead>
+              <TableHead>创建时间</TableHead>
+              <TableHead>备注</TableHead>
+              <TableHead>操作</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {dictTypes.map((dictType) => (
-              <tr key={dictType.dict_id} className="hover:bg-gray-50">
-                <td className="px-4 py-4 whitespace-nowrap">{dictType.dict_name}</td>
-                <td className="px-4 py-4 whitespace-nowrap">{dictType.dict_type}</td>
-                <td className="px-4 py-4 whitespace-nowrap">{dictType.status === "0" ? '正常' : '停用'}</td>
-                <td className="px-4 py-4 whitespace-nowrap">{dictType.create_time}</td>
-                <td className="px-4 py-4">
+              <TableRow key={dictType.dict_id} className="hover:bg-gray-50">
+                <TableCell className="px-4 py-4 whitespace-nowrap">{dictType.dict_name}</TableCell>
+                <TableCell className="px-4 py-4 whitespace-nowrap">{dictType.dict_type}</TableCell>
+                <TableCell className="px-4 py-4 whitespace-nowrap">{dictType.status === "0" ? '正常' : '停用'}</TableCell>
+                <TableCell className="px-4 py-4 whitespace-nowrap">{dictType.create_time}</TableCell>
+                <TableCell className="px-4 py-4">
                   <div className="max-w-xs truncate">{dictType.remark || "-"}</div>
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap">
+                </TableCell>
+                <TableCell className="px-4 py-4 whitespace-nowrap">
                   <div className="flex space-x-2">
                     <Button 
                       variant="outline" 
@@ -292,18 +316,18 @@ export default function DictPage() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
             {dictTypes.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-4 text-center text-gray-500">
+              <TableRow>
+                <TableCell colSpan={6} className="px-4 py-4 text-center text-gray-500">
                   {isLoading ? "加载中..." : "暂无数据"}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
       
       {/* 分页器 */}

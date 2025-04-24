@@ -1,6 +1,7 @@
 import { DictData, DictDataCreateDto, DictDataQuery, DictDataUpdateDto, DictOption, DictType, DictTypeCreateDto, DictTypeQuery, DictTypeUpdateDto } from '@/types/dict';
 import { PaginationResult } from '@/types/pagination';
 import { apiRequest } from '@/lib/api';
+import { Dict, DictCreateDto, DictQuery, DictResponse, DictUpdateDto } from "@/types/dict"
 
 /**
  * 字典API
@@ -84,4 +85,43 @@ export const dictAPI = {
    * 根据字典类型获取字典选项
    */
   getDictOptions: (dictType: string) => apiRequest<DictOption[]>(`/api/v1/dicts/type/${dictType}`, 'GET')
-}; 
+};
+
+export const dictApi = {
+  getList: (params: DictQuery) => {
+    const requestBody = {
+      page: params.page,
+      page_size: params.page_size,
+      order_by: params.order_by,
+      order: params.order,
+      search_params: {}
+    }
+    if (params.dict_name) requestBody.search_params.dict_name = params.dict_name
+    if (params.dict_key) requestBody.search_params.dict_key = params.dict_key
+    if (params.dict_value) requestBody.search_params.dict_value = params.dict_value
+    if (params.status) requestBody.search_params.status = params.status
+    return apiRequest<DictResponse>('/api/v1/dict', {
+      method: 'POST',
+      data: requestBody
+    })
+  },
+  create: (data: DictCreateDto) =>
+    apiRequest<Dict>('/api/v1/dict', {
+      method: 'POST',
+      data
+    }),
+  update: (data: DictUpdateDto) =>
+    apiRequest<Dict>(`/api/v1/dict/${data.id}`, {
+      method: 'PUT',
+      data
+    }),
+  delete: (id: number) =>
+    apiRequest<void>(`/api/v1/dict/${id}`, {
+      method: 'DELETE'
+    }),
+  batchDelete: (ids: number[]) =>
+    apiRequest<void>('/api/v1/dict/batch', {
+      method: 'DELETE',
+      data: { ids }
+    })
+} 

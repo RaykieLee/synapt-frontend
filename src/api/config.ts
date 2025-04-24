@@ -71,5 +71,10 @@ export const configAPI = {
   /**
    * 刷新缓存
    */
-  refreshCache: () => apiRequest<void>('/api/v1/configs/refresh-cache', 'POST')
+  refreshCache: () => apiRequest<void>('/api/v1/configs/refresh-cache', 'POST'),
+
+  /**
+   * 获取AI体验中心菜单配置
+   */
+  getAiExperienceMenu: () => apiRequest<string>('/api/v1/configs/key/ai_experience_center_menu')
 }; 
