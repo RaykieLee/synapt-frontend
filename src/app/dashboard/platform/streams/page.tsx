@@ -64,7 +64,7 @@ import {
 // 表单验证Schema
 const streamFormSchema = z.object({
   name: z.string().min(1, "名称不能为空"),
-  rtsp_url: z.string().min(1, "RTSP地址不能为空").url("请输入有效的URL"),
+  rtspUrl: z.string().min(1, "RTSP地址不能为空").url("请输入有效的URL"),
   description: z.string().optional(),
 });
 
@@ -73,7 +73,7 @@ type StreamFormValues = z.infer<typeof streamFormSchema>;
 export default function StreamsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [page, setPage] = useState(1);
+  const [pageNum, setPageNum] = useState(1);
   const [pageSize] = useState(10);
   const [searchName, setSearchName] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<StreamStatus | ''>('');
@@ -86,7 +86,7 @@ export default function StreamsPage() {
     resolver: zodResolver(streamFormSchema),
     defaultValues: {
       name: "",
-      rtsp_url: "",
+      rtspUrl: "",
       description: "",
     },
   });
@@ -95,30 +95,31 @@ export default function StreamsPage() {
     resolver: zodResolver(streamFormSchema),
     defaultValues: {
       name: "",
-      rtsp_url: "",
+      rtspUrl: "",
       description: "",
     },
   });
 
   // 获取视频流列表
   const { data: streamResponse, isLoading } = useQuery({
-    queryKey: ['streams', page, pageSize, searchName, selectedStatus],
+    queryKey: ['streams', 'list', { pageNum, pageSize, status: selectedStatus, keyword: searchName }],
     queryFn: () => streamAPI.getList({
       name: searchName || undefined,
       status: selectedStatus || undefined,
-      page,
-      page_size: pageSize,
+      pageNum,
+      pageSize,
     }),
   });
 
-  const streams = streamResponse?.data || [];
+  // 判断返回数据格式并正确提取数据
+  const streams = streamResponse?.rows || [];
   const total = streamResponse?.total || 0;
 
   // 创建视频流
   const createMutation = useMutation({
     mutationFn: streamAPI.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['streams'] });
+      queryClient.invalidateQueries({ queryKey: ['streams', 'list'] });
       setShowCreateDialog(false);
       form.reset();
       toast({
@@ -131,9 +132,9 @@ export default function StreamsPage() {
   // 更新视频流
   const updateMutation = useMutation({
     mutationFn: ({ streamId, data }: { streamId: number; data: StreamFormValues }) =>
-      streamAPI.update(streamId, { ...data, stream_id: streamId }),
+      streamAPI.update(streamId, { ...data, streamId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['streams'] });
+      queryClient.invalidateQueries({ queryKey: ['streams', 'list'] });
       setShowEditDialog(false);
       setCurrentStream(null);
       toast({
@@ -147,7 +148,7 @@ export default function StreamsPage() {
   const deleteMutation = useMutation({
     mutationFn: streamAPI.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['streams'] });
+      queryClient.invalidateQueries({ queryKey: ['streams', 'list'] });
       setShowDeleteDialog(false);
       toast({
         title: '删除成功',
@@ -160,7 +161,7 @@ export default function StreamsPage() {
   const batchDeleteMutation = useMutation({
     mutationFn: streamAPI.batchDelete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['streams'] });
+      queryClient.invalidateQueries({ queryKey: ['streams', 'list'] });
       setSelectedStreams([]);
       toast({
         title: '批量删除成功',
@@ -173,7 +174,7 @@ export default function StreamsPage() {
   const startMutation = useMutation({
     mutationFn: streamAPI.start,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['streams'] });
+      queryClient.invalidateQueries({ queryKey: ['streams', 'list'] });
       toast({
         title: '启动成功',
         description: '视频流已启动',
@@ -185,7 +186,7 @@ export default function StreamsPage() {
   const stopMutation = useMutation({
     mutationFn: streamAPI.stop,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['streams'] });
+      queryClient.invalidateQueries({ queryKey: ['streams', 'list'] });
       toast({
         title: '停止成功',
         description: '视频流已停止',
@@ -197,7 +198,7 @@ export default function StreamsPage() {
   const restartMutation = useMutation({
     mutationFn: streamAPI.restart,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['streams'] });
+      queryClient.invalidateQueries({ queryKey: ['streams', 'list'] });
       toast({
         title: '重启成功',
         description: '视频流已重启',
@@ -207,14 +208,21 @@ export default function StreamsPage() {
 
   // 处理搜索
   const handleSearch = () => {
-    setPage(1);
+    setPageNum(1);
+    queryClient.invalidateQueries({ queryKey: ['streams', 'list'] });
   };
 
   // 处理状态筛选
-  const handleStatusFilter = (status: StreamStatus | '') => {
-    setSelectedStatus(status);
-    setPage(1);
+  const handleStatusFilter = (status: StreamStatus | 'all') => {
+    setSelectedStatus(status === 'all' ? '' : status);
+    setPageNum(1);
+    queryClient.invalidateQueries({ queryKey: ['streams', 'list'] });
   };
+
+  // 监听搜索参数变化
+  useEffect(() => {
+    console.log('Stream data response:', streamResponse);
+  }, [streamResponse]);
 
   // 处理选择
   const handleSelect = (streamId: number) => {
@@ -231,7 +239,7 @@ export default function StreamsPage() {
       setSelectedStreams(prev =>
         prev.length === streams.length
           ? []
-          : streams.map(stream => stream.stream_id)
+          : streams.map(stream => stream.id)
       );
     }
   };
@@ -248,7 +256,7 @@ export default function StreamsPage() {
     setShowDeleteDialog(true);
   };
 
-  // 获取状态标签样式
+  // 颜色定义
   const getStatusStyle = (status: StreamStatus) => {
     switch (status) {
       case StreamStatus.Online:
@@ -262,7 +270,7 @@ export default function StreamsPage() {
     }
   };
 
-  // 获取状态文本
+  // 状态显示文本
   const getStatusText = (status: StreamStatus) => {
     switch (status) {
       case StreamStatus.Online:
@@ -276,81 +284,58 @@ export default function StreamsPage() {
     }
   };
 
-  // 创建视频流
+  // 提交表单处理
   const onSubmit = async (data: StreamFormValues) => {
     try {
-      await streamAPI.create(data);
-      toast({
-        title: "创建成功",
-        description: "视频流创建成功",
+      await createMutation.mutateAsync({
+        name: data.name,
+        rtspUrl: data.rtspUrl,
+        description: data.description,
       });
-      setShowCreateDialog(false);
-      form.reset();
-      handleSearch();
-    } catch (error: any) {
+    } catch (error) {
+      console.error('创建视频流失败', error);
       toast({
-        title: "创建失败",
-        description: error.message,
-        variant: "destructive",
+        title: '创建失败',
+        description: '创建视频流时出现错误',
+        variant: 'destructive',
       });
     }
   };
 
-  // 更新视频流
+  // 处理编辑
   const handleEdit = async (data: StreamFormValues) => {
     if (!currentStream) return;
+
     try {
-      const updateData: StreamUpdateDto = {
-        stream_id: currentStream.stream_id,
-        ...data,
-      };
-      await streamAPI.update(currentStream.stream_id, updateData);
-      toast({
-        title: "更新成功",
-        description: "视频流更新成功",
+      await updateMutation.mutateAsync({
+        streamId: currentStream.id,
+        data: {
+          name: data.name,
+          rtspUrl: data.rtspUrl,
+          description: data.description,
+        },
       });
-      setShowEditDialog(false);
-      editForm.reset();
-      handleSearch();
-    } catch (error: any) {
+    } catch (error) {
+      console.error('更新视频流失败', error);
       toast({
-        title: "更新失败",
-        description: error.message,
-        variant: "destructive",
+        title: '更新失败',
+        description: '更新视频流时出现错误',
+        variant: 'destructive',
       });
     }
   };
 
-  // 删除视频流
+  // 处理删除
   const handleDelete = async (id: number) => {
-    if (!confirm('确定要删除该视频流吗？')) return;
     try {
-      await streamAPI.delete(id);
-      toast({
-        title: '删除成功',
-        description: '视频流删除成功'
-      });
-      handleSearch();
-    } catch (error: any) {
+      await deleteMutation.mutateAsync(id);
+    } catch (error) {
+      console.error('删除视频流失败', error);
       toast({
         title: '删除失败',
-        description: error.message,
-        variant: 'destructive'
+        description: '删除视频流时出现错误',
+        variant: 'destructive',
       });
-    }
-  };
-
-  // 获取状态显示
-  const getStatusBadge = (status: StreamStatus) => {
-    switch (status) {
-      case StreamStatus.Online:
-        return <Badge variant="default" className="bg-green-500">在线</Badge>;
-      case StreamStatus.Offline:
-        return <Badge variant="secondary" className="bg-gray-500">离线</Badge>;
-      case StreamStatus.Error:
-        return <Badge variant="destructive">错误</Badge>;
-      default:
-        return <Badge variant="outline">未知</Badge>;
     }
   };
 
@@ -358,286 +343,322 @@ export default function StreamsPage() {
     if (currentStream && showEditDialog) {
       editForm.reset({
         name: currentStream.name,
-        rtsp_url: currentStream.rtsp_url,
-        description: currentStream.description || "",
+        rtspUrl: currentStream.rtspUrl,
+        description: currentStream.description,
       });
     }
-  }, [currentStream, showEditDialog]);
+  }, [currentStream, showEditDialog, editForm]);
+
+  // 获取状态徽章
+  const getStatusBadge = (status: StreamStatus) => {
+    switch (status) {
+      case StreamStatus.Online:
+        return <Badge variant="outline" className="bg-green-100 text-green-800">在线</Badge>;
+      case StreamStatus.Offline:
+        return <Badge variant="outline" className="bg-gray-100 text-gray-800">离线</Badge>;
+      case StreamStatus.Error:
+        return <Badge variant="outline" className="bg-red-100 text-red-800">错误</Badge>;
+      default:
+        return <Badge variant="outline" className="bg-gray-100 text-gray-800">未知</Badge>;
+    }
+  };
 
   return (
-    <div className="container mx-auto py-8">
-      {/* 工具栏 */}
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Input
-            placeholder="搜索视频流名称"
-            value={searchName}
-            onChange={(e) => setSearchName(e.target.value)}
-            className="w-64"
-          />
-          <Button onClick={handleSearch}>
-            <Search className="mr-2 h-4 w-4" />
-            搜索
-          </Button>
-          <Select
-            value={selectedStatus}
-            onValueChange={(value) => handleStatusFilter(value as StreamStatus)}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="选择状态" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">全部状态</SelectItem>
-              <SelectItem value={StreamStatus.Online}>在线</SelectItem>
-              <SelectItem value={StreamStatus.Offline}>离线</SelectItem>
-              <SelectItem value={StreamStatus.Error}>错误</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-4">
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                新建视频流
+    <div className="container mx-auto py-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">视频流管理</h1>
+        <Button onClick={() => setShowCreateDialog(true)} className="flex items-center space-x-2">
+          <Plus className="h-4 w-4" />
+          <span>添加视频流</span>
+        </Button>
+      </div>
+
+      <Card className="mb-6">
+        <div className="p-4 flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <Label htmlFor="search" className="mb-2 block">名称搜索</Label>
+            <div className="flex">
+              <Input
+                id="search"
+                placeholder="搜索视频流名称"
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                className="rounded-r-none"
+              />
+              <Button 
+                onClick={handleSearch} 
+                className="rounded-l-none"
+              >
+                <Search className="h-4 w-4" />
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>新建视频流</DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>名称</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="rtsp_url"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>RTSP地址</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>描述</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex justify-end gap-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setShowCreateDialog(false);
-                        form.reset();
-                      }}
-                    >
-                      取消
-                    </Button>
-                    <Button type="submit">创建</Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+            </div>
+          </div>
+
+          <div className="w-[200px]">
+            <Label htmlFor="status-filter" className="mb-2 block">状态筛选</Label>
+            <Select
+              value={selectedStatus || 'all'}
+              onValueChange={(value) => handleStatusFilter(value as StreamStatus | 'all')}
+            >
+              <SelectTrigger id="status-filter" className="w-full">
+                <SelectValue placeholder="所有状态" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">所有状态</SelectItem>
+                <SelectItem value={StreamStatus.Online}>在线</SelectItem>
+                <SelectItem value={StreamStatus.Offline}>离线</SelectItem>
+                <SelectItem value={StreamStatus.Error}>错误</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="p-4 flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="select-all"
+              checked={selectedStreams.length > 0 && selectedStreams.length === streams.length}
+              onCheckedChange={handleSelectAll}
+              className={cn(
+                selectedStreams.length > 0 && selectedStreams.length < streams.length ? 'opacity-50' : ''
+              )}
+            />
+            <label htmlFor="select-all" className="text-sm font-medium">
+              {selectedStreams.length > 0 ? `已选择 ${selectedStreams.length} 项` : '全选'}
+            </label>
+          </div>
+
           {selectedStreams.length > 0 && (
             <Button
               variant="destructive"
+              size="sm"
               onClick={() => batchDeleteMutation.mutate(selectedStreams)}
+              className="flex items-center space-x-2"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              批量删除
+              <Trash2 className="h-4 w-4" />
+              <span>批量删除</span>
             </Button>
           )}
         </div>
-      </div>
 
-      {/* 视频流列表 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {streams.map((stream: Stream) => (
-          <Card key={stream.stream_id} className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={selectedStreams.includes(stream.stream_id)}
-                  onCheckedChange={() => handleSelect(stream.stream_id)}
-                />
-                <div>
-                  <h3 className="text-lg font-semibold">{stream.name}</h3>
-                  <p className="text-sm text-muted-foreground">{stream.rtsp_url}</p>
-                </div>
-              </div>
-              <span className={cn(
-                'px-2 py-1 rounded-full text-xs font-medium',
-                getStatusStyle(stream.status)
-              )}>
-                {getStatusBadge(stream.status)}
-              </span>
-            </div>
-            
-            {stream.description && (
-              <p className="text-sm text-muted-foreground mb-4">{stream.description}</p>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[50px]"></TableHead>
+              <TableHead>名称</TableHead>
+              <TableHead>RTSP地址</TableHead>
+              <TableHead>状态</TableHead>
+              <TableHead>描述</TableHead>
+              <TableHead>创建时间</TableHead>
+              <TableHead className="text-right">操作</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {streams.map((stream) => (
+              <TableRow key={stream.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedStreams.includes(stream.id)}
+                    onCheckedChange={() => handleSelect(stream.id)}
+                  />
+                </TableCell>
+                <TableCell className="font-medium">{stream.name}</TableCell>
+                <TableCell className="max-w-[200px] truncate">{stream.rtspUrl}</TableCell>
+                <TableCell>{getStatusBadge(stream.status)}</TableCell>
+                <TableCell className="max-w-[200px] truncate">{stream.description || '-'}</TableCell>
+                <TableCell>{new Date(stream.createTime).toLocaleString()}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end space-x-2">
+                    {stream.status === StreamStatus.Offline && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => startMutation.mutate(stream.id)}
+                        title="启动"
+                      >
+                        <Play className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {stream.status === StreamStatus.Online && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => stopMutation.mutate(stream.id)}
+                        title="停止"
+                      >
+                        <Pause className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => restartMutation.mutate(stream.id)}
+                      title="重启"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => openEditDialog(stream)}
+                      title="编辑"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => openDeleteDialog(stream)}
+                      title="删除"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {streams.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-10">
+                  <div className="flex flex-col items-center text-muted-foreground">
+                    <AlertCircle className="h-8 w-8 mb-2" />
+                    <p>暂无数据</p>
+                  </div>
+                </TableCell>
+              </TableRow>
             )}
+          </TableBody>
+        </Table>
 
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                {stream.resolution && <span className="mr-4">分辨率: {stream.resolution}</span>}
-                {stream.fps && <span>帧率: {stream.fps}fps</span>}
-              </div>
-              <div className="flex items-center gap-2">
-                {stream.status === StreamStatus.Offline && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => startMutation.mutate(stream.stream_id)}
-                  >
-                    <Play className="h-4 w-4" />
-                  </Button>
-                )}
-                {stream.status === StreamStatus.Online && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => stopMutation.mutate(stream.stream_id)}
-                  >
-                    <Pause className="h-4 w-4" />
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => restartMutation.mutate(stream.stream_id)}
-                >
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const streamData: Stream = {
-                      stream_id: stream.stream_id,
-                      name: stream.name,
-                      rtsp_url: stream.rtsp_url,
-                      description: stream.description || '',
-                      status: stream.status,
-                      create_time: stream.create_time,
-                      update_time: stream.update_time,
-                      hls_url: stream.hls_url || '',
-                      fps: stream.fps || 0,
-                      resolution: stream.resolution || ''
-                    }
-                    setCurrentStream(streamData)
-                    setShowEditDialog(true)
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-destructive"
-                  onClick={() => openDeleteDialog(stream)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* 分页 */}
-      {streamResponse && (
-        <div className="mt-6 flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            共 {total} 条记录
-          </div>
+        <div className="p-4 flex justify-center">
           <Pagination
-            currentPage={page}
+            currentPage={pageNum}
             pageSize={pageSize}
             total={total}
-            onChange={setPage}
+            onChange={setPageNum}
           />
         </div>
-      )}
+      </Card>
 
-      {/* 编辑对话框 */}
+      {/* 创建表单对话框 */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>添加视频流</DialogTitle>
+            <DialogDescription>
+              请填写视频流信息，带*号为必填项
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>名称 *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="请输入视频流名称" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="rtspUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>RTSP地址 *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="请输入RTSP地址" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>描述</FormLabel>
+                    <FormControl>
+                      <Input placeholder="请输入描述信息" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? '提交中...' : '提交'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 编辑表单对话框 */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>编辑视频流</DialogTitle>
+            <DialogDescription>
+              修改视频流信息，带*号为必填项
+            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={editForm.handleSubmit(handleEdit)} className="space-y-4">
-            <FormField
-              control={editForm.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>名称</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={editForm.control}
-              name="rtsp_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>RTSP URL</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={editForm.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>描述</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-                取消
-              </Button>
-              <Button type="submit">保存</Button>
-            </DialogFooter>
-          </form>
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(handleEdit)} className="space-y-4">
+              <FormField
+                control={editForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>名称 *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="请输入视频流名称" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="rtspUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>RTSP地址 *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="请输入RTSP地址" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>描述</FormLabel>
+                    <FormControl>
+                      <Input placeholder="请输入描述信息" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? '提交中...' : '提交'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 
@@ -647,18 +668,16 @@ export default function StreamsPage() {
           <DialogHeader>
             <DialogTitle>删除视频流</DialogTitle>
             <DialogDescription>
-              确定要删除该视频流吗？此操作无法撤销。
+              您确定要删除该视频流吗？此操作不可撤销。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              取消
-            </Button>
             <Button
               variant="destructive"
-              onClick={() => currentStream && handleDelete(currentStream.stream_id)}
+              onClick={() => currentStream && handleDelete(currentStream.id)}
+              disabled={deleteMutation.isPending}
             >
-              确定删除
+              {deleteMutation.isPending ? '删除中...' : '确认删除'}
             </Button>
           </DialogFooter>
         </DialogContent>
