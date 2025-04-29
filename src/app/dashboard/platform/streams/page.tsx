@@ -494,14 +494,6 @@ export default function StreamsPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => restartMutation.mutate(stream.id)}
-                      title="重启"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
                       onClick={() => openEditDialog(stream)}
                       title="编辑"
                     >
