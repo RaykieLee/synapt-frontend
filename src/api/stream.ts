@@ -5,46 +5,54 @@ import { BaseResponse, PageResult } from "@/types/base";
 export const streamAPI = {
   // 获取视频流列表
   getList: (params: StreamQuery) => 
-    apiRequest<PageResult<Stream>>("/api/v1/streams/list", "POST", { 
-      pageNum: params.pageNum, 
-      pageSize: params.pageSize,
-      orderBy: "createTime",
-      orderType: "desc",
+    apiRequest<BaseResponse<PageResult<Stream>>>("/api/v1/streams/list", "POST", { 
+      page_num: params.page_num || 1, 
+      page_size: params.page_size || 10,
+      sorts: [
+        {
+          field: "create_time",
+          order: "desc"
+        }
+      ],
       params: {
-        keyword: params.name,
-        status: params.status
+        keywords: {
+          stream_name: params.keywords?.stream_name
+        },
+        status: params.status,
+        time_range: params.time_range,
+        search_mode: params.search_mode || "and"
       }
     }),
 
   // 获取视频流详情
-  getDetail: (streamId: number) => 
-    apiRequest<BaseResponse<Stream>>(`/api/v1/streams/${streamId}`, "GET"),
+  getDetail: (stream_id: number) => 
+    apiRequest<BaseResponse<Stream>>(`/api/v1/streams/${stream_id}`, "GET"),
 
   // 创建视频流
   create: (stream: StreamCreateDto) => 
     apiRequest<BaseResponse<Stream>>("/api/v1/streams", "POST", stream),
 
   // 更新视频流
-  update: (streamId: number, stream: StreamUpdateDto) => 
-    apiRequest<BaseResponse<Stream>>(`/api/v1/streams/${streamId}`, "PUT", stream),
+  update: (stream_id: number, stream: StreamUpdateDto) => 
+    apiRequest<BaseResponse<Stream>>(`/api/v1/streams/${stream_id}`, "PUT", stream),
 
   // 删除视频流
-  delete: (streamId: number) => 
-    apiRequest<BaseResponse<void>>(`/api/v1/streams/${streamId}`, "DELETE"),
+  delete: (stream_id: number) => 
+    apiRequest<BaseResponse<void>>(`/api/v1/streams/${stream_id}`, "DELETE"),
 
   // 批量删除视频流
-  batchDelete: (streamIds: number[]) => 
-    apiRequest<BaseResponse<void>>("/api/v1/streams/batch-delete", "POST", { ids: streamIds }),
+  batchDelete: (stream_ids: number[]) => 
+    apiRequest<BaseResponse<void>>("/api/v1/streams/batch-delete", "POST", { ids: stream_ids }),
 
   // 启动视频流
-  start: (streamId: number) => 
-    apiRequest<BaseResponse<void>>(`/api/v1/streams/${streamId}/start`, "POST"),
+  start: (stream_id: number) => 
+    apiRequest<BaseResponse<void>>(`/api/v1/streams/${stream_id}/start`, "POST"),
 
   // 停止视频流
-  stop: (streamId: number) => 
-    apiRequest<BaseResponse<void>>(`/api/v1/streams/${streamId}/stop`, "POST"),
+  stop: (stream_id: number) => 
+    apiRequest<BaseResponse<void>>(`/api/v1/streams/${stream_id}/stop`, "POST"),
 
   // 重启视频流
-  restart: (streamId: number) => 
-    apiRequest<BaseResponse<void>>(`/api/v1/streams/${streamId}/restart`, "POST"),
+  restart: (stream_id: number) => 
+    apiRequest<BaseResponse<void>>(`/api/v1/streams/${stream_id}/restart`, "POST"),
 }; 

@@ -63,9 +63,11 @@ import {
 
 // 表单验证Schema
 const streamFormSchema = z.object({
-  name: z.string().min(1, "名称不能为空"),
-  rtspUrl: z.string().min(1, "RTSP地址不能为空").url("请输入有效的URL"),
+  stream_name: z.string().min(1, "名称不能为空"),
+  stream_url: z.string().min(1, "视频流地址不能为空").url("请输入有效的URL"),
+  stream_type: z.string().optional(),
   description: z.string().optional(),
+  remark: z.string().optional(),
 });
 
 type StreamFormValues = z.infer<typeof streamFormSchema>;
@@ -73,8 +75,8 @@ type StreamFormValues = z.infer<typeof streamFormSchema>;
 export default function StreamsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [pageNum, setPageNum] = useState(1);
-  const [pageSize] = useState(10);
+  const [page_num, setPageNum] = useState(1);
+  const [page_size] = useState(10);
   const [searchName, setSearchName] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<StreamStatus | ''>('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -85,35 +87,42 @@ export default function StreamsPage() {
   const form = useForm<StreamFormValues>({
     resolver: zodResolver(streamFormSchema),
     defaultValues: {
-      name: "",
-      rtspUrl: "",
+      stream_name: "",
+      stream_url: "",
+      stream_type: "",
       description: "",
+      remark: "",
     },
   });
 
   const editForm = useForm<StreamFormValues>({
     resolver: zodResolver(streamFormSchema),
     defaultValues: {
-      name: "",
-      rtspUrl: "",
+      stream_name: "",
+      stream_url: "",
+      stream_type: "",
       description: "",
+      remark: "",
     },
   });
 
   // 获取视频流列表
   const { data: streamResponse, isLoading } = useQuery({
-    queryKey: ['streams', 'list', { pageNum, pageSize, status: selectedStatus, keyword: searchName }],
+    queryKey: ['streams', 'list', { page_num, page_size, status: selectedStatus, keyword: searchName }],
     queryFn: () => streamAPI.getList({
-      name: searchName || undefined,
+      keywords: {
+        stream_name: searchName || undefined
+      },
       status: selectedStatus || undefined,
-      pageNum,
-      pageSize,
+      page_num,
+      page_size,
     }),
   });
 
   // 判断返回数据格式并正确提取数据
-  const streams = streamResponse?.rows || [];
-  const total = streamResponse?.total || 0;
+  const streams = streamResponse?.data?.list || [];
+  const total = streamResponse?.data?.total || 0;
+  const totalPages = streamResponse?.data?.pages || 1;
 
   // 创建视频流
   const createMutation = useMutation({
@@ -131,8 +140,8 @@ export default function StreamsPage() {
 
   // 更新视频流
   const updateMutation = useMutation({
-    mutationFn: ({ streamId, data }: { streamId: number; data: StreamFormValues }) =>
-      streamAPI.update(streamId, { ...data, streamId }),
+    mutationFn: ({ stream_id, data }: { stream_id: number; data: StreamFormValues }) =>
+      streamAPI.update(stream_id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['streams', 'list'] });
       setShowEditDialog(false);
@@ -225,11 +234,11 @@ export default function StreamsPage() {
   }, [streamResponse]);
 
   // 处理选择
-  const handleSelect = (streamId: number) => {
+  const handleSelect = (stream_id: number) => {
     setSelectedStreams(prev =>
-      prev.includes(streamId)
-        ? prev.filter(id => id !== streamId)
-        : [...prev, streamId]
+      prev.includes(stream_id)
+        ? prev.filter(id => id !== stream_id)
+        : [...prev, stream_id]
     );
   };
 
@@ -239,7 +248,7 @@ export default function StreamsPage() {
       setSelectedStreams(prev =>
         prev.length === streams.length
           ? []
-          : streams.map(stream => stream.id)
+          : streams.map(stream => stream.stream_id)
       );
     }
   };
@@ -288,9 +297,11 @@ export default function StreamsPage() {
   const onSubmit = async (data: StreamFormValues) => {
     try {
       await createMutation.mutateAsync({
-        name: data.name,
-        rtspUrl: data.rtspUrl,
+        stream_name: data.stream_name,
+        stream_url: data.stream_url,
+        stream_type: data.stream_type,
         description: data.description,
+        remark: data.remark,
       });
     } catch (error) {
       console.error('创建视频流失败', error);
@@ -308,32 +319,34 @@ export default function StreamsPage() {
 
     try {
       await updateMutation.mutateAsync({
-        streamId: currentStream.id,
+        stream_id: currentStream.stream_id,
         data: {
-          name: data.name,
-          rtspUrl: data.rtspUrl,
+          stream_name: data.stream_name,
+          stream_url: data.stream_url,
+          stream_type: data.stream_type,
           description: data.description,
+          remark: data.remark,
         },
       });
     } catch (error) {
-      console.error('更新视频流失败', error);
+      console.error("更新失败:", error);
       toast({
         title: '更新失败',
-        description: '更新视频流时出现错误',
+        description: '更新视频流信息时出错',
         variant: 'destructive',
       });
     }
   };
 
   // 处理删除
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (stream_id: number) => {
     try {
-      await deleteMutation.mutateAsync(id);
+      await deleteMutation.mutateAsync(stream_id);
     } catch (error) {
-      console.error('删除视频流失败', error);
+      console.error("删除失败:", error);
       toast({
         title: '删除失败',
-        description: '删除视频流时出现错误',
+        description: '删除视频流时出错',
         variant: 'destructive',
       });
     }
@@ -342,9 +355,11 @@ export default function StreamsPage() {
   useEffect(() => {
     if (currentStream && showEditDialog) {
       editForm.reset({
-        name: currentStream.name,
-        rtspUrl: currentStream.rtspUrl,
+        stream_name: currentStream.stream_name,
+        stream_url: currentStream.stream_url,
+        stream_type: currentStream.stream_type,
         description: currentStream.description,
+        remark: currentStream.remark,
       });
     }
   }, [currentStream, showEditDialog, editForm]);
@@ -448,7 +463,7 @@ export default function StreamsPage() {
             <TableRow>
               <TableHead className="w-[50px]"></TableHead>
               <TableHead>名称</TableHead>
-              <TableHead>RTSP地址</TableHead>
+              <TableHead>视频流地址</TableHead>
               <TableHead>状态</TableHead>
               <TableHead>描述</TableHead>
               <TableHead>创建时间</TableHead>
@@ -457,25 +472,25 @@ export default function StreamsPage() {
           </TableHeader>
           <TableBody>
             {streams.map((stream) => (
-              <TableRow key={stream.id}>
-                <TableCell>
+              <TableRow key={stream.stream_id}>
+                <TableCell className="p-0 pl-4 w-[50px]">
                   <Checkbox
-                    checked={selectedStreams.includes(stream.id)}
-                    onCheckedChange={() => handleSelect(stream.id)}
+                    checked={selectedStreams.includes(stream.stream_id)}
+                    onCheckedChange={() => handleSelect(stream.stream_id)}
                   />
                 </TableCell>
-                <TableCell className="font-medium">{stream.name}</TableCell>
-                <TableCell className="max-w-[200px] truncate">{stream.rtspUrl}</TableCell>
+                <TableCell className="font-medium">{stream.stream_name}</TableCell>
+                <TableCell className="max-w-[200px] truncate">{stream.stream_url}</TableCell>
                 <TableCell>{getStatusBadge(stream.status)}</TableCell>
                 <TableCell className="max-w-[200px] truncate">{stream.description || '-'}</TableCell>
-                <TableCell>{new Date(stream.createTime).toLocaleString()}</TableCell>
+                <TableCell>{new Date(stream.create_time).toLocaleString()}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end space-x-2">
                     {stream.status === StreamStatus.Offline && (
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => startMutation.mutate(stream.id)}
+                        onClick={() => startMutation.mutate(stream.stream_id)}
                         title="启动"
                       >
                         <Play className="h-4 w-4" />
@@ -485,7 +500,7 @@ export default function StreamsPage() {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => stopMutation.mutate(stream.id)}
+                        onClick={() => stopMutation.mutate(stream.stream_id)}
                         title="停止"
                       >
                         <Pause className="h-4 w-4" />
@@ -524,14 +539,18 @@ export default function StreamsPage() {
           </TableBody>
         </Table>
 
-        <div className="p-4 flex justify-center">
+        {isLoading ? (
+          <div className="w-full p-8 text-center">加载中...</div>
+        ) : streams.length === 0 ? (
+          <div className="w-full p-8 text-center">暂无数据</div>
+        ) : (
           <Pagination
-            currentPage={pageNum}
-            pageSize={pageSize}
+            currentPage={page_num}
+            pageSize={page_size}
             total={total}
             onChange={setPageNum}
           />
-        </div>
+        )}
       </Card>
 
       {/* 创建表单对话框 */}
@@ -547,7 +566,7 @@ export default function StreamsPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="name"
+                name="stream_name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>名称 *</FormLabel>
@@ -560,12 +579,25 @@ export default function StreamsPage() {
               />
               <FormField
                 control={form.control}
-                name="rtspUrl"
+                name="stream_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>RTSP地址 *</FormLabel>
+                    <FormLabel>视频流地址 *</FormLabel>
                     <FormControl>
-                      <Input placeholder="请输入RTSP地址" {...field} />
+                      <Input placeholder="请输入视频流地址" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="stream_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>类型</FormLabel>
+                    <FormControl>
+                      <Input placeholder="请输入视频流类型" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -579,6 +611,19 @@ export default function StreamsPage() {
                     <FormLabel>描述</FormLabel>
                     <FormControl>
                       <Input placeholder="请输入描述信息" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="remark"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>备注</FormLabel>
+                    <FormControl>
+                      <Input placeholder="请输入备注信息" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -607,7 +652,7 @@ export default function StreamsPage() {
             <form onSubmit={editForm.handleSubmit(handleEdit)} className="space-y-4">
               <FormField
                 control={editForm.control}
-                name="name"
+                name="stream_name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>名称 *</FormLabel>
@@ -620,12 +665,25 @@ export default function StreamsPage() {
               />
               <FormField
                 control={editForm.control}
-                name="rtspUrl"
+                name="stream_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>RTSP地址 *</FormLabel>
+                    <FormLabel>视频流地址 *</FormLabel>
                     <FormControl>
-                      <Input placeholder="请输入RTSP地址" {...field} />
+                      <Input placeholder="请输入视频流地址" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="stream_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>类型</FormLabel>
+                    <FormControl>
+                      <Input placeholder="请输入视频流类型" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -639,6 +697,19 @@ export default function StreamsPage() {
                     <FormLabel>描述</FormLabel>
                     <FormControl>
                       <Input placeholder="请输入描述信息" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="remark"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>备注</FormLabel>
+                    <FormControl>
+                      <Input placeholder="请输入备注信息" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -666,7 +737,7 @@ export default function StreamsPage() {
           <DialogFooter>
             <Button
               variant="destructive"
-              onClick={() => currentStream && handleDelete(currentStream.id)}
+              onClick={() => currentStream && handleDelete(currentStream.stream_id)}
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? '删除中...' : '确认删除'}

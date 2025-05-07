@@ -7,35 +7,52 @@ export enum StreamStatus {
 
 // 视频流基本信息
 export interface Stream {
-  id: number;              // 视频流ID
-  name: string;            // 视频流名称
-  rtspUrl: string;         // RTSP地址
-  hlsUrl?: string;         // HLS地址
-  status: StreamStatus;    // 状态
-  fps?: number;            // 帧率
-  resolution?: string;     // 分辨率
-  description?: string;    // 描述
-  createTime: string;      // 创建时间
-  updatedTime: string;     // 更新时间
+  stream_id: number;              // 视频流ID
+  stream_name: string;            // 视频流名称
+  stream_url: string;             // 视频流地址
+  stream_type?: string;           // 视频流类型
+  stream_transcode_url?: string;  // 转码后地址
+  status: StreamStatus;           // 状态
+  description?: string;           // 描述
+  remark?: string;                // 备注
+  create_by?: string;             // 创建者
+  create_time: string;            // 创建时间
+  update_by?: string;             // 更新者
+  update_time?: string;           // 更新时间
 }
 
 // 视频流查询参数
 export interface StreamQuery {
-  name?: string;           // 按名称搜索
-  status?: StreamStatus;   // 按状态筛选
-  pageNum?: number;        // 页码
-  pageSize?: number;       // 每页数量
+  keywords?: {
+    stream_name?: string;         // 按名称搜索
+  };
+  status?: StreamStatus;          // 按状态筛选
+  time_range?: {                  // 时间范围
+    create_time?: {
+      start?: string;
+      end?: string;
+    };
+  };
+  search_mode?: 'and' | 'or';     // 查询模式
+  page_num?: number;              // 页码
+  page_size?: number;             // 每页数量
 }
 
 // 创建视频流DTO
 export interface StreamCreateDto {
-  name: string;           // 视频流名称
-  rtspUrl: string;        // RTSP地址
-  description?: string;   // 描述
+  stream_name: string;           // 视频流名称
+  stream_url: string;            // 视频流地址
+  stream_type?: string;          // 视频流类型
+  description?: string;          // 描述
+  remark?: string;               // 备注
 }
 
 // 更新视频流DTO
-export interface StreamUpdateDto extends Partial<StreamCreateDto> {
-  streamId: number;       // 视频流ID
-  status?: StreamStatus;  // 状态
+export interface StreamUpdateDto {
+  stream_name?: string;          // 视频流名称
+  stream_url?: string;           // 视频流地址
+  stream_type?: string;          // 视频流类型
+  description?: string;          // 描述
+  status?: StreamStatus;         // 状态
+  remark?: string;               // 备注
 } 

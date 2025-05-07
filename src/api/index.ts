@@ -3,4 +3,7 @@ export * from './user';
 export * from './role';
 export * from './menu';
 export * from './dept';
-export * from './config'; 
+export * from './config';
+export * from './dict';
+export * from './stream';
+export * from './alert'; 
