@@ -71,7 +71,7 @@ export function DataTableRowActions<TData>({
             编辑
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => router.push("/dashboard/platform/alerts/category")}
+            onClick={() => router.push(`/dashboard/platform/alerts/category?configId=${config.id}`)}
           >
             <FolderTree className="mr-2 h-4 w-4" />
             告警类别管理

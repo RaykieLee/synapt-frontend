@@ -15,10 +15,12 @@ import {
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>
+  columnLabels?: Record<string, string>
 }
 
 export function DataTableViewOptions<TData>({
   table,
+  columnLabels = {},
 }: DataTableViewOptionsProps<TData>) {
   return (
     <DropdownMenu>
@@ -52,7 +54,7 @@ export function DataTableViewOptions<TData>({
                   column.toggleVisibility(!!value)
                 }
               >
-                {getColumnLabel(column.id)}
+                {getColumnLabel(column.id, columnLabels)}
               </DropdownMenuCheckboxItem>
             )
           })}
@@ -62,16 +64,21 @@ export function DataTableViewOptions<TData>({
 }
 
 // 列ID转显示标签
-function getColumnLabel(columnId: string): string {
-  const columnLabels: Record<string, string> = {
-    name: "配置名称",
-    code: "配置编码",
-    threshold: "告警阈值",
-    frequency: "告警频率",
-    categories: "告警类别",
+function getColumnLabel(columnId: string, customLabels: Record<string, string> = {}): string {
+  // 默认列标签
+  const defaultColumnLabels: Record<string, string> = {
+    name: "名称",
+    code: "编码",
+    title: "标题",
+    description: "描述",
+    type: "类型",
     status: "状态",
+    price: "价格",
+    amount: "数量",
     create_time: "创建时间",
+    update_time: "更新时间",
   }
   
-  return columnLabels[columnId] || columnId
+  // 优先使用自定义标签，其次使用默认标签，最后使用列ID本身
+  return customLabels[columnId] || defaultColumnLabels[columnId] || columnId
 } 

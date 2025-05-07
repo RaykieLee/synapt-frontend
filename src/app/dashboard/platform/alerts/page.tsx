@@ -7,7 +7,7 @@ import { PlusCircle } from "lucide-react";
 import { SortingState } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
-import { AlertConfigQuery, AlertConfig } from "@/types/alert";
+import { AlertConfigQuery, AlertConfig, AlertSearchParams } from "@/types/alert";
 import { alertConfigAPI } from "@/api";
 import {
   Card,
@@ -59,7 +59,7 @@ export default function AlertConfigPage() {
   };
 
   // 处理搜索
-  const handleSearch = (params: any) => {
+  const handleSearch = (params: AlertSearchParams) => {
     console.log('Search params:', params); // 添加日志
     setQuery((prev) => ({
       ...prev,
@@ -80,6 +80,17 @@ export default function AlertConfigPage() {
   // 处理分页变化
   const handlePageChange = (page: number) => {
     setQuery((prev) => ({ ...prev, page_num: page }));
+  };
+
+  // 自定义列标签
+  const columnLabels = {
+    name: "配置名称",
+    code: "配置编码",
+    threshold: "告警阈值",
+    frequency: "告警频率", 
+    categories: "告警类别",
+    status: "状态",
+    create_time: "创建时间",
   };
 
   // 添加调试日志
@@ -110,6 +121,8 @@ export default function AlertConfigPage() {
           onSearch={handleSearch}
           onSortingChange={handleSortingChange}
           isLoading={isLoading}
+          columnLabels={columnLabels}
+          minHeight="400px"
         />
       </div>
     </div>

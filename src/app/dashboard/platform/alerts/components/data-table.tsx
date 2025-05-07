@@ -25,9 +25,11 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-import { DataTablePagination } from "./data-table-pagination"
+import { DataTablePagination } from "@/components/shared/data-table"
 import { DataTableToolbar } from "./data-table-toolbar"
 import { Loader2 } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { AlertSearchParams } from "@/types/alert"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -36,12 +38,14 @@ interface DataTableProps<TData, TValue> {
   pageIndex?: number
   pageSize?: number
   onPageChange?: (page: number) => void
-  onSearch?: (params: any) => void
+  onSearch?: (params: AlertSearchParams) => void
   onSortingChange?: (sorting: SortingState) => void
   isLoading?: boolean
+  columnLabels?: Record<string, string>
+  minHeight?: string
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends object, TValue>({
   columns,
   data,
   pageCount,
@@ -51,6 +55,8 @@ export function DataTable<TData, TValue>({
   onSearch,
   onSortingChange,
   isLoading = false,
+  columnLabels,
+  minHeight = "400px",
 }: DataTableProps<TData, TValue>) {
   // 添加调试日志
   console.log('DataTable received data:', data);
@@ -113,68 +119,117 @@ export function DataTable<TData, TValue>({
     }
   }, [onPageChange])
 
+  // 生成骨架屏行
+  const renderSkeletonRows = () => {
+    // 生成与pageSize相同数量的骨架行
+    return Array(pageSize)
+      .fill(0)
+      .map((_, index) => (
+        <TableRow key={`skeleton-${index}`}>
+          {columns.map((column, columnIndex) => (
+            <TableCell key={`skeleton-cell-${columnIndex}`}>
+              <Skeleton className="h-6 w-full" />
+            </TableCell>
+          ))}
+        </TableRow>
+      ))
+  }
+
+  // 生成空白填充行以保持表格高度
+  const renderEmptyRows = () => {
+    if (!data.length) return null;
+    
+    // 计算需要填充的行数
+    const filledRowCount = Math.min(data.length, pageSize);
+    const emptyRowCount = pageSize - filledRowCount;
+    
+    if (emptyRowCount <= 0) return null;
+    
+    return Array(emptyRowCount)
+      .fill(0)
+      .map((_, index) => (
+        <TableRow 
+          key={`empty-${index}`} 
+          className="h-[41px] border-0"
+        >
+          {columns.map((column, columnIndex) => (
+            <TableCell 
+              key={`empty-cell-${columnIndex}`}
+              className="border-0"
+            >
+              &nbsp;
+            </TableCell>
+          ))}
+        </TableRow>
+      ));
+  };
+
+  // 判断是否有实际数据
+  const hasRealData = !isLoading && table.getRowModel().rows?.length > 0;
+
   return (
     <div className="space-y-4">
-      <DataTableToolbar table={table} onSearch={onSearch} />
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} colSpan={header.colSpan}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  <div className="flex items-center justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                    <span className="text-sm text-muted-foreground">加载中...</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
+      <DataTableToolbar 
+        table={table} 
+        onSearch={onSearch} 
+        columnLabels={columnLabels}
+      />
+      <div className={`rounded-md ${hasRealData ? 'border' : 'border-t border-l border-r'}`}>
+        <div style={{ minHeight }}>
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} colSpan={header.colSpan}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  暂无数据
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody className={!hasRealData ? 'border-0' : undefined}>
+              {isLoading ? (
+                // 显示骨架屏
+                renderSkeletonRows()
+              ) : table.getRowModel().rows?.length ? (
+                <>
+                  {table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                  {/* 添加空白填充行 */}
+                  {renderEmptyRows()}
+                </>
+              ) : (
+                <TableRow className="border-0">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-[300px] text-center border-0"
+                  >
+                    暂无数据
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
       <DataTablePagination 
         table={table} 

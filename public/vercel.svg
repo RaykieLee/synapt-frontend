@@ -1,1 +1,9 @@
-<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 蓝色L形状 -->
+  <path d="M8 8h24v20h-12v12h-12v-32z" fill="#1E88E5"/>
+  <path d="M32 8h8v20h-8v-20z" fill="#1E88E5"/>
+  <path d="M20 28h20v12h-20v-12z" fill="#1E88E5"/>
+  
+  <!-- 橙色圆点 -->
+  <circle cx="40" cy="8" r="4" fill="#FF9800"/>
+</svg>

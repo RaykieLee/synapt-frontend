@@ -31,6 +31,14 @@ export interface AlertConfig {
   update_by?: string
 }
 
+// 告警搜索参数接口
+export interface AlertSearchParams {
+  name?: string
+  code?: string
+  status?: string
+  category_ids?: number[]
+}
+
 // 告警类别查询参数
 export interface AlertCategoryQuery {
   page_num?: number
