@@ -109,12 +109,6 @@ export default function AlertConfigPage() {
               管理系统中的告警配置和触发规则
             </p>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button onClick={() => router.push("/dashboard/platform/alerts/create")}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              新建告警配置
-            </Button>
-          </div>
         </div>
 
         <DataTable

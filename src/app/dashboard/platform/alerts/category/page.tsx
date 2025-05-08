@@ -3,10 +3,8 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { PlusCircle } from "lucide-react";
 import { SortingState } from "@tanstack/react-table";
 
-import { Button } from "@/components/ui/button";
 import { AlertCategoryQuery, AlertCategory } from "@/types/alert";
 import { alertCategoryAPI } from "@/api";
 import {
@@ -134,12 +132,6 @@ export default function AlertCategoryPage() {
               管理系统中的告警类别和分类
             </p>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button onClick={handleOpenCreateDialog}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              新建告警类别
-            </Button>
-          </div>
         </div>
 
         <DataTable
@@ -154,6 +146,7 @@ export default function AlertCategoryPage() {
           isLoading={isLoading}
           columnLabels={columnLabels}
           minHeight="400px"
+          handleOpenCreateDialog={handleOpenCreateDialog}
         />
         
         {/* 告警类别表单弹窗 */}

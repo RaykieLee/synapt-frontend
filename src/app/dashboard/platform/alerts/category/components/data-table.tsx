@@ -45,6 +45,7 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean
   columnLabels?: Record<string, string>
   minHeight?: string
+  handleOpenCreateDialog?: () => void
 }
 
 export function DataTable<TData extends object, TValue>({
@@ -59,6 +60,7 @@ export function DataTable<TData extends object, TValue>({
   isLoading = false,
   columnLabels,
   minHeight = "400px",
+  handleOpenCreateDialog,
 }: DataTableProps<TData, TValue>) {
   // 添加调试日志
   console.log('DataTable received data:', data);
@@ -176,6 +178,7 @@ export function DataTable<TData extends object, TValue>({
         table={table} 
         onSearch={onSearch} 
         columnLabels={columnLabels}
+        handleOpenCreateDialog={handleOpenCreateDialog}
       />
       <div className={`rounded-md ${hasRealData ? 'border' : 'border-t border-l border-r'}`}>
         <div style={{ minHeight }}>

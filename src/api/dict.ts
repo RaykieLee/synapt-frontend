@@ -102,18 +102,18 @@ export const dictApi = {
       }
     };
     
-    return apiRequest<DictResponse>('/api/v1/dict', 'POST', requestBody);
+    return apiRequest<DictResponse>('/api/v1/system/dict', 'POST', requestBody);
   },
   
   create: (data: DictCreateDto) =>
-    apiRequest<Dict>('/api/v1/dict', 'POST', data),
+    apiRequest<Dict>('/api/v1/system/dict/create', 'POST', data),
     
   update: (data: DictUpdateDto) =>
-    apiRequest<Dict>(`/api/v1/dict/${data.id}`, 'PUT', data),
+    apiRequest<Dict>(`/api/v1/system/dict/${data.id}`, 'PUT', data),
     
   delete: (id: number) =>
-    apiRequest<void>(`/api/v1/dict/${id}`, 'DELETE'),
+    apiRequest<void>(`/api/v1/system/dict/${id}`, 'DELETE'),
     
   batchDelete: (ids: number[]) =>
-    apiRequest<void>('/api/v1/dict/batch', 'DELETE', { ids })
+    apiRequest<void>('/api/v1/system/dict/batch', 'DELETE', { ids })
 } 

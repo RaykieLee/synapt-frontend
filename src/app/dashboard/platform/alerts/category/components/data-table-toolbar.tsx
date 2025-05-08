@@ -27,12 +27,14 @@ interface DataTableToolbarProps<TData> {
     status?: string;
   }) => void
   columnLabels?: Record<string, string>
+  handleOpenCreateDialog?: () => void
 }
 
 export function DataTableToolbar<TData extends object>({
   table,
   onSearch,
   columnLabels,
+  handleOpenCreateDialog,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0
   const router = useRouter()
@@ -163,7 +165,7 @@ export function DataTableToolbar<TData extends object>({
         <Button
           size="sm"
           className="h-8"
-          onClick={() => router.push("/dashboard/platform/alerts/category/create")}
+          onClick={handleOpenCreateDialog}
         >
           <PlusCircle className="mr-2 h-4 w-4" />
           新建类别
