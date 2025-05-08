@@ -3,11 +3,11 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { AlertConfig } from "@/types/alert"
+import { AlertCategory } from "@/types/alert"
 import { DataTableColumnHeader } from "@/components/shared/data-table"
-import { DataTableRowActions } from "./data-table-row-actions"
+import { DataTableRowActions } from "@/app/dashboard/platform/alerts/category/components/data-table-row-actions"
 
-export const columns: ColumnDef<AlertConfig>[] = [
+export const getColumns = (onEdit?: (category: AlertCategory) => void): ColumnDef<AlertCategory>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -37,7 +37,7 @@ export const columns: ColumnDef<AlertConfig>[] = [
   },
   {
     accessorKey: "name",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="配置名称" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="类别名称" />,
     cell: ({ row }) => {
       return (
         <div className="flex space-x-2">
@@ -52,7 +52,7 @@ export const columns: ColumnDef<AlertConfig>[] = [
   },
   {
     accessorKey: "code",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="配置编码" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="类别编码" />,
     cell: ({ row }) => {
       return (
         <div className="flex space-x-2">
@@ -65,80 +65,29 @@ export const columns: ColumnDef<AlertConfig>[] = [
     enableSorting: true,
   },
   {
-    accessorKey: "threshold",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="告警阈值" />,
+    accessorKey: "description",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="描述" />,
     cell: ({ row }) => {
       return (
         <div className="flex space-x-2">
-          <span className="truncate">
-            {row.original.threshold || "-"}
+          <span className="max-w-[300px] truncate">
+            {row.original.description || "-"}
           </span>
         </div>
       )
     },
     enableSorting: true,
-  },
-  {
-    accessorKey: "frequency",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="告警频率" />,
-    cell: ({ row }) => {
-      const frequency = row.original.frequency;
-      return (
-        <div className="flex space-x-2">
-          <span className="truncate">
-            {frequency ? `${frequency}次/分钟` : "-"}
-          </span>
-        </div>
-      )
-    },
-    enableSorting: true,
-  },
-  {
-    accessorKey: "categories",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="告警类别" />,
-    cell: ({ row }) => {
-      const categories = row.original.categories
-      
-      if (!categories || !categories.length) {
-        return (
-          <div className="flex space-x-2">
-            <span className="truncate">-</span>
-          </div>
-        )
-      }
-      
-      return (
-        <div className="flex flex-wrap gap-1 max-w-[250px]">
-          {categories.slice(0, 3).map((category) => (
-            <Badge key={category.category_id} variant="outline" className="truncate">
-              {category.name}
-            </Badge>
-          ))}
-          {categories.length > 3 && (
-            <Badge variant="outline">+{categories.length - 3}</Badge>
-          )}
-        </div>
-      )
-    },
-    filterFn: (row, id, value) => {
-      const categories = row.original.categories;
-      if (!categories || !categories.length) return false;
-      
-      const categoryIds = categories.map(c => c.category_id.toString());
-      return value.some((val: string) => categoryIds.includes(val));
-    },
-    enableSorting: false,
   },
   {
     accessorKey: "status",
     header: ({ column }) => <DataTableColumnHeader column={column} title="状态" />,
     cell: ({ row }) => {
-      const status = parseInt(row.original.status);
-      const isActive = status === 0;
+      const status = row.original.status;
+      const isActive = status === "1"; // 修正逻辑: 1表示启用, 0表示禁用
       
       return (
         <Badge variant={isActive ? "default" : "secondary"}>
-          {isActive ? "启用" : "停用"}
+          {isActive ? "启用" : "禁用"}
         </Badge>
       )
     },
@@ -158,6 +107,6 @@ export const columns: ColumnDef<AlertConfig>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    cell: ({ row }) => <DataTableRowActions row={row} onEdit={onEdit} />,
   },
 ] 

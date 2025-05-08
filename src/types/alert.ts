@@ -43,9 +43,28 @@ export interface AlertSearchParams {
 export interface AlertCategoryQuery {
   page_num?: number
   page_size?: number
-  name?: string
-  code?: string
-  status?: string
+  sorts?: Array<{
+    field: string
+    order: 'asc' | 'desc'
+  }>
+  params?: {
+    keywords?: {
+      name?: string
+      code?: string
+    }
+    status?: string
+    time_range?: {
+      create_time?: {
+        start?: string
+        end?: string
+      }
+      update_time?: {
+        start?: string
+        end?: string
+      }
+    }
+    search_mode?: 'and' | 'or'
+  }
 }
 
 // 创建告警类别请求

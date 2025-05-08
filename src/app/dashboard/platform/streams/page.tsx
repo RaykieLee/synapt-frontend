@@ -19,7 +19,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { Pagination } from '@/components/ui/pagination';
+import { Pagination } from '@/components/pagination';
 import { 
   Play, 
   Pause, 
@@ -548,7 +548,7 @@ export default function StreamsPage() {
             currentPage={page_num}
             pageSize={page_size}
             total={total}
-            onChange={setPageNum}
+            onPageChange={(page) => setPageNum(page)}
           />
         )}
       </Card>

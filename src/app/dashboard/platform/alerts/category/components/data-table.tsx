@@ -26,9 +26,8 @@ import {
 } from "@/components/ui/table"
 
 import { DataTablePagination } from "@/components/shared/data-table"
-import { DataTableToolbar } from "./data-table-toolbar"
+import { DataTableToolbar } from "@/app/dashboard/platform/alerts/category/components/data-table-toolbar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { AlertSearchParams } from "@/types/alert"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -37,7 +36,11 @@ interface DataTableProps<TData, TValue> {
   pageIndex?: number
   pageSize?: number
   onPageChange?: (page: number) => void
-  onSearch?: (params: AlertSearchParams) => void
+  onSearch?: (params: {
+    name?: string;
+    code?: string;
+    status?: string;
+  }) => void
   onSortingChange?: (sorting: SortingState) => void
   isLoading?: boolean
   columnLabels?: Record<string, string>
@@ -106,9 +109,8 @@ export function DataTable<TData extends object, TValue>({
   const currentPageIndex = table.getState().pagination.pageIndex;
   React.useEffect(() => {
     // 添加条件判断，防止无限循环
-    // 确保只有在表格内部的 pageIndex 确实发生变化，并且与父组件传入的 pageIndex 不同时才调用 onPageChange
-    if (onPageChange && table.getState().pagination.pageIndex !== pageIndex) { 
-      onPageChange(currentPageIndex + 1); // 转换为1-based索引传给外部
+    if (onPageChange && table.getState().pagination.pageIndex !== pageIndex) {
+      onPageChange(currentPageIndex + 1)
     }
   }, [currentPageIndex, onPageChange, pageIndex, table]);
   

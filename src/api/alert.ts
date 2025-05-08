@@ -62,9 +62,20 @@ export const alertCategoryAPI = {
     apiRequest<BaseResponse<PageResult<AlertCategory>>>("/api/v1/alerts/category/list", "POST", { 
       page_num: params.page_num || 1, 
       page_size: params.page_size || 10,
-      name: params.name,
-      code: params.code,
-      status: params.status
+      sorts: params.sorts || [
+        {
+          field: "create_time",
+          order: "desc"
+        }
+      ],
+      params: {
+        keywords: {
+          name: params.params?.keywords?.name,
+          code: params.params?.keywords?.code,
+        },
+        status: params.params?.status,
+        search_mode: params.params?.search_mode || "and"
+      }
     }),
 
   // 获取所有启用的告警类别（用于下拉选择）

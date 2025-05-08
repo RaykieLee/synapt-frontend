@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { PlusCircle } from "lucide-react";
@@ -47,8 +47,13 @@ export default function AlertConfigPage() {
   const total = alertConfigsData.total || 0;
   const pages = alertConfigsData.pages || 1;
 
+  // 处理分页变化
+  const handlePageChange = useCallback((page: number) => {
+    setQuery((prev) => ({ ...prev, page_num: page }));
+  }, []);
+
   // 处理排序变化
-  const handleSortingChange = (sorting: SortingState) => {
+  const handleSortingChange = useCallback((sorting: SortingState) => {
     setQuery((prev) => ({
       ...prev,
       sorts: sorting.map((sort) => ({
@@ -56,10 +61,10 @@ export default function AlertConfigPage() {
         order: sort.desc ? "desc" : "asc"
       }))
     }));
-  };
+  }, []);
 
   // 处理搜索
-  const handleSearch = (params: AlertSearchParams) => {
+  const handleSearch = useCallback((params: AlertSearchParams) => {
     console.log('Search params:', params); // 添加日志
     setQuery((prev) => ({
       ...prev,
@@ -75,12 +80,7 @@ export default function AlertConfigPage() {
         search_mode: "and"
       }
     }));
-  };
-
-  // 处理分页变化
-  const handlePageChange = (page: number) => {
-    setQuery((prev) => ({ ...prev, page_num: page }));
-  };
+  }, []);
 
   // 自定义列标签
   const columnLabels = {
@@ -108,6 +108,12 @@ export default function AlertConfigPage() {
             <p className="text-muted-foreground">
               管理系统中的告警配置和触发规则
             </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button onClick={() => router.push("/dashboard/platform/alerts/create")}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              新建告警配置
+            </Button>
           </div>
         </div>
 

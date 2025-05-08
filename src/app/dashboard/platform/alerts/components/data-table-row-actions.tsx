@@ -65,7 +65,7 @@ export function DataTableRowActions<TData>({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
-            onClick={() => router.push(`/dashboard/platform/alerts/edit/${config.id}`)}
+            onClick={() => router.push(`/dashboard/platform/alerts/create?id=${config.id}`)}
           >
             <Edit className="mr-2 h-4 w-4" />
             编辑

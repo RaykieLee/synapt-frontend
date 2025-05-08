@@ -90,38 +90,30 @@ export const dictAPI = {
 export const dictApi = {
   getList: (params: DictQuery) => {
     const requestBody = {
-      page: params.page,
+      page_num: params.page_num,
       page_size: params.page_size,
-      order_by: params.order_by,
-      order: params.order,
-      search_params: {}
-    }
-    if (params.dict_name) requestBody.search_params.dict_name = params.dict_name
-    if (params.dict_key) requestBody.search_params.dict_key = params.dict_key
-    if (params.dict_value) requestBody.search_params.dict_value = params.dict_value
-    if (params.status) requestBody.search_params.status = params.status
-    return apiRequest<DictResponse>('/api/v1/dict', {
-      method: 'POST',
-      data: requestBody
-    })
+      order_by: params.order_by_column,
+      order: params.is_asc,
+      search_params: {
+        dict_name: params.dict_name,
+        dict_key: params.dict_key,
+        dict_value: params.dict_value,
+        status: params.status
+      }
+    };
+    
+    return apiRequest<DictResponse>('/api/v1/dict', 'POST', requestBody);
   },
+  
   create: (data: DictCreateDto) =>
-    apiRequest<Dict>('/api/v1/dict', {
-      method: 'POST',
-      data
-    }),
+    apiRequest<Dict>('/api/v1/dict', 'POST', data),
+    
   update: (data: DictUpdateDto) =>
-    apiRequest<Dict>(`/api/v1/dict/${data.id}`, {
-      method: 'PUT',
-      data
-    }),
+    apiRequest<Dict>(`/api/v1/dict/${data.id}`, 'PUT', data),
+    
   delete: (id: number) =>
-    apiRequest<void>(`/api/v1/dict/${id}`, {
-      method: 'DELETE'
-    }),
+    apiRequest<void>(`/api/v1/dict/${id}`, 'DELETE'),
+    
   batchDelete: (ids: number[]) =>
-    apiRequest<void>('/api/v1/dict/batch', {
-      method: 'DELETE',
-      data: { ids }
-    })
+    apiRequest<void>('/api/v1/dict/batch', 'DELETE', { ids })
 } 

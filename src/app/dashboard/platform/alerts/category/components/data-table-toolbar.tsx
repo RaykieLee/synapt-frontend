@@ -4,7 +4,6 @@ import { Cross2Icon } from "@radix-ui/react-icons"
 import { Table } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import { PlusCircle } from "lucide-react"
-import { useQuery } from "@tanstack/react-query"
 import { useState, useCallback, useRef } from "react"
 import debounce from "lodash/debounce"
 
@@ -16,13 +15,17 @@ import {
   DeleteConfirmationDialog
 } from "@/components/shared/data-table"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { alertConfigAPI, alertCategoryAPI } from "@/api"
+import { alertCategoryAPI } from "@/api"
 import { toast } from "sonner"
-import { AlertCategory, AlertConfig, AlertSearchParams } from "@/types/alert"
+import { AlertCategory } from "@/types/alert"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
-  onSearch?: (params: AlertSearchParams) => void
+  onSearch?: (params: {
+    name?: string;
+    code?: string;
+    status?: string;
+  }) => void
   columnLabels?: Record<string, string>
 }
 
@@ -36,19 +39,11 @@ export function DataTableToolbar<TData extends object>({
   const [deleteOpen, setDeleteOpen] = useState(false)
   
   // 使用ref存储当前的搜索参数
-  const searchParamsRef = useRef<AlertSearchParams>({})
-
-  // 获取所有告警类别
-  const { data: categoriesResponse } = useQuery({
-    queryKey: ["alerts", "category", "all"],
-    queryFn: () => alertCategoryAPI.getAll(),
-  })
-
-  const categories = categoriesResponse?.data || []
-  const categoryOptions = categories.map((category: AlertCategory) => ({
-    label: category.name,
-    value: category.category_id.toString(),
-  }))
+  const searchParamsRef = useRef<{
+    name?: string;
+    code?: string;
+    status?: string;
+  }>({})
 
   // 状态选项
   const statusOptions = [
@@ -59,10 +54,10 @@ export function DataTableToolbar<TData extends object>({
   // 批量删除
   const queryClient = useQueryClient()
   const deleteMutation = useMutation({
-    mutationFn: (ids: number[]) => alertConfigAPI.batchDelete(ids),
+    mutationFn: (ids: number[]) => alertCategoryAPI.batchDelete(ids),
     onSuccess: () => {
       toast.success("删除成功")
-      queryClient.invalidateQueries({ queryKey: ["alerts", "config"] })
+      queryClient.invalidateQueries({ queryKey: ["alerts", "category"] })
       setDeleteOpen(false)
     },
     onError: (error) => {
@@ -71,7 +66,7 @@ export function DataTableToolbar<TData extends object>({
   })
 
   // 更新搜索参数
-  const updateSearchParams = (key: keyof AlertSearchParams, value: string | number[] | undefined) => {
+  const updateSearchParams = (key: string, value: string | undefined) => {
     searchParamsRef.current = {
       ...searchParamsRef.current,
       [key]: value || undefined
@@ -89,13 +84,11 @@ export function DataTableToolbar<TData extends object>({
   // 使用防抖处理搜索
   const debouncedSearch = debounce(debouncedSearchFn, 500);
 
-  // 自定义告警列标签
-  const alertColumnLabels = {
-    name: "配置名称",
-    code: "配置编码",
-    threshold: "告警阈值",
-    frequency: "告警频率",
-    categories: "告警类别",
+  // 自定义列标签
+  const categoryColumnLabels = {
+    name: "类别名称",
+    code: "类别编码",
+    description: "描述",
     status: "状态",
     create_time: "创建时间",
     ...columnLabels
@@ -105,7 +98,7 @@ export function DataTableToolbar<TData extends object>({
     <div className="flex items-center justify-between">
       <div className="flex flex-1 items-center space-x-2">
         <Input
-          placeholder="搜索配置名称..."
+          placeholder="搜索类别名称..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) => {
             const value = event.target.value
@@ -115,7 +108,7 @@ export function DataTableToolbar<TData extends object>({
           className="h-8 w-[150px] lg:w-[250px]"
         />
         <Input
-          placeholder="搜索配置编码..."
+          placeholder="搜索类别编码..."
           value={(table.getColumn("code")?.getFilterValue() as string) ?? ""}
           onChange={(event) => {
             const value = event.target.value
@@ -133,18 +126,6 @@ export function DataTableToolbar<TData extends object>({
               const value = table.getColumn("status")?.getFilterValue()
               updateSearchParams("status", Array.isArray(value) ? value[0] : value as string)
             }}
-          />
-        )}
-        {table.getColumn("categories") && (
-          <DataTableFacetedFilter
-            column={table.getColumn("categories")}
-            title="告警类别"
-            options={categoryOptions}
-            onSelect={() => {
-              const value = table.getColumn("categories")?.getFilterValue()
-              updateSearchParams("category_ids", value as number[])
-            }}
-            multiple={true}
           />
         )}
         {isFiltered && (
@@ -177,15 +158,15 @@ export function DataTableToolbar<TData extends object>({
         )}
         <DataTableViewOptions 
           table={table} 
-          columnLabels={alertColumnLabels}
+          columnLabels={categoryColumnLabels}
         />
         <Button
           size="sm"
           className="h-8"
-          onClick={() => router.push("/dashboard/platform/alerts/create")}
+          onClick={() => router.push("/dashboard/platform/alerts/category/create")}
         >
           <PlusCircle className="mr-2 h-4 w-4" />
-          新建配置
+          新建类别
         </Button>
       </div>
 
@@ -195,12 +176,12 @@ export function DataTableToolbar<TData extends object>({
         onOpenChange={setDeleteOpen}
         onConfirm={() => {
           const ids = table.getSelectedRowModel().rows.map(
-            (row) => (row.original as AlertConfig).id
+            (row) => (row.original as AlertCategory).category_id
           )
           deleteMutation.mutate(ids)
         }}
         title="确认删除"
-        description={`确定要删除选中的 ${table.getSelectedRowModel().rows.length} 个配置吗？此操作不可恢复。`}
+        description={`确定要删除选中的 ${table.getSelectedRowModel().rows.length} 个类别吗？此操作不可恢复。`}
         isDeleting={deleteMutation.isPending}
       />
     </div>

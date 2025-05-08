@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -31,15 +32,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertConfigCreateDto } from "@/types/alert";
-import { alertConfigAPI } from "@/api";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { AlertConfigCreateDto, AlertConfigUpdateDto } from "@/types/alert";
+import { alertConfigAPI, alertCategoryAPI } from "@/api";
 
-export default function CreateAlertConfigPage() {
+export default function AlertConfigFormPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const configId = searchParams.get("id");
 
-  // 表单定义
-  const form = useForm<AlertConfigCreateDto>({
+  // 是否为编辑模式
+  const isEditMode = !!configId;
+
+  // 表单定义 - 使用泛型联合类型，适用于创建和编辑
+  const form = useForm<AlertConfigCreateDto & AlertConfigUpdateDto>({
     defaultValues: {
       code: "",
       name: "",
@@ -48,8 +61,48 @@ export default function CreateAlertConfigPage() {
       frequency: 15,
       status: "0",
       remark: "",
+      category_ids: [],
     },
   });
+
+  // 查询告警配置详情 (编辑模式)
+  const { data: configData, isLoading: isConfigLoading } = useQuery({
+    queryKey: ["alerts", "config", "detail", configId],
+    queryFn: () => alertConfigAPI.getDetail(parseInt(configId!)),
+    enabled: isEditMode,
+  });
+
+  // 查询所有告警类别
+  const { data: categoriesData } = useQuery({
+    queryKey: ["alerts", "category", "all"],
+    queryFn: () => alertCategoryAPI.getAll(),
+  });
+
+  // 页面标题和描述
+  const [pageTitle, setPageTitle] = useState("新建告警配置");
+  const [pageDescription, setPageDescription] = useState("创建一个新的告警配置，用于系统告警触发和通知。");
+
+  // 更新表单默认值 (编辑模式)
+  useEffect(() => {
+    if (isEditMode) {
+      setPageTitle("编辑告警配置");
+      setPageDescription("修改告警配置的基本信息和告警规则。");
+    }
+
+    if (isEditMode && configData?.data) {
+      const config = configData.data;
+      form.reset({
+        code: config.code,
+        name: config.name,
+        description: config.description,
+        threshold: config.threshold,
+        frequency: config.frequency,
+        status: config.status,
+        remark: config.remark,
+        category_ids: config.categories?.map((cat) => cat.category_id) || [],
+      });
+    }
+  }, [configData, form, isEditMode]);
 
   // 创建告警配置
   const createMutation = useMutation({
@@ -64,19 +117,63 @@ export default function CreateAlertConfigPage() {
     },
   });
 
+  // 更新告警配置
+  const updateMutation = useMutation({
+    mutationFn: (data: AlertConfigUpdateDto) =>
+      alertConfigAPI.update(parseInt(configId!), data),
+    onSuccess: () => {
+      toast.success("更新成功");
+      queryClient.invalidateQueries({ queryKey: ["alerts", "config"] });
+      router.push("/dashboard/platform/alerts");
+    },
+    onError: (error) => {
+      toast.error(`更新失败: ${error}`);
+    },
+  });
+
   // 提交表单
-  const onSubmit = (data: AlertConfigCreateDto) => {
-    createMutation.mutate(data);
+  const onSubmit = (data: AlertConfigCreateDto & AlertConfigUpdateDto) => {
+    if (isEditMode) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
   };
+
+  // 加载状态
+  if (isEditMode && isConfigLoading) {
+    return <div className="container mx-auto py-6">加载中...</div>;
+  }
+
+  // 操作状态
+  const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
     <div className="container mx-auto py-6">
+      {isEditMode && (
+        <Breadcrumb className="mb-6">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/dashboard">首页</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/dashboard/platform/alerts">
+                告警配置
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink>编辑配置</BreadcrumbLink>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      )}
+
       <Card>
         <CardHeader>
-          <CardTitle>新建告警配置</CardTitle>
-          <CardDescription>
-            创建一个新的告警配置，用于系统告警触发和通知。
-          </CardDescription>
+          <CardTitle>{pageTitle}</CardTitle>
+          <CardDescription>{pageDescription}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -93,7 +190,7 @@ export default function CreateAlertConfigPage() {
                         <Input placeholder="请输入配置名称" {...field} />
                       </FormControl>
                       <FormDescription>
-                        告警配置的显示名称，如"CPU使用率告警"
+                        告警配置的显示名称，如&ldquo;CPU使用率告警&rdquo;
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -111,7 +208,7 @@ export default function CreateAlertConfigPage() {
                         <Input placeholder="请输入配置编码" {...field} />
                       </FormControl>
                       <FormDescription>
-                        唯一的识别码，如"CPU_USAGE_ALERT"
+                        唯一的识别码，如&ldquo;CPU_USAGE_ALERT&rdquo;
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -128,7 +225,7 @@ export default function CreateAlertConfigPage() {
                         <Input placeholder="请输入告警阈值" {...field} />
                       </FormControl>
                       <FormDescription>
-                        触发告警的临界值，如"90%"或"5次/分钟"
+                        触发告警的临界值，如&ldquo;90%&rdquo;或&ldquo;5次/分钟&rdquo;
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -168,6 +265,7 @@ export default function CreateAlertConfigPage() {
                       <FormLabel>状态</FormLabel>
                       <Select
                         onValueChange={field.onChange}
+                        value={field.value}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -185,6 +283,49 @@ export default function CreateAlertConfigPage() {
                     </FormItem>
                   )}
                 />
+
+                {categoriesData?.data && categoriesData.data.length > 0 && (
+                  <FormField
+                    control={form.control}
+                    name="category_ids"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>告警类别</FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            const values = value.split(",").map(Number);
+                            field.onChange(values);
+                          }}
+                          value={
+                            field.value && field.value.length > 0
+                              ? field.value.join(",")
+                              : undefined
+                          }
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="请选择告警类别（可多选）" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categoriesData.data.map((category) => (
+                              <SelectItem
+                                key={category.category_id}
+                                value={category.category_id.toString()}
+                              >
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          选择该告警配置所属的类别，用于分类管理
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               <FormField
@@ -235,9 +376,9 @@ export default function CreateAlertConfigPage() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={createMutation.isPending}
+                  disabled={isPending}
                 >
-                  {createMutation.isPending ? "保存中..." : "保存"}
+                  {isPending ? "保存中..." : "保存"}
                 </Button>
               </div>
             </form>

@@ -2,6 +2,7 @@
 
 import { Table } from "@tanstack/react-table"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -25,6 +26,20 @@ export function DataTablePagination<TData>({
   const pageSize = table.getState().pagination.pageSize
   const pageIndex = table.getState().pagination.pageIndex
   
+  // 使用本地状态存储选择的大小，避免与table状态直接交互
+  const [selectedSize, setSelectedSize] = useState<string>(String(pageSize))
+  
+  // 当pageSize变化时更新本地状态
+  useEffect(() => {
+    setSelectedSize(String(pageSize))
+  }, [pageSize])
+  
+  // 处理pageSize变化
+  const handlePageSizeChange = (value: string) => {
+    setSelectedSize(value)
+    table.setPageSize(Number(value))
+  }
+  
   return (
     <div className="flex items-center justify-between px-2">
       <div className="flex-1 text-sm text-muted-foreground">
@@ -35,19 +50,14 @@ export function DataTablePagination<TData>({
         <div className="flex items-center space-x-2">
           <p className="text-sm font-medium">每页行数</p>
           <Select
-            value="all"
-            onValueChange={(value) => {
-              if (value !== "all") {
-                table.setPageSize(Number(value))
-              }
-            }}
+            value={selectedSize}
+            onValueChange={handlePageSizeChange}
           >
             <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue>{pageSize}</SelectValue>
+              <SelectValue>{selectedSize}</SelectValue>
             </SelectTrigger>
             <SelectContent side="top">
-              <SelectItem value="all">{pageSize}</SelectItem>
-              {[10, 20, 30, 40, 50].filter(size => size !== pageSize).map((size) => (
+              {[10, 20, 30, 40, 50].map((size) => (
                 <SelectItem key={size} value={String(size)}>
                   {size}
                 </SelectItem>
