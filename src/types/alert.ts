@@ -53,6 +53,7 @@ export interface AlertCategoryQuery {
       code?: string
     }
     status?: string
+    config_id?: number
     time_range?: {
       create_time?: {
         start?: string
@@ -76,6 +77,7 @@ export interface AlertCategoryCreateDto {
   status?: string
   order_num?: number
   remark?: string
+  config_id?: number
 }
 
 // 更新告警类别请求
@@ -87,6 +89,7 @@ export interface AlertCategoryUpdateDto {
   status?: string
   order_num?: number
   remark?: string
+  config_id?: number
 }
 
 // 创建告警配置请求
@@ -127,7 +130,7 @@ export interface AlertConfigQuery {
       code?: string
     }
     status?: string
-    category_id?: number
+    category_ids?: number[]
     time_range?: {
       create_time?: {
         start?: string

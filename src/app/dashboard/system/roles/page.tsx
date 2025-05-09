@@ -86,14 +86,14 @@ export default function RolesPage() {
   const { data: roles = [], isLoading } = useQuery<Role[]>({
     queryKey: ['roles'],
     queryFn: () => roleApi.getList(),
-    staleTime: 1000 * 60 * 5, // 5分钟内不重新获取数据
+    staleTime: 5, // 5秒不重新获取数据
   })
   
   // 获取菜单树查询
   const { data: menuTree = [] } = useQuery<MenuNode[]>({
     queryKey: ['menuTree'],
     queryFn: () => roleApi.getMenuTree(),
-    staleTime: 1000 * 60 * 5, // 5分钟内不重新获取数据
+    staleTime: 5, // 5秒不重新获取数据
   })
 
   // 添加角色的mutation

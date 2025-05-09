@@ -65,7 +65,10 @@ export default function AlertConfigPage() {
 
   // 处理搜索
   const handleSearch = useCallback((params: AlertSearchParams) => {
-    console.log('Search params:', params); // 添加日志
+    // 确保数据发送到后端而不是在前端过滤
+    console.log('搜索参数：', params);
+    
+    // 特别处理筛选参数：确保直接传递用户选择的值，不做反向处理
     setQuery((prev) => ({
       ...prev,
       page_num: 1, // 重置到第一页
@@ -75,8 +78,10 @@ export default function AlertConfigPage() {
           name: params.name,
           code: params.code,
         },
+        // 直接使用选中的状态值
         status: params.status,
-        category_id: params.category_ids?.[0],
+        // 直接使用选中的类别ID数组，支持多选
+        category_ids: params.category_ids || undefined,
         search_mode: "and"
       }
     }));
@@ -92,12 +97,6 @@ export default function AlertConfigPage() {
     status: "状态",
     create_time: "创建时间",
   };
-
-  // 添加调试日志
-  console.log('Current query:', query);
-  console.log('Response:', response);
-  console.log('AlertConfigsData:', alertConfigsData);
-  console.log('List:', list);
 
   return (
     <div className="container mx-auto px-0 py-6 md:px-6">

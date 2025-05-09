@@ -83,7 +83,7 @@ export const getColumns = (onEdit?: (category: AlertCategory) => void): ColumnDe
     header: ({ column }) => <DataTableColumnHeader column={column} title="状态" />,
     cell: ({ row }) => {
       const status = row.original.status;
-      const isActive = status === "1"; // 修正逻辑: 1表示启用, 0表示禁用
+      const isActive = status === "0"; // 修正逻辑: 0表示正常/启用, 1表示停用
       
       return (
         <Badge variant={isActive ? "default" : "secondary"}>

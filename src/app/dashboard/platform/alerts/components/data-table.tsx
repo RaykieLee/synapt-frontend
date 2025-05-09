@@ -57,10 +57,6 @@ export function DataTable<TData extends object, TValue>({
   columnLabels,
   minHeight = "400px",
 }: DataTableProps<TData, TValue>) {
-  // 添加调试日志
-  console.log('DataTable received data:', data);
-  console.log('DataTable columns:', columns);
-
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -92,11 +88,10 @@ export function DataTable<TData extends object, TValue>({
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    // 启用手动模式，表示这些操作由外部控制
+    manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
     pageCount: pageCount,

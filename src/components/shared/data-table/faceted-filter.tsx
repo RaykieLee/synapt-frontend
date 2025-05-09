@@ -31,7 +31,7 @@ interface DataTableFacetedFilterProps<TData, TValue> {
     value: string
     icon?: React.ComponentType<{ className?: string }>
   }[]
-  onSelect?: () => void
+  onSelect?: (selectedValue: string[] | undefined) => void
   multiple?: boolean
 }
 
@@ -43,7 +43,11 @@ export function DataTableFacetedFilter<TData, TValue>({
   multiple = false,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues()
-  const selectedValues = new Set(column?.getFilterValue() as string[])
+  const [selectedValues, setSelectedValues] = React.useState<Set<string>>(() => new Set(column?.getFilterValue() as string[]));
+
+  React.useEffect(() => {
+    setSelectedValues(new Set(column?.getFilterValue() as string[]));
+  }, [column?.getFilterValue()]);
 
   return (
     <Popover>
@@ -98,23 +102,26 @@ export function DataTableFacetedFilter<TData, TValue>({
                   <CommandItem
                     key={option.value}
                     onSelect={() => {
+                      let newSelectedValues: Set<string>;
                       if (multiple) {
-                        const newValues = new Set(selectedValues)
+                        newSelectedValues = new Set(selectedValues)
                         if (isSelected) {
-                          newValues.delete(option.value)
+                          newSelectedValues.delete(option.value)
                         } else {
-                          newValues.add(option.value)
+                          newSelectedValues.add(option.value)
                         }
-                        column?.setFilterValue(
-                          newValues.size ? Array.from(newValues) : undefined
-                        )
                       } else {
-                        column?.setFilterValue(
-                          isSelected ? undefined : [option.value]
-                        )
+                        newSelectedValues = new Set();
+                        if (!isSelected) {
+                          newSelectedValues.add(option.value);
+                        }
                       }
+                      column?.setFilterValue(
+                        newSelectedValues.size ? Array.from(newSelectedValues) : undefined
+                      )
+                      setSelectedValues(newSelectedValues);
                       if (onSelect) {
-                        onSelect()
+                        onSelect(newSelectedValues.size ? Array.from(newSelectedValues) : undefined)
                       }
                     }}
                   >
@@ -148,8 +155,9 @@ export function DataTableFacetedFilter<TData, TValue>({
                   <CommandItem
                     onSelect={() => {
                       column?.setFilterValue(undefined)
+                      setSelectedValues(new Set());
                       if (onSelect) {
-                        onSelect()
+                        onSelect(undefined)
                       }
                     }}
                     className="justify-center text-center"

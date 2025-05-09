@@ -204,7 +204,7 @@ export default function MenusPage() {
   const { data: menus = [], isLoading } = useQuery<Menu[]>({
     queryKey: ['menus'],
     queryFn: () => menuApi.getList(),
-    staleTime: 1000 * 60 * 5, // 5分钟内不重新获取数据
+    staleTime: 5, // 5秒不重新获取数据
   })
   
   // 生成父菜单选项

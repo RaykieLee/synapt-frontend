@@ -56,6 +56,7 @@ interface CategoryFormDialogProps {
   onOpenChange: (open: boolean) => void;
   editData?: AlertCategory | null;
   mode: "create" | "edit";
+  configId?: number;
 }
 
 export function CategoryFormDialog({
@@ -63,6 +64,7 @@ export function CategoryFormDialog({
   onOpenChange,
   editData = null,
   mode = "create",
+  configId,
 }: CategoryFormDialogProps) {
   // 状态
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,7 +76,7 @@ export function CategoryFormDialog({
       code: editData?.code || "",
       name: editData?.name || "",
       description: editData?.description || "",
-      status: (editData?.status as "0" | "1") || "1",
+      status: (editData?.status as "0" | "1") || "0",
       remark: editData?.remark || "",
     },
   });
@@ -86,7 +88,7 @@ export function CategoryFormDialog({
         code: editData.code || "",
         name: editData.name || "",
         description: editData.description || "",
-        status: (editData.status as "0" | "1") || "1",
+        status: (editData.status as "0" | "1") || "0",
         remark: editData.remark || "",
       });
     } else {
@@ -94,7 +96,7 @@ export function CategoryFormDialog({
         code: "",
         name: "",
         description: "",
-        status: "1",
+        status: "0",
         remark: "",
       });
     }
@@ -150,8 +152,9 @@ export function CategoryFormDialog({
           name: values.name,
           description: values.description,
           status: values.status,
-          enabled: values.status === "1",
+          enabled: values.status === "0",
           remark: values.remark,
+          config_id: configId, // 传递告警配置ID
         });
       } else if (mode === "edit" && editData) {
         // 更新现有告警类别
@@ -162,8 +165,9 @@ export function CategoryFormDialog({
             name: values.name,
             description: values.description,
             status: values.status,
-            enabled: values.status === "1",
+            enabled: values.status === "0",
             remark: values.remark,
+            config_id: configId, // 传递告警配置ID
           }
         });
       }
@@ -183,7 +187,7 @@ export function CategoryFormDialog({
           </DialogTitle>
           <DialogDescription>
             {mode === "create" 
-              ? "创建一个新的告警类别，填写必要的信息。" 
+              ? (configId ? "创建一个新的告警类别并关联到当前告警配置" : "创建一个新的告警类别，填写必要的信息。") 
               : "编辑告警类别的详细信息。"}
           </DialogDescription>
         </DialogHeader>
@@ -253,8 +257,8 @@ export function CategoryFormDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="1">启用</SelectItem>
-                      <SelectItem value="0">禁用</SelectItem>
+                      <SelectItem value="0">启用</SelectItem>
+                      <SelectItem value="1">禁用</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

@@ -133,8 +133,8 @@ export const columns: ColumnDef<AlertConfig>[] = [
     accessorKey: "status",
     header: ({ column }) => <DataTableColumnHeader column={column} title="状态" />,
     cell: ({ row }) => {
-      const status = parseInt(row.original.status);
-      const isActive = status === 0;
+      const status = row.original.status;
+      const isActive = status === "0";
       
       return (
         <Badge variant={isActive ? "default" : "secondary"}>

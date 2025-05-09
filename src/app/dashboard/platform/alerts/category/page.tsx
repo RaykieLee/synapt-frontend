@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { SortingState } from "@tanstack/react-table";
 
@@ -18,7 +18,11 @@ import { CategoryFormDialog } from "@/app/dashboard/platform/alerts/category/com
 
 export default function AlertCategoryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   
+  // 获取URL参数中的config_id
+  const configId = searchParams.get("config_id") ? parseInt(searchParams.get("config_id")!) : undefined;
+  console.log('configId:', configId);
   // 表单弹窗状态
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editData, setEditData] = useState<AlertCategory | null>(null);
@@ -50,9 +54,21 @@ export default function AlertCategoryPage() {
     ],
     params: {
       keywords: {},
+      config_id: configId,
       search_mode: "and"
     }
   });
+
+  // 当configId变化时更新查询参数
+  useEffect(() => {
+    setQuery(prev => ({
+      ...prev,
+      params: {
+        ...prev.params,
+        config_id: configId
+      }
+    }));
+  }, [configId]);
 
   // 查询告警类别列表
   const { data: response, isLoading } = useQuery({
@@ -129,7 +145,7 @@ export default function AlertCategoryPage() {
           <div>
             <h2 className="text-2xl font-bold tracking-tight">告警类别管理</h2>
             <p className="text-muted-foreground">
-              管理系统中的告警类别和分类
+              {configId ? "管理此告警配置关联的类别" : "管理系统中的告警类别和分类"}
             </p>
           </div>
         </div>
@@ -155,6 +171,7 @@ export default function AlertCategoryPage() {
           onOpenChange={setFormDialogOpen}
           editData={editData}
           mode={formMode}
+          configId={configId}
         />
       </div>
     </div>

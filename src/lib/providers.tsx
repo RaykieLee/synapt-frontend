@@ -13,7 +13,7 @@ export function Providers({ children }: ProvidersProps) {
       queries: {
         refetchOnWindowFocus: false,
         retry: 1,
-        staleTime: 5 * 60 * 1000, // 5分钟
+        staleTime: 5, // 5分钟
       },
     },
   }))

@@ -90,14 +90,14 @@ export default function DeptPage() {
   const { data: depts = [], isLoading: isLoadingTree } = useQuery<Dept[]>({
     queryKey: ['deptTree'],
     queryFn: () => deptApi.getTree(),
-    staleTime: 1000 * 60 * 5, // 5分钟内不重新获取数据
+    staleTime: 5, // 5秒不重新获取数据
   })
   
   // 获取部门列表（扁平结构，用于搜索和筛选）
   const { data: deptList = [] } = useQuery<Dept[]>({
     queryKey: ['deptList'],
     queryFn: () => deptApi.getList(),
-    staleTime: 1000 * 60 * 5, // 5分钟内不重新获取数据
+    staleTime: 5, // 5秒不重新获取数据
   })
 
   // 添加部门的mutation

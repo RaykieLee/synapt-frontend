@@ -43,13 +43,16 @@ export function DataTableToolbar<TData extends object>({
     queryKey: ["alerts", "category", "all"],
     queryFn: () => alertCategoryAPI.getAll(),
   })
-
-  const categories = categoriesResponse?.data || []
+  
+  // apiRequest 函数已经提取了 result.data，所以 categoriesResponse 就是 AlertCategory[] 数组
+  const categories = Array.isArray(categoriesResponse) ? categoriesResponse : [];
+  
+  // 生成分类选项
   const categoryOptions = categories.map((category: AlertCategory) => ({
-    label: category.name,
-    value: category.category_id.toString(),
-  }))
-
+    label: category.name || '未命名分类',
+    value: category.category_id.toString()
+  }));
+  
   // 状态选项
   const statusOptions = [
     { label: "启用", value: "0" },
@@ -129,9 +132,16 @@ export function DataTableToolbar<TData extends object>({
             column={table.getColumn("status")}
             title="状态"
             options={statusOptions}
-            onSelect={() => {
-              const value = table.getColumn("status")?.getFilterValue()
-              updateSearchParams("status", Array.isArray(value) ? value[0] : value as string)
+            onSelect={(selectedValue) => {
+              const status = selectedValue && selectedValue.length > 0 ? selectedValue[0] : undefined;
+              updateSearchParams("status", status);
+              if (onSearch) {
+                const updatedParams = {
+                  ...searchParamsRef.current,
+                  status: status
+                };
+                onSearch(updatedParams);
+              }
             }}
           />
         )}
@@ -140,9 +150,20 @@ export function DataTableToolbar<TData extends object>({
             column={table.getColumn("categories")}
             title="告警类别"
             options={categoryOptions}
-            onSelect={() => {
-              const value = table.getColumn("categories")?.getFilterValue()
-              updateSearchParams("category_ids", value as number[])
+            onSelect={(selectedValues) => {
+              const categoryIds = selectedValues && selectedValues.length > 0 
+                ? selectedValues.map(v => parseInt(v)) 
+                : undefined;
+              
+              console.log("选中的类别ID（来自回调）:", categoryIds);
+              updateSearchParams("category_ids", categoryIds);
+              if (onSearch) {
+                const updatedParams = {
+                  ...searchParamsRef.current,
+                  category_ids: categoryIds
+                };
+                onSearch(updatedParams);
+              }
             }}
             multiple={true}
           />

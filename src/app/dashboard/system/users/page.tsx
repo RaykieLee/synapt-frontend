@@ -97,14 +97,14 @@ export default function UsersPage() {
       user_name: searchTerm || undefined,
       status: statusFilter !== "all" ? statusFilter : undefined
     }),
-    staleTime: 1000 * 60 * 5, // 5分钟内不重新获取数据
+    staleTime: 5, // 5秒不重新获取数据
   })
   
   // 获取所有角色
   const { data: roles = [] } = useQuery({
     queryKey: ['roles', 'options'],
     queryFn: () => userApi.getRoles(),
-    staleTime: 1000 * 60 * 5, // 5分钟内不重新获取数据
+    staleTime: 5, // 5秒不重新获取数据
   })
 
   // 创建用户的mutation

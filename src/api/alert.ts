@@ -15,7 +15,6 @@ import { BaseResponse, PageResult } from "@/types/base";
 export const alertConfigAPI = {
   // 获取告警配置列表
   getList: (params: AlertConfigQuery) => {
-    console.log('API getList params:', params); // 添加日志
     return apiRequest<BaseResponse<PageResult<AlertConfig>>>("/api/v1/platform/alerts/config/list", "POST", {
       page_num: params.page_num || 1,
       page_size: params.page_size || 10,
@@ -28,7 +27,7 @@ export const alertConfigAPI = {
       params: {
         keywords: params.params?.keywords || {},
         status: params.params?.status,
-        category_id: params.params?.category_id,
+        category_ids: params.params?.category_ids,
         search_mode: params.params?.search_mode || "and"
       }
     });
@@ -58,8 +57,8 @@ export const alertConfigAPI = {
 // 告警类别API
 export const alertCategoryAPI = {
   // 获取告警类别列表
-  getList: (params: AlertCategoryQuery) => 
-    apiRequest<BaseResponse<PageResult<AlertCategory>>>("/api/v1/platform/alerts/category/list", "POST", { 
+  getList: (params: AlertCategoryQuery) => {
+    return apiRequest<BaseResponse<PageResult<AlertCategory>>>("/api/v1/platform/alerts/category/list", "POST", { 
       page_num: params.page_num || 1, 
       page_size: params.page_size || 10,
       sorts: params.sorts || [
@@ -74,13 +73,15 @@ export const alertCategoryAPI = {
           code: params.params?.keywords?.code,
         },
         status: params.params?.status,
+        config_id: params.params?.config_id,
         search_mode: params.params?.search_mode || "and"
       }
-    }),
+    });
+  },
 
   // 获取所有启用的告警类别（用于下拉选择）
-  getAll: () => 
-    apiRequest<BaseResponse<AlertCategory[]>>("/api/v1/platform/alerts/category/all", "GET"),
+  getAll: (config_id?: number) => 
+    apiRequest<BaseResponse<AlertCategory[]>>(`/api/v1/platform/alerts/category/all${config_id ? `?config_id=${config_id}` : ''}`, "GET"),
 
   // 获取告警类别详情
   getDetail: (category_id: number) => 
@@ -88,7 +89,7 @@ export const alertCategoryAPI = {
 
   // 创建告警类别
   create: (category: AlertCategoryCreateDto) => 
-    apiRequest<BaseResponse<AlertCategory>>("/api/v1/platform/alerts/category", "POST", category),
+    apiRequest<BaseResponse<AlertCategory>>("/api/v1/platform/alerts/category/create", "POST", category),
 
   // 更新告警类别
   update: (category_id: number, category: AlertCategoryUpdateDto) => 
