@@ -124,9 +124,22 @@ export function DataTableToolbar<TData extends object>({
             column={table.getColumn("status")}
             title="状态"
             options={statusOptions}
-            onSelect={() => {
-              const value = table.getColumn("status")?.getFilterValue()
-              updateSearchParams("status", Array.isArray(value) ? value[0] : value as string)
+            onSelect={(selectedValue) => {
+              // 如果selectedValue存在且有值，取第一个元素（单选）
+              // 否则为undefined表示清除筛选
+              const status = selectedValue && selectedValue.length > 0 ? selectedValue[0] : undefined;
+              
+              // 更新搜索参数
+              updateSearchParams("status", status);
+              
+              // 立即触发搜索，不等待防抖
+              if (onSearch) {
+                const updatedParams = {
+                  ...searchParamsRef.current,
+                  status: status
+                };
+                onSearch(updatedParams);
+              }
             }}
           />
         )}

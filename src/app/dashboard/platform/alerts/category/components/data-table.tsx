@@ -62,10 +62,6 @@ export function DataTable<TData extends object, TValue>({
   minHeight = "400px",
   handleOpenCreateDialog,
 }: DataTableProps<TData, TValue>) {
-  // 添加调试日志
-  console.log('DataTable received data:', data);
-  console.log('DataTable columns:', columns);
-
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])

@@ -22,7 +22,6 @@ export default function AlertCategoryPage() {
   
   // 获取URL参数中的config_id
   const configId = searchParams.get("config_id") ? parseInt(searchParams.get("config_id")!) : undefined;
-  console.log('configId:', configId);
   // 表单弹窗状态
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editData, setEditData] = useState<AlertCategory | null>(null);
@@ -104,7 +103,6 @@ export default function AlertCategoryPage() {
     code?: string;
     status?: string;
   }) => {
-    console.log('Search params:', params); // 添加日志
     setQuery((prev) => ({
       ...prev,
       page_num: 1, // 重置到第一页
@@ -128,12 +126,6 @@ export default function AlertCategoryPage() {
     status: "状态",
     create_time: "创建时间",
   };
-
-  // 添加调试日志
-  console.log('Current query:', query);
-  console.log('Response:', response);
-  console.log('AlertCategoriesData:', alertCategoriesData);
-  console.log('List:', list);
 
   // 列定义，传入编辑回调
   const columns = getColumns(handleOpenEditDialog);
