@@ -42,6 +42,7 @@ const formSchema = z.object({
   code: z.string().min(1, "编码不能为空").max(50, "编码不能超过50个字符"),
   name: z.string().min(1, "名称不能为空").max(100, "名称不能超过100个字符"),
   description: z.string().optional(),
+  frequency: z.number().int().min(0, "频率必须大于或等于0").max(1000, "频率不能超过1000").nullable().optional(),
   status: z.enum(["0", "1"], {
     required_error: "请选择状态",
   }),
@@ -76,6 +77,7 @@ export function CategoryFormDialog({
       code: editData?.code || "",
       name: editData?.name || "",
       description: editData?.description || "",
+      frequency: editData?.frequency || null,
       status: (editData?.status as "0" | "1") || "0",
       remark: editData?.remark || "",
     },
@@ -88,6 +90,7 @@ export function CategoryFormDialog({
         code: editData.code || "",
         name: editData.name || "",
         description: editData.description || "",
+        frequency: editData.frequency || null,
         status: (editData.status as "0" | "1") || "0",
         remark: editData.remark || "",
       });
@@ -96,6 +99,7 @@ export function CategoryFormDialog({
         code: "",
         name: "",
         description: "",
+        frequency: null,
         status: "0",
         remark: "",
       });
@@ -151,6 +155,7 @@ export function CategoryFormDialog({
           code: values.code,
           name: values.name,
           description: values.description,
+          frequency: values.frequency,
           status: values.status,
           enabled: values.status === "0",
           remark: values.remark,
@@ -164,6 +169,7 @@ export function CategoryFormDialog({
             code: values.code,
             name: values.name,
             description: values.description,
+            frequency: values.frequency,
             status: values.status,
             enabled: values.status === "0",
             remark: values.remark,
@@ -261,6 +267,28 @@ export function CategoryFormDialog({
                       <SelectItem value="1">禁用</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="frequency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>告警触发频率(次/分钟)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="请输入告警触发频率阈值"
+                      value={field.value === null ? '' : field.value}
+                      onChange={(e) => {
+                        const value = e.target.value === '' ? null : parseInt(e.target.value);
+                        field.onChange(value);
+                      }}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

@@ -57,8 +57,6 @@ export default function AlertConfigFormPage() {
       code: "",
       name: "",
       description: "",
-      threshold: "",
-      frequency: 15,
       status: "0",
       remark: "",
       category_ids: [],
@@ -95,8 +93,6 @@ export default function AlertConfigFormPage() {
         code: config.code,
         name: config.name,
         description: config.description,
-        threshold: config.threshold,
-        frequency: config.frequency,
         status: config.status,
         remark: config.remark,
         category_ids: config.categories?.map((cat) => cat.category_id) || [],
@@ -209,48 +205,6 @@ export default function AlertConfigFormPage() {
                       </FormControl>
                       <FormDescription>
                         唯一的识别码，如&ldquo;CPU_USAGE_ALERT&rdquo;
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="threshold"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>告警阈值</FormLabel>
-                      <FormControl>
-                        <Input placeholder="请输入告警阈值" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        触发告警的临界值，如&ldquo;90%&rdquo;或&ldquo;5次/分钟&rdquo;
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="frequency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>告警频率(分钟)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="请输入告警频率"
-                          {...field}
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value);
-                            field.onChange(isNaN(value) ? "" : value);
-                          }}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        告警触发的最小间隔时间，防止频繁告警
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

@@ -123,6 +123,7 @@ export default function AlertCategoryPage() {
     name: "类别名称",
     code: "类别编码",
     description: "描述",
+    frequency: "告警频率",
     status: "状态",
     create_time: "创建时间",
   };

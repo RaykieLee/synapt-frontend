@@ -65,35 +65,6 @@ export const columns: ColumnDef<AlertConfig>[] = [
     enableSorting: true,
   },
   {
-    accessorKey: "threshold",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="告警阈值" />,
-    cell: ({ row }) => {
-      return (
-        <div className="flex space-x-2">
-          <span className="truncate">
-            {row.original.threshold || "-"}
-          </span>
-        </div>
-      )
-    },
-    enableSorting: true,
-  },
-  {
-    accessorKey: "frequency",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="告警频率" />,
-    cell: ({ row }) => {
-      const frequency = row.original.frequency;
-      return (
-        <div className="flex space-x-2">
-          <span className="truncate">
-            {frequency ? `${frequency}次/分钟` : "-"}
-          </span>
-        </div>
-      )
-    },
-    enableSorting: true,
-  },
-  {
     accessorKey: "categories",
     header: ({ column }) => <DataTableColumnHeader column={column} title="告警类别" />,
     cell: ({ row }) => {
@@ -144,6 +115,21 @@ export const columns: ColumnDef<AlertConfig>[] = [
     },
     filterFn: (row, id, value) => {
       return value.includes(row.original.status)
+    },
+    enableSorting: true,
+  },
+
+  {
+    accessorKey: "description",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="描述" />,
+    cell: ({ row }) => {
+      return (
+        <div className="flex space-x-2">
+          <span className="max-w-[500px] truncate">
+            {row.original.description || "-"}
+          </span>
+        </div>
+      )
     },
     enableSorting: true,
   },

@@ -5,6 +5,7 @@ export interface AlertCategory {
   name: string
   description?: string
   enabled: boolean
+  frequency?: number // 告警触发频率阈值（每分钟最多触发次数）
   status: string
   order_num?: number
   remark?: string
@@ -20,8 +21,6 @@ export interface AlertConfig {
   code: string
   name: string
   description?: string
-  threshold?: string
-  frequency?: number
   status: string
   remark?: string
   categories: AlertCategory[]
@@ -74,6 +73,7 @@ export interface AlertCategoryCreateDto {
   name: string
   description?: string
   enabled?: boolean
+  frequency?: number // 添加告警触发频率阈值字段
   status?: string
   order_num?: number
   remark?: string
@@ -86,6 +86,7 @@ export interface AlertCategoryUpdateDto {
   name?: string
   description?: string
   enabled?: boolean
+  frequency?: number // 添加告警触发频率阈值字段
   status?: string
   order_num?: number
   remark?: string
@@ -97,8 +98,6 @@ export interface AlertConfigCreateDto {
   code: string
   name: string
   description?: string
-  threshold?: string
-  frequency?: number
   status?: string
   remark?: string
   category_ids?: number[]
@@ -109,8 +108,6 @@ export interface AlertConfigUpdateDto {
   code?: string
   name?: string
   description?: string
-  threshold?: string
-  frequency?: number
   status?: string
   remark?: string
   category_ids?: number[]

@@ -79,6 +79,21 @@ export const getColumns = (onEdit?: (category: AlertCategory) => void): ColumnDe
     enableSorting: true,
   },
   {
+    accessorKey: "frequency",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="告警频率" />,
+    cell: ({ row }) => {
+      const frequency = row.original.frequency;
+      return (
+        <div className="flex space-x-2">
+          <span className="truncate">
+            {frequency ? `${frequency}次/分钟` : "-"}
+          </span>
+        </div>
+      )
+    },
+    enableSorting: true,
+  },
+  {
     accessorKey: "status",
     header: ({ column }) => <DataTableColumnHeader column={column} title="状态" />,
     cell: ({ row }) => {

@@ -91,8 +91,6 @@ export default function AlertConfigPage() {
   const columnLabels = {
     name: "配置名称",
     code: "配置编码",
-    threshold: "告警阈值",
-    frequency: "告警频率", 
     categories: "告警类别",
     status: "状态",
     create_time: "创建时间",
