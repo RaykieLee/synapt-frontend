@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { Row } from "@tanstack/react-table"
-import { Edit, MoreHorizontal, Trash, FolderTree } from "lucide-react"
+import { Edit, MoreHorizontal, Trash, FolderTree, Bell } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -75,6 +75,12 @@ export function DataTableRowActions<TData>({
           >
             <FolderTree className="mr-2 h-4 w-4" />
             告警类别管理
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => router.push(`/dashboard/platform/alerts/log?config_id=${config.id}`)}
+          >
+            <Bell className="mr-2 h-4 w-4" />
+            查看告警日志
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => setOpenDeleteDialog(true)}

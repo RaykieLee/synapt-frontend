@@ -5,6 +5,8 @@ import { Row } from "@tanstack/react-table"
 import { useQueryClient, useMutation } from "@tanstack/react-query"
 import { useState } from "react"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+import { Bell } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,6 +30,7 @@ export function DataTableRowActions<TData extends AlertCategory>({
 }: DataTableRowActionsProps<TData>) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const queryClient = useQueryClient()
+  const router = useRouter()
   
   // 删除操作
   const deleteMutation = useMutation({
@@ -64,6 +67,12 @@ export function DataTableRowActions<TData extends AlertCategory>({
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handleEdit}>
             编辑
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={() => router.push(`/dashboard/platform/alerts/log?category_id=${row.original.category_id}`)}
+          >
+            <Bell className="mr-2 h-4 w-4" />
+            查看告警日志
           </DropdownMenuItem>
           <DropdownMenuItem 
             className="text-red-600"

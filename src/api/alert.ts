@@ -7,7 +7,12 @@ import {
   AlertConfig, 
   AlertConfigCreateDto, 
   AlertConfigQuery, 
-  AlertConfigUpdateDto 
+  AlertConfigUpdateDto,
+  AlertLog,
+  AlertLogCreateDto,
+  AlertLogQuery,
+  AlertLogUpdateDto,
+  AlertLogBatchProcessDto
 } from "@/types/alert";
 import { BaseResponse, PageResult } from "@/types/base";
 
@@ -32,6 +37,10 @@ export const alertConfigAPI = {
       }
     });
   },
+
+  // 获取所有启用的告警配置（用于下拉选择）
+  getAll: () => 
+    apiRequest<BaseResponse<AlertConfig[]>>("/api/v1/platform/alerts/config/all", "GET"),
 
   // 获取告警配置详情
   getDetail: (config_id: number) => 
@@ -102,4 +111,59 @@ export const alertCategoryAPI = {
   // 批量删除告警类别
   batchDelete: (category_ids: number[]) => 
     apiRequest<BaseResponse<void>>("/api/v1/platform/alerts/category/batch-delete", "POST", { category_ids }),
+};
+
+// 告警日志API
+export const alertLogAPI = {
+  // 获取告警日志列表
+  getList: (params: AlertLogQuery) => {
+    return apiRequest<BaseResponse<PageResult<AlertLog>>>("/api/v1/platform/alerts/log/list", "POST", { 
+      page_num: params.page_num || 1, 
+      page_size: params.page_size || 10,
+      sorts: params.sorts || [
+        {
+          field: "create_time",
+          order: "desc"
+        }
+      ],
+      params: {
+        keywords: {
+          title: params.params?.keywords?.title,
+          content: params.params?.keywords?.content,
+          device_name: params.params?.keywords?.device_name,
+        },
+        status: params.params?.status,
+        level: params.params?.level,
+        source: params.params?.source,
+        alert_config_id: params.params?.alert_config_id,
+        category_id: params.params?.category_id,
+        time_range: params.params?.time_range,
+        search_mode: params.params?.search_mode || "and"
+      }
+    });
+  },
+
+  // 获取告警日志详情
+  getDetail: (log_id: number) => 
+    apiRequest<BaseResponse<AlertLog>>(`/api/v1/platform/alerts/log/${log_id}`, "GET"),
+
+  // 创建告警日志
+  create: (log: AlertLogCreateDto) => 
+    apiRequest<BaseResponse<AlertLog>>("/api/v1/platform/alerts/log/create", "POST", log),
+
+  // 更新告警日志
+  update: (log_id: number, log: AlertLogUpdateDto) => 
+    apiRequest<BaseResponse<AlertLog>>(`/api/v1/platform/alerts/log/${log_id}`, "PUT", log),
+
+  // 删除告警日志
+  delete: (log_id: number) => 
+    apiRequest<BaseResponse<void>>(`/api/v1/platform/alerts/log/${log_id}`, "DELETE"),
+
+  // 批量删除告警日志
+  batchDelete: (log_ids: number[]) => 
+    apiRequest<BaseResponse<void>>("/api/v1/platform/alerts/log/batch-delete", "POST", { log_ids }),
+
+  // 批量处理告警日志
+  batchProcess: (data: AlertLogBatchProcessDto) => 
+    apiRequest<BaseResponse<void>>("/api/v1/platform/alerts/log/batch-process", "PUT", data),
 }; 

@@ -149,13 +149,16 @@ export function CategoryFormDialog({
     setIsSubmitting(true);
     
     try {
+      // 处理frequency字段，将null转换为undefined
+      const frequency = values.frequency === null ? undefined : values.frequency;
+      
       if (mode === "create") {
         // 创建新告警类别
         await createMutation.mutateAsync({
           code: values.code,
           name: values.name,
           description: values.description,
-          frequency: values.frequency,
+          frequency: frequency,
           status: values.status,
           enabled: values.status === "0",
           remark: values.remark,
@@ -169,7 +172,7 @@ export function CategoryFormDialog({
             code: values.code,
             name: values.name,
             description: values.description,
-            frequency: values.frequency,
+            frequency: frequency,
             status: values.status,
             enabled: values.status === "0",
             remark: values.remark,

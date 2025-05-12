@@ -30,12 +30,50 @@ export interface AlertConfig {
   update_by?: string
 }
 
+// 告警日志
+export interface AlertLog {
+  id: number
+  alert_config_id: number
+  category_id: number
+  level: string
+  title: string
+  content?: string
+  source?: string
+  ip?: string
+  device_name?: string
+  status: string
+  process_time?: string
+  process_by?: string
+  process_note?: string
+  config?: AlertConfig
+  category?: AlertCategory
+  create_time?: string
+  create_by?: string
+  update_time?: string
+  update_by?: string
+  remark?: string
+}
+
 // 告警搜索参数接口
 export interface AlertSearchParams {
   name?: string
   code?: string
   status?: string
   category_ids?: number[]
+}
+
+// 告警日志搜索参数接口
+export interface AlertLogSearchParams {
+  title?: string
+  content?: string
+  device_name?: string
+  status?: string
+  level?: string
+  source?: string
+  alert_config_id?: number
+  category_id?: number
+  create_time_start?: string
+  create_time_end?: string
 }
 
 // 告警类别查询参数
@@ -59,6 +97,35 @@ export interface AlertCategoryQuery {
         end?: string
       }
       update_time?: {
+        start?: string
+        end?: string
+      }
+    }
+    search_mode?: 'and' | 'or'
+  }
+}
+
+// 告警日志查询参数
+export interface AlertLogQuery {
+  page_num?: number
+  page_size?: number
+  sorts?: Array<{
+    field: string
+    order: 'asc' | 'desc'
+  }>
+  params?: {
+    keywords?: {
+      title?: string
+      content?: string
+      device_name?: string
+    }
+    status?: string
+    level?: string
+    source?: string
+    alert_config_id?: number
+    category_id?: number
+    time_range?: {
+      create_time?: {
         start?: string
         end?: string
       }
@@ -111,6 +178,34 @@ export interface AlertConfigUpdateDto {
   status?: string
   remark?: string
   category_ids?: number[]
+}
+
+// 创建告警日志请求
+export interface AlertLogCreateDto {
+  alert_config_id: number
+  category_id: number
+  level: string
+  title: string
+  content?: string
+  source?: string
+  ip?: string
+  device_name?: string
+  status?: string
+  remark?: string
+}
+
+// 更新告警日志请求
+export interface AlertLogUpdateDto {
+  status?: string
+  process_note?: string
+  remark?: string
+}
+
+// 批量处理告警日志请求
+export interface AlertLogBatchProcessDto {
+  log_ids: number[]
+  status: string
+  process_note?: string
 }
 
 // 告警配置查询参数
