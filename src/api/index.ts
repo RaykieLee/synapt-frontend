@@ -6,4 +6,5 @@ export * from './dept';
 export * from './config';
 export * from './dict';
 export * from './stream';
-export * from './alert'; 
+export * from './alert';
+export * from './app'; 

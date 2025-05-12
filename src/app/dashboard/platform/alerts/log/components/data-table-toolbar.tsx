@@ -118,6 +118,25 @@ export function DataTableToolbar<TData>({
   // 使用ref存储当前的搜索参数
   const searchParamsRef = useRef<AlertLogSearchParams>({})
 
+  // 创建防抖搜索函数
+  const debouncedSearchFn = useCallback(() => {
+    if (onSearch) {
+      onSearch(searchParamsRef.current)
+    }
+  }, [onSearch]);
+
+  // 使用防抖处理搜索
+  const debouncedSearch = debounce(debouncedSearchFn, 500);
+
+  // 更新搜索参数
+  const updateSearchParams = useCallback((key: keyof AlertLogSearchParams, value: string | number | undefined) => {
+    searchParamsRef.current = {
+      ...searchParamsRef.current,
+      [key]: value || undefined
+    }
+    debouncedSearch();
+  }, [debouncedSearch]);
+
   // 初始化过滤器
   useEffect(() => {
     if (!filtersInitialized) {
@@ -141,7 +160,7 @@ export function DataTableToolbar<TData>({
       
       setFiltersInitialized(true);
     }
-  }, [table, configId, categoryId, filtersInitialized]);
+  }, [table, configId, categoryId, filtersInitialized, updateSearchParams]);
 
   // 获取所有告警配置
   const { data: configsResponse } = useQuery({
@@ -229,25 +248,6 @@ export function DataTableToolbar<TData>({
       status
     })
   }
-
-  // 更新搜索参数
-  const updateSearchParams = (key: keyof AlertLogSearchParams, value: string | number | undefined) => {
-    searchParamsRef.current = {
-      ...searchParamsRef.current,
-      [key]: value || undefined
-    }
-    debouncedSearch();
-  }
-
-  // 创建防抖搜索函数
-  const debouncedSearchFn = useCallback(() => {
-    if (onSearch) {
-      onSearch(searchParamsRef.current)
-    }
-  }, [onSearch]);
-
-  // 使用防抖处理搜索
-  const debouncedSearch = debounce(debouncedSearchFn, 500);
 
   // 自定义告警日志列标签
   const alertLogColumnLabels = {
