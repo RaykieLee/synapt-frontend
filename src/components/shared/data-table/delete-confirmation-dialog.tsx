@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useCallback } from "react"
 import {
   Dialog,
   DialogContent,
@@ -34,8 +34,44 @@ export function DeleteConfirmationDialog({
   confirmText = "确认删除",
   deletingText = "删除中...",
 }: DeleteConfirmationDialogProps) {
+  
+  // 安全关闭弹窗的函数
+  const safeCloseDialog = useCallback((closeFunc: () => void) => {
+    // 首先使用RAF确保在下一帧执行
+    requestAnimationFrame(() => {
+      // 然后使用setTimeout确保React有时间更新DOM
+      setTimeout(() => {
+        closeFunc()
+      }, 150)
+    })
+  }, [])
+  
+  // 为了确保弹窗关闭后彻底清除蒙版
+  const handleOpenChange = useCallback((isOpen: boolean) => {
+    if (!isOpen && !isDeleting) {
+      // 安全关闭弹窗
+      safeCloseDialog(() => onOpenChange(false))
+    } else if (isOpen) {
+      onOpenChange(true)
+    }
+  }, [isDeleting, onOpenChange, safeCloseDialog])
+  
+  // 处理确认操作
+  const handleConfirm = useCallback(() => {
+    // 执行确认操作
+    onConfirm()
+  }, [onConfirm])
+  
+  // 处理取消操作
+  const handleCancel = useCallback(() => {
+    safeCloseDialog(() => onOpenChange(false))
+  }, [onOpenChange, safeCloseDialog])
+  
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog 
+      open={open} 
+      onOpenChange={handleOpenChange}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -44,14 +80,14 @@ export function DeleteConfirmationDialog({
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={handleCancel}
             disabled={isDeleting}
           >
             {cancelText}
           </Button>
           <Button
             variant="destructive"
-            onClick={onConfirm}
+            onClick={handleConfirm}
             disabled={isDeleting}
           >
             {isDeleting ? deletingText : confirmText}

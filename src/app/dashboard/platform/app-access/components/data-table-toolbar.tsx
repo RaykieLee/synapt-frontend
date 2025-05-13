@@ -2,7 +2,6 @@
 
 import { Cross2Icon } from "@radix-ui/react-icons"
 import { Table } from "@tanstack/react-table"
-import { useRouter } from "next/navigation"
 import { PlusCircle } from "lucide-react"
 import { useCallback, useRef, useState } from "react"
 import debounce from "lodash/debounce"
@@ -27,15 +26,16 @@ interface DataTableToolbarProps<TData> {
   table: Table<TData>
   onSearch?: (params: AppAccessSearchParams) => void
   columnLabels?: Record<string, string>
+  onCreateClick?: () => void
 }
 
 export function DataTableToolbar<TData>({
   table,
   onSearch,
   columnLabels,
+  onCreateClick,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0
-  const router = useRouter()
   const [deleteOpen, setDeleteOpen] = useState(false)
   
   // 日期范围状态
@@ -144,9 +144,9 @@ export function DataTableToolbar<TData>({
   }
 
   return (
-    <div className="flex flex-col space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-1 items-center space-x-2">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Input
             placeholder="搜索应用名称..."
             value={(table.getColumn("app_name")?.getFilterValue() as string) ?? ""}
@@ -155,7 +155,7 @@ export function DataTableToolbar<TData>({
               table.getColumn("app_name")?.setFilterValue(value)
               updateSearchParams("app_name", value)
             }}
-            className="h-8 w-[150px] lg:w-[250px]"
+            className="h-10 w-[150px] lg:w-[200px]"
           />
           <Input
             placeholder="搜索应用编码..."
@@ -165,8 +165,31 @@ export function DataTableToolbar<TData>({
               table.getColumn("app_code")?.setFilterValue(value)
               updateSearchParams("app_code", value)
             }}
-            className="h-8 w-[150px] lg:w-[200px]"
+            className="h-10 w-[150px] lg:w-[200px]"
           />
+          
+          <div className="flex items-center w-[300px]">
+            {/* <span className="text-sm font-medium mr-1">创建时间:</span> */}
+            <DateRangePicker
+              value={createTimeRange}
+              onChange={handleCreateTimeRangeChange}
+              placeholder="选择创建时间范围"
+              align="start"
+              className="w-[220px]"
+            />
+          </div>
+          
+          <div className="flex items-center w-[300px]">
+            {/* <span className="text-sm font-medium mr-1">过期时间:</span> */}
+            <DateRangePicker
+              value={expireTimeRange}
+              onChange={handleExpireTimeRangeChange}
+              placeholder="选择过期时间范围"
+              align="start"
+              className="w-[220px]"
+            />
+          </div>
+          
           {table.getColumn("status") && (
             <DataTableFacetedFilter
               column={table.getColumn("status")}
@@ -178,6 +201,7 @@ export function DataTableToolbar<TData>({
               }}
             />
           )}
+          
           {isFiltered && (
             <Button
               variant="ghost"
@@ -190,14 +214,14 @@ export function DataTableToolbar<TData>({
                   onSearch({})
                 }
               }}
-              className="h-8 px-2 lg:px-3"
+              className="h-8 px-2"
             >
               重置
               <Cross2Icon className="ml-2 h-4 w-4" />
             </Button>
           )}
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           {table.getSelectedRowModel().rows.length > 0 && (
             <Button
               variant="destructive"
@@ -215,35 +239,11 @@ export function DataTableToolbar<TData>({
           <Button
             size="sm"
             className="h-8"
-            onClick={() => router.push("/dashboard/platform/app-access/create")}
+            onClick={onCreateClick}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             新建应用
           </Button>
-        </div>
-      </div>
-
-      {/* 时间范围筛选 */}
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center">
-          <span className="text-sm font-medium mr-2">创建时间:</span>
-          <DateRangePicker
-            value={createTimeRange}
-            onChange={handleCreateTimeRangeChange}
-            placeholder="选择创建时间范围"
-            align="start"
-            className="w-[280px]"
-          />
-        </div>
-        <div className="flex items-center">
-          <span className="text-sm font-medium mr-2">过期时间:</span>
-          <DateRangePicker
-            value={expireTimeRange}
-            onChange={handleExpireTimeRangeChange}
-            placeholder="选择过期时间范围"
-            align="start"
-            className="w-[280px]"
-          />
         </div>
       </div>
 
@@ -252,13 +252,13 @@ export function DataTableToolbar<TData>({
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onConfirm={() => {
-          const ids = table.getSelectedRowModel().rows.map(
+          const selectedIds = table.getSelectedRowModel().rows.map(
             (row) => (row.original as AppAccess).id
           )
-          deleteMutation.mutate(ids)
+          deleteMutation.mutate(selectedIds)
         }}
-        title="确认删除"
-        description={`确定要删除选中的 ${table.getSelectedRowModel().rows.length} 个应用吗？此操作不可恢复。`}
+        title="确认批量删除"
+        description={`确定要删除选中的 ${table.getSelectedRowModel().rows.length} 个应用接入吗？此操作不可恢复。`}
         isDeleting={deleteMutation.isPending}
       />
     </div>

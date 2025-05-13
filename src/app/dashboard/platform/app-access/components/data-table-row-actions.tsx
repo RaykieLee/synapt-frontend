@@ -2,7 +2,9 @@
 
 import { DotsHorizontalIcon } from "@radix-ui/react-icons"
 import { Row } from "@tanstack/react-table"
-import { useRouter } from "next/navigation"
+import { useState, useCallback } from "react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -12,12 +14,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { AppAccess } from "@/types/app"
 import { DeleteConfirmationDialog } from "@/components/shared/data-table"
+import { AppAccess } from "@/types/app"
 import { appAccessAPI } from "@/api"
-import { useState } from "react"
+import { AppDialog } from "./app-dialog"
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>
@@ -26,10 +26,11 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const router = useRouter()
   const queryClient = useQueryClient()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
+  const [viewOpen, setViewOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
   
   const app = row.original as AppAccess
   
@@ -39,7 +40,9 @@ export function DataTableRowActions<TData>({
     onSuccess: () => {
       toast.success("删除成功")
       queryClient.invalidateQueries({ queryKey: ["app-access", "list"] })
-      setDeleteOpen(false)
+      
+      // 使用更安全的方式关闭弹窗
+      safeCloseDialog(() => setDeleteOpen(false))
     },
     onError: (error) => {
       toast.error(`删除失败: ${error}`)
@@ -53,12 +56,48 @@ export function DataTableRowActions<TData>({
       toast.success("API密钥重置成功")
       queryClient.invalidateQueries({ queryKey: ["app-access", "list"] })
       queryClient.invalidateQueries({ queryKey: ["app-access", "detail", app.id] })
-      setResetOpen(false)
+      
+      // 使用更安全的方式关闭弹窗
+      safeCloseDialog(() => setResetOpen(false))
     },
     onError: (error) => {
       toast.error(`重置失败: ${error}`)
     },
   })
+
+  // 安全关闭弹窗的函数
+  const safeCloseDialog = useCallback((closeFunc: () => void) => {
+    // 首先使用RAF确保在下一帧执行
+    requestAnimationFrame(() => {
+      // 然后使用setTimeout确保React有时间更新DOM
+      setTimeout(() => {
+        closeFunc()
+      }, 150)
+    })
+  }, [])
+
+  // 处理对话框成功回调
+  const handleDialogSuccess = () => {
+    // 安全关闭对话框
+    safeCloseDialog(() => {
+      setViewOpen(false)
+      setEditOpen(false)
+    })
+  }
+
+  // 处理通用的弹窗打开
+  const handleOpenDialog = useCallback((setter: (open: boolean) => void) => {
+    // 确保其他所有弹窗都关闭
+    setDeleteOpen(false)
+    setResetOpen(false)
+    setViewOpen(false)
+    setEditOpen(false)
+    
+    // 延迟打开新弹窗，确保其他弹窗已完全关闭
+    setTimeout(() => {
+      setter(true)
+    }, 100)
+  }, [])
 
   return (
     <>
@@ -73,32 +112,59 @@ export function DataTableRowActions<TData>({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[160px]">
-          <DropdownMenuItem onClick={() => router.push(`/dashboard/platform/app-access/${app.id}`)}>
+          <DropdownMenuItem onClick={() => handleOpenDialog(setViewOpen)}>
             查看详情
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push(`/dashboard/platform/app-access/${app.id}/edit`)}>
+          <DropdownMenuItem onClick={() => handleOpenDialog(setEditOpen)}>
             编辑
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
-            onClick={() => setResetOpen(true)}
+            onClick={() => handleOpenDialog(setResetOpen)}
           >
             重置API密钥
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             className="text-destructive focus:text-destructive"
-            onClick={() => setDeleteOpen(true)}
+            onClick={() => handleOpenDialog(setDeleteOpen)}
           >
             删除
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
+      {/* 查看应用详情对话框 */}
+      <AppDialog
+        app={app}
+        mode="view"
+        open={viewOpen}
+        onOpenChange={(open) => {
+          if (!open) safeCloseDialog(() => setViewOpen(false))
+          else setViewOpen(open)
+        }}
+        onSuccess={handleDialogSuccess}
+      />
+
+      {/* 编辑应用对话框 */}
+      <AppDialog
+        app={app}
+        mode="edit"
+        open={editOpen}
+        onOpenChange={(open) => {
+          if (!open) safeCloseDialog(() => setEditOpen(false))
+          else setEditOpen(open)
+        }}
+        onSuccess={handleDialogSuccess}
+      />
+
       {/* 删除确认对话框 */}
       <DeleteConfirmationDialog
         open={deleteOpen}
-        onOpenChange={setDeleteOpen}
+        onOpenChange={(open) => {
+          if (!open) safeCloseDialog(() => setDeleteOpen(false))
+          else setDeleteOpen(open)
+        }}
         onConfirm={() => deleteMutation.mutate(app.id)}
         title="确认删除"
         description="确定要删除此应用接入吗？此操作不可恢复。"
@@ -108,7 +174,10 @@ export function DataTableRowActions<TData>({
       {/* 重置API密钥确认对话框 */}
       <DeleteConfirmationDialog
         open={resetOpen}
-        onOpenChange={setResetOpen}
+        onOpenChange={(open) => {
+          if (!open) safeCloseDialog(() => setResetOpen(false))
+          else setResetOpen(open)
+        }}
         onConfirm={() => resetApiKeyMutation.mutate(app.id)}
         title="确认重置API密钥"
         description="确定要重置API密钥吗？此操作将使当前密钥失效，需要更新使用此接入的所有应用。"

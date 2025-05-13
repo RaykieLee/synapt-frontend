@@ -37,9 +37,12 @@ const mockData = {
     { time: '20:00', value: 35 },
   ],
   alerts: [
-    { id: 1, type: '异常', location: '充电桩A12', time: '10:25:33', status: '未处理' },
-    { id: 2, type: '故障', location: '充电桩B05', time: '10:20:15', status: '已处理' },
-    { id: 3, type: '异常', location: '充电桩A08', time: '10:15:42', status: '处理中' },
+    { id: 1, type: '异常', location: '检测到未授权人员进入禁区', time: '10:25:33', status: '未处理' },
+    { id: 2, type: '故障', location: '检测到吸烟行为', time: '10:20:15', status: '已处理' },
+    { id: 3, type: '异常', location: '检测到火灾', time: '10:15:42', status: '处理中' },
+    { id: 4, type: '异常', location: '检测到烟雾', time: '10:15:42', status: '处理中' },
+    { id: 5, type: '异常', location: '检测到人员跌倒', time: '10:15:42', status: '处理中' },
+
     // ... 更多告警数据
   ]
 };
@@ -132,7 +135,7 @@ export default function ChargingPileDetectionPage() {
               <AlertCircle className="w-5 h-5 text-red-500" />
               <h2 className="text-xl font-bold">实时告警</h2>
             </div>
-            <ScrollArea className="h-[calc(100%-40px)]">
+            <ScrollArea className="h-[calc(80%-40px)]">
               <div className="space-y-2">
                 {mockData.alerts.map((alert) => (
                   <Card key={alert.id} className="p-3">

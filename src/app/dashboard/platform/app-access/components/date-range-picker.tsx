@@ -1,9 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { CalendarIcon } from "@radix-ui/react-icons"
-import { addDays, format, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns"
+import { addDays, format, subDays } from "date-fns"
 import { zhCN } from "date-fns/locale"
+import { Calendar as CalendarIcon, X } from "lucide-react"
 import { DateRange } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
@@ -41,67 +41,58 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false)
   
-  // 快速选择的预设选项
-  const selectPreset = (preset: string) => {
-    const now = new Date()
-    let date: DateRange
-    
-    switch (preset) {
-      case "today":
-        date = {
-          from: now,
-          to: now,
+  // 预设日期范围选项
+  const presets = [
+    {
+      name: "今天",
+      getValue: () => ({
+        from: new Date(),
+        to: new Date(),
+      }),
+    },
+    {
+      name: "昨天",
+      getValue: () => ({
+        from: subDays(new Date(), 1),
+        to: subDays(new Date(), 1),
+      }),
+    },
+    {
+      name: "最近7天",
+      getValue: () => ({
+        from: subDays(new Date(), 6),
+        to: new Date(),
+      }),
+    },
+    {
+      name: "最近30天",
+      getValue: () => ({
+        from: subDays(new Date(), 29),
+        to: new Date(),
+      }),
+    },
+    {
+      name: "本月",
+      getValue: () => {
+        const today = new Date()
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+        return {
+          from: startOfMonth,
+          to: today,
         }
-        break
-      case "yesterday":
-        const yesterday = addDays(now, -1)
-        date = {
-          from: yesterday,
-          to: yesterday,
-        }
-        break
-      case "7days":
-        date = {
-          from: addDays(now, -7),
-          to: now,
-        }
-        break
-      case "30days":
-        date = {
-          from: addDays(now, -30),
-          to: now,
-        }
-        break
-      case "90days":
-        date = {
-          from: addDays(now, -90),
-          to: now,
-        }
-        break
-      case "thisMonth":
-        date = {
-          from: startOfMonth(now),
-          to: endOfMonth(now),
-        }
-        break
-      case "lastMonth":
-        const lastMonth = addDays(startOfMonth(now), -1)
-        date = {
-          from: startOfMonth(lastMonth),
-          to: endOfMonth(lastMonth),
-        }
-        break
-      case "thisYear":
-        date = {
-          from: startOfYear(now),
-          to: endOfYear(now),
-        }
-        break
-      default:
-        return
-    }
-    
-    onChange(date)
+      },
+    },
+  ]
+
+  // 选择预设日期范围
+  const selectPreset = (preset: typeof presets[number]) => {
+    const newValue = preset.getValue()
+    onChange(newValue)
+  }
+  
+  // 清除选择
+  const handleClear = () => {
+    onChange(undefined)
   }
 
   return (
@@ -113,7 +104,7 @@ export function DateRangePicker({
             variant={"outline"}
             size="sm"
             className={cn(
-              "h-8 w-[300px] justify-start text-left font-normal",
+              "h-10 min-w-[300px] justify-start text-left font-normal border-border shadow-sm",
               !value && "text-muted-foreground"
             )}
           >
@@ -121,7 +112,7 @@ export function DateRangePicker({
             {value?.from ? (
               value.to ? (
                 <>
-                  {format(value.from, "yyyy年MM月dd日", { locale: zhCN })} ~{" "}
+                  {format(value.from, "yyyy年MM月dd日", { locale: zhCN })} -{" "}
                   {format(value.to, "yyyy年MM月dd日", { locale: zhCN })}
                 </>
               ) : (
@@ -132,58 +123,50 @@ export function DateRangePicker({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent 
-          className="w-auto p-0" 
-          align={align}
-          side={side}
-        >
-          <div className="p-2 border-b">
-            <Select
-              onValueChange={(value) => selectPreset(value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="快速选择..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="today">今天</SelectItem>
-                <SelectItem value="yesterday">昨天</SelectItem>
-                <SelectItem value="7days">最近 7 天</SelectItem>
-                <SelectItem value="30days">最近 30 天</SelectItem>
-                <SelectItem value="90days">最近 90 天</SelectItem>
-                <SelectItem value="thisMonth">本月</SelectItem>
-                <SelectItem value="lastMonth">上月</SelectItem>
-                <SelectItem value="thisYear">今年</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="p-3">
-            <CalendarCN
-              mode="range"
-              defaultMonth={value?.from}
-              selected={value}
-              onSelect={onChange}
-              numberOfMonths={2}
-            />
-          </div>
-          <div className="flex items-center justify-end gap-2 border-t p-3">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                onChange(undefined)
-                setOpen(false)
-              }}
-            >
-              清除
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => {
-                setOpen(false)
-              }}
-            >
-              确定
-            </Button>
+        <PopoverContent className="w-auto p-0" align={align} side={side}>
+          <div className="flex flex-col space-y-4 p-3">
+            <div className="flex items-center gap-2">
+              <Select
+                onValueChange={(value) => {
+                  const preset = presets.find((preset) => preset.name === value)
+                  if (preset) {
+                    selectPreset(preset)
+                  }
+                }}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="选择快捷日期" />
+                </SelectTrigger>
+                <SelectContent>
+                  {presets.map((preset) => (
+                    <SelectItem key={preset.name} value={preset.name}>
+                      {preset.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-2"
+                onClick={handleClear}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">清除</span>
+              </Button>
+            </div>
+            <div className="rounded-md border">
+              <CalendarCN
+                mode="range"
+                defaultMonth={value?.from}
+                selected={value}
+                onSelect={onChange}
+                numberOfMonths={2}
+                initialFocus
+                fixedWeeks
+                locale={zhCN}
+              />
+            </div>
           </div>
         </PopoverContent>
       </Popover>
