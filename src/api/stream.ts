@@ -5,24 +5,7 @@ import { BaseResponse, PageResult } from "@/types/base";
 export const streamAPI = {
   // 获取视频流列表
   getList: (params: StreamQuery) => 
-    apiRequest<BaseResponse<PageResult<Stream>>>("/api/v1/platform/streams/list", "POST", { 
-      page_num: params.page_num || 1, 
-      page_size: params.page_size || 10,
-      sorts: [
-        {
-          field: "create_time",
-          order: "desc"
-        }
-      ],
-      params: {
-        keywords: {
-          stream_name: params.keywords?.stream_name
-        },
-        status: params.status,
-        time_range: params.time_range,
-        search_mode: params.search_mode || "and"
-      }
-    }),
+    apiRequest<BaseResponse<PageResult<Stream>>>("/api/v1/platform/streams/list", "POST", params),
 
   // 获取视频流详情
   getDetail: (stream_id: number) => 

@@ -18,8 +18,9 @@ import { VideoPlayer } from "@/components/video-player";
 
 // 视频流配置
 const STREAM_URL = "http://172.16.100.177:8085/live/cctv5.flv";
-const STREAM_URL2 = "http://172.16.100.177:8085/live/cctv4.flv";
-
+// const STREAM_URL2 = "http://172.16.100.177:8085/live/cctv4.flv";
+const STREAM_URL2 = "http://localhost:8080/sc_ai_hub/1.live.flv";
+// http://localhost:8080/sc_ai_hub/1/hls.flv?vhost=__defaultVhost__
 // 模拟数据
 const mockData = {
   stats: {

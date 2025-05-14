@@ -23,19 +23,25 @@ export interface Stream {
 
 // 视频流查询参数
 export interface StreamQuery {
-  keywords?: {
-    stream_name?: string;         // 按名称搜索
+  page_num: number;              // 页码
+  page_size: number;             // 每页数量
+  sorts: {                       // 排序
+    field: string;               // 排序字段
+    order: 'asc' | 'desc';       // 排序方式
+  }[];
+  params: {                      // 查询参数
+    keywords?: {                 // 关键字查询
+      stream_name?: string;      // 按名称搜索
   };
-  status?: StreamStatus;          // 按状态筛选
-  time_range?: {                  // 时间范围
+    status?: StreamStatus | string; // 按状态筛选
+    time_range?: {               // 时间范围
     create_time?: {
       start?: string;
       end?: string;
     };
   };
-  search_mode?: 'and' | 'or';     // 查询模式
-  page_num?: number;              // 页码
-  page_size?: number;             // 每页数量
+    search_mode: 'and' | 'or';   // 查询模式
+  };
 }
 
 // 创建视频流DTO
