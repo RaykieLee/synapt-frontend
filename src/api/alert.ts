@@ -166,4 +166,8 @@ export const alertLogAPI = {
   // 批量处理告警日志
   batchProcess: (data: AlertLogBatchProcessDto) => 
     apiRequest<BaseResponse<void>>("/api/v1/platform/alerts/log/batch-process", "PUT", data),
+
+  // 获取实时告警（按配置编码）
+  getRealtimeAlerts: (configCode: string, limit: number = 20) => 
+    apiRequest<BaseResponse<AlertLog[]>>(`/api/v1/platform/alerts/log/realtime/${configCode}?limit=${limit}`, "GET"),
 }; 

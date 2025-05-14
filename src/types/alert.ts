@@ -6,6 +6,7 @@ export interface AlertCategory {
   description?: string
   enabled: boolean
   frequency?: number // 告警触发频率阈值（每分钟最多触发次数）
+  alert_level: string // 告警等级(emergency/critical/warning/notice)
   status: string
   order_num?: number
   remark?: string
@@ -41,6 +42,7 @@ export interface AlertLog {
   source?: string
   ip?: string
   device_name?: string
+  image_url?: string  // 告警图片URL
   status: string
   process_time?: string
   process_by?: string
@@ -141,6 +143,7 @@ export interface AlertCategoryCreateDto {
   description?: string
   enabled?: boolean
   frequency?: number // 添加告警触发频率阈值字段
+  alert_level?: string // 告警等级(emergency/critical/warning/notice)
   status?: string
   order_num?: number
   remark?: string
@@ -154,6 +157,7 @@ export interface AlertCategoryUpdateDto {
   description?: string
   enabled?: boolean
   frequency?: number // 添加告警触发频率阈值字段
+  alert_level?: string // 告警等级(emergency/critical/warning/notice)
   status?: string
   order_num?: number
   remark?: string

@@ -94,6 +94,46 @@ export const getColumns = (onEdit?: (category: AlertCategory) => void): ColumnDe
     enableSorting: true,
   },
   {
+    accessorKey: "alert_level",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="告警等级" />,
+    cell: ({ row }) => {
+      const alertLevel = row.original.alert_level;
+      
+      // 根据不同级别显示不同标签样式
+      let variant: "destructive" | "outline" | "default" | "secondary" = "default";
+      let label = "通知";
+      
+      switch(alertLevel) {
+        case "emergency":
+          variant = "destructive";
+          label = "紧急";
+          break;
+        case "critical":
+          variant = "destructive";
+          label = "严重";
+          break;
+        case "warning":
+          variant = "secondary";
+          label = "警告";
+          break;
+        case "notice":
+          variant = "outline";
+          label = "通知";
+          break;
+      }
+      
+      return (
+        <Badge variant={variant}>
+          {label}
+        </Badge>
+      )
+    },
+    filterFn: (row, id, value) => {
+      return value.includes(row.original.alert_level)
+    },
+    enableSorting: true,
+  },
+  {
     accessorKey: "status",
     header: ({ column }) => <DataTableColumnHeader column={column} title="状态" />,
     cell: ({ row }) => {

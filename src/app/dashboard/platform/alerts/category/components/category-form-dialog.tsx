@@ -43,6 +43,9 @@ const formSchema = z.object({
   name: z.string().min(1, "名称不能为空").max(100, "名称不能超过100个字符"),
   description: z.string().optional(),
   frequency: z.number().int().min(0, "频率必须大于或等于0").max(1000, "频率不能超过1000").nullable().optional(),
+  alert_level: z.enum(["emergency", "critical", "warning", "notice"], {
+    required_error: "请选择告警等级",
+  }),
   status: z.enum(["0", "1"], {
     required_error: "请选择状态",
   }),
@@ -78,6 +81,7 @@ export function CategoryFormDialog({
       name: editData?.name || "",
       description: editData?.description || "",
       frequency: editData?.frequency || null,
+      alert_level: (editData?.alert_level as "emergency" | "critical" | "warning" | "notice") || "notice",
       status: (editData?.status as "0" | "1") || "0",
       remark: editData?.remark || "",
     },
@@ -91,6 +95,7 @@ export function CategoryFormDialog({
         name: editData.name || "",
         description: editData.description || "",
         frequency: editData.frequency || null,
+        alert_level: (editData.alert_level as "emergency" | "critical" | "warning" | "notice") || "notice",
         status: (editData.status as "0" | "1") || "0",
         remark: editData.remark || "",
       });
@@ -100,6 +105,7 @@ export function CategoryFormDialog({
         name: "",
         description: "",
         frequency: null,
+        alert_level: "notice",
         status: "0",
         remark: "",
       });
@@ -159,6 +165,7 @@ export function CategoryFormDialog({
           name: values.name,
           description: values.description,
           frequency: frequency,
+          alert_level: values.alert_level,
           status: values.status,
           enabled: values.status === "0",
           remark: values.remark,
@@ -173,6 +180,7 @@ export function CategoryFormDialog({
             name: values.name,
             description: values.description,
             frequency: frequency,
+            alert_level: values.alert_level,
             status: values.status,
             enabled: values.status === "0",
             remark: values.remark,
@@ -292,6 +300,33 @@ export function CategoryFormDialog({
                       }}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="alert_level"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>告警等级</FormLabel>
+                  <Select 
+                    value={field.value} 
+                    onValueChange={field.onChange}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="请选择告警等级" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="emergency">紧急</SelectItem>
+                      <SelectItem value="critical">严重</SelectItem>
+                      <SelectItem value="warning">警告</SelectItem>
+                      <SelectItem value="notice">通知</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
