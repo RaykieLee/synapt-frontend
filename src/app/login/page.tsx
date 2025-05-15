@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,10 +16,19 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [redirectPath, setRedirectPath] = useState("/dashboard");
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
+
+  // 在组件加载时，检查是否有重定向路径
+  useEffect(() => {
+    const savedRedirectPath = localStorage.getItem("redirectAfterLogin");
+    if (savedRedirectPath) {
+      setRedirectPath(savedRedirectPath);
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -63,8 +72,11 @@ export default function LoginPage() {
         description: `欢迎回来，${data.user_info.nickName || data.user_info.userName}`,
       });
       
-      // 跳转到仪表板
-      router.push("/dashboard");
+      // 清除保存的重定向路径
+      localStorage.removeItem("redirectAfterLogin");
+      
+      // 跳转到保存的路径或默认的dashboard
+      router.push(redirectPath);
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : "登录时发生错误");

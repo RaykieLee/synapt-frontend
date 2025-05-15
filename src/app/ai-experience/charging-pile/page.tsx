@@ -52,16 +52,18 @@ const LEVEL_COLORS = {
   notice: "#3b82f6",  // 蓝色
   warning: "#f59e0b", // 黄色
   error: "#ef4444",   // 红色
-  critical: "#dc2626" // 深红色
+  critical: "#dc2626", // 深红色
+  emergency: "#dc2626" // 深红色
 };
 
 // 告警级别文本
 const LEVEL_TEXT = {
-  info: "信息",
+  info: "提示",
   notice: "提示",
   warning: "警告",
   error: "错误",
-  critical: "紧急"
+  critical: "严重",
+  emergency: "紧急"
 };
 
 // 图表颜色
@@ -224,44 +226,69 @@ export default function ChargingPileDetectionPage() {
                   />
                   
                   {/* 告警级别占比图表 */}
-                  <Card className="p-4 relative overflow-hidden h-full">
-                    <h3 className="text-sm text-muted-foreground mb-2">告警级别分布</h3>
-                    <div className="h-[130px] w-full">
-                      {statsLoading || !levelPieData.length ? (
-                        <Skeleton className="h-full w-full" />
-                      ) : (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={levelPieData}
-                              dataKey="value"
-                              nameKey="name"
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={50}
-                              label={(entry) => entry.name}
-                              labelLine={true}
-                            >
-                              {levelPieData.map((entry, index) => (
-                                <Cell 
-                                  key={`cell-${index}`} 
-                                  fill={LEVEL_COLORS[entry.level as keyof typeof LEVEL_COLORS] || CHART_COLORS[index % CHART_COLORS.length]} 
+                  <Card className="p-4 relative h-full flex flex-col">
+                    <h3 className="text-sm text-muted-foreground mb-3">告警级别分布</h3>
+                    {statsLoading || !levelPieData.length ? (
+                      <div className="flex-1 flex items-center justify-center">
+                        <Skeleton className="h-[80%] w-[90%]" />
+                      </div>
+                    ) : (
+                      <div className="flex-1 flex items-center">
+                        <div className="flex w-full h-[90%] gap-2">
+                          {/* 饼图部分 */}
+                          <div className="w-[80px] h-[80px] flex-shrink-0">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={levelPieData}
+                                  dataKey="value"
+                                  nameKey="name"
+                                  cx="50%"
+                                  cy="50%"
+                                  outerRadius={32}
+                                  innerRadius={10}
+                                  paddingAngle={3}
+                                  stroke="#fff"
+                                  strokeWidth={1}
+                                >
+                                  {levelPieData.map((entry, index) => (
+                                    <Cell 
+                                      key={`cell-${index}`} 
+                                      fill={LEVEL_COLORS[entry.level as keyof typeof LEVEL_COLORS] || CHART_COLORS[index % CHART_COLORS.length]} 
+                                    />
+                                  ))}
+                                </Pie>
+                                <Tooltip 
+                                  formatter={(value: number, name: string) => [`${value}条`, name]}
+                                  contentStyle={{ 
+                                    backgroundColor: 'rgba(23, 23, 23, 0.8)',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    color: 'white',
+                                    fontSize: '12px',
+                                    padding: '4px 8px'
+                                  }}
                                 />
-                              ))}
-                            </Pie>
-                            <Tooltip 
-                              formatter={(value: number, name: string) => [value, name]}
-                              contentStyle={{ 
-                                backgroundColor: 'rgba(23, 23, 23, 0.8)',
-                                border: 'none',
-                                borderRadius: '4px',
-                                color: 'white'
-                              }}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      )}
-                    </div>
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                          
+                          {/* 自定义图例 */}
+                          <div className="flex flex-col justify-center gap-1 text-[10px] sm:text-xs flex-1 max-w-[calc(100%-90px)]">
+                            {levelPieData.map((entry, index) => (
+                              <div key={index} className="flex items-center gap-1">
+                                <div 
+                                  className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full flex-shrink-0" 
+                                  style={{ backgroundColor: LEVEL_COLORS[entry.level as keyof typeof LEVEL_COLORS] || CHART_COLORS[index % CHART_COLORS.length] }}
+                                />
+                                <span className="truncate text-muted-foreground">{entry.name}</span>
+                                <span className="ml-auto font-medium text-right whitespace-nowrap">{entry.value}条</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </Card>
                 </div>
               </div>

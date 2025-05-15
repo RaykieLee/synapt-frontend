@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertCircle, Image, AlertTriangle } from "lucide-react";
+import { AlertCircle, Image as ImageIcon, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { alertLogAPI } from "@/api/alert";
 import { AlertLog } from "@/types/alert";
@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import Image from "next/image";
 
 const CONFIG_CODE = "CHARGING_PILE_CODE";
 const REFRESH_INTERVAL = 10000; // 10秒刷新一次
@@ -34,7 +35,7 @@ export function RealTimeAlerts() {
   });
   
   // 从响应中提取真正的告警数据数组
-  const alerts: AlertLog[] = data ?? [];
+  const alerts = data;
   
   const getAlertLevelColor = (level: string) => {
     switch(level) {
@@ -42,6 +43,7 @@ export function RealTimeAlerts() {
       case 'critical': return 'destructive';
       case 'warning': return 'default';
       case 'notice': 
+      case 'info':
       default: return 'secondary';
     }
   };
@@ -52,7 +54,8 @@ export function RealTimeAlerts() {
       case 'critical': return '严重';
       case 'warning': return '警告';
       case 'notice': 
-      default: return '提醒';
+      case 'info':
+      default: return '提示';
     }
   };
   
@@ -88,7 +91,7 @@ export function RealTimeAlerts() {
       ) : (
         <ScrollArea className="flex-grow overflow-hidden">
           <div className="space-y-3 pb-2">
-            {alerts.map((alert: AlertLog) => (
+            {[...alerts].reverse().map((alert: AlertLog) => (
               <AlertCard 
                 key={alert.id} 
                 alert={alert} 
@@ -110,10 +113,12 @@ export function RealTimeAlerts() {
           </DialogHeader>
           <div className="flex justify-center">
             {selectedImage && (
-              <img 
+              <Image 
                 src={`/api/v1/system/file/public/preview?path=${encodeURIComponent(selectedImage)}`}
                 alt="告警图片"
                 className="max-h-[80vh] object-contain"
+                width={800}
+                height={600}
               />
             )}
           </div>
@@ -143,6 +148,7 @@ function AlertCard({
       case 'critical': return 'destructive';
       case 'warning': return 'default';
       case 'notice': 
+      case 'info':
       default: return 'secondary';
     }
   };
@@ -153,7 +159,8 @@ function AlertCard({
       case 'critical': return '严重';
       case 'warning': return '警告';
       case 'notice': 
-      default: return '提醒';
+      case 'info':
+      default: return '提示';
     }
   };
   
@@ -175,10 +182,12 @@ function AlertCard({
       <Dialog>
         <DialogTrigger asChild>
           <div className="relative w-16 h-16 overflow-hidden rounded cursor-pointer flex-shrink-0" onClick={() => onImageClick(alert.image_url!)}>
-            <img 
+            <Image 
               src={`/api/v1/system/file/public/preview?path=${encodeURIComponent(alert.image_url!)}`}
               alt={alert.title}
-              className="object-cover w-full h-full"
+              className="object-cover"
+              fill
+              sizes="64px"
             />
           </div>
         </DialogTrigger>
@@ -187,10 +196,12 @@ function AlertCard({
             <DialogTitle>{alert.title}</DialogTitle>
           </DialogHeader>
           <div className="flex justify-center">
-            <img 
+            <Image 
               src={`/api/v1/system/file/public/preview?path=${encodeURIComponent(alert.image_url!)}`}
               alt={alert.title}
               className="max-h-[80vh] object-contain"
+              width={800}
+              height={600}
             />
           </div>
         </DialogContent>

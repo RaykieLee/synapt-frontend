@@ -65,6 +65,16 @@ export function DataTableToolbar<TData>({
     },
   })
 
+  // 创建防抖搜索函数
+  const debouncedSearchFn = useCallback(() => {
+    if (onSearch) {
+      onSearch(searchParamsRef.current)
+    }
+  }, [onSearch]);
+
+  // 使用防抖处理搜索
+  const debouncedSearch = debounce(debouncedSearchFn, 500);
+
   // 更新搜索参数
   const updateSearchParams = useCallback((key: string, value: any) => {
     // 根据不同的键处理不同类型的数据
@@ -95,17 +105,7 @@ export function DataTableToolbar<TData>({
     }
     
     debouncedSearch();
-  }, []);
-
-  // 创建防抖搜索函数
-  const debouncedSearchFn = useCallback(() => {
-    if (onSearch) {
-      onSearch(searchParamsRef.current)
-    }
-  }, [onSearch]);
-
-  // 使用防抖处理搜索
-  const debouncedSearch = debounce(debouncedSearchFn, 500);
+  }, [debouncedSearch]);
 
   // 处理创建时间范围变化
   const handleCreateTimeRangeChange = useCallback((range: DateRange | undefined) => {
