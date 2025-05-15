@@ -32,7 +32,12 @@ import {
   getChargingPileStats 
 } from "@/api/ai-experience";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -116,11 +121,11 @@ export default function ChargingPileDetectionPage() {
     <div className="container mx-auto p-4 h-full">
       <div className="grid grid-cols-4 gap-4 h-[calc(100vh-120px)]">
         {/* 左侧区域：摄像头和统计面板 */}
-        <div className="col-span-3 grid grid-rows-5 gap-4 h-full">
-          {/* 摄像头区域 - 现在占据3/5的高度，固定高度 */}
-          <div className="row-span-2 grid grid-cols-2 gap-4">
+        <div className="col-span-3 grid grid-rows-[minmax(200px,_2fr)_minmax(320px,_3fr)] gap-4 h-full">
+          {/* 摄像头区域 - 约占2/5的高度，但最小高度为200px */}
+          <div className="grid grid-cols-2 gap-4 h-full">
             {/* 摄像头 1 */}
-            <Card className="relative overflow-hidden">
+            <Card className="relative overflow-hidden h-full">
               <div className="absolute top-2 left-2 z-10">
                 <Badge variant="secondary" className="flex items-center gap-1">
                   <Camera className="w-4 h-4" />
@@ -133,7 +138,7 @@ export default function ChargingPileDetectionPage() {
             </Card>
             
             {/* 摄像头 2 */}
-            <Card className="relative overflow-hidden">
+            <Card className="relative overflow-hidden h-full">
               <div className="absolute top-2 left-2 z-10">
                 <Badge variant="secondary" className="flex items-center gap-1">
                   <Camera className="w-4 h-4" />
@@ -146,8 +151,8 @@ export default function ChargingPileDetectionPage() {
             </Card>
           </div>
 
-          {/* 统计面板区域 - 现在占据2/5的高度，固定高度 */}
-          <div className="row-span-2">
+          {/* 统计面板区域 - 约占3/5的高度，但最小高度为320px */}
+          <div className="h-full">
             <Card className="h-full overflow-hidden">
               <div className="p-6 pb-2">
                 <div className="flex justify-between items-center mb-4">
@@ -201,29 +206,31 @@ export default function ChargingPileDetectionPage() {
                 </div>
                 
                 {/* 统计卡片 */}
-                <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-3 gap-3 mb-4 h-[176px]">
                   <StatCard 
                     title="异常告警" 
                     value={statsLoading || !monitorData ? '0' : monitorData.stats.abnormal_alerts.toString()} 
                     type="warning"
                     icon={<AlertCircle className="w-5 h-5 text-yellow-500" />}
                     loading={statsLoading}
+                    className="h-full"
                   />
                   <StatCard 
                     title="今日告警" 
                     value={statsLoading || !monitorData ? '0' : monitorData.stats.today_alerts.toString()}
                     icon={<Clock className="w-5 h-5 text-indigo-500" />}
                     loading={statsLoading}
+                    className="h-full"
                   />
                   
                   {/* 告警级别占比图表 */}
-                  <Card className="p-4 relative overflow-hidden hover:shadow-md transition-all duration-200">
+                  <Card className="p-4 relative overflow-hidden h-full">
                     <h3 className="text-sm text-muted-foreground mb-2">告警级别分布</h3>
-                    <div className="h-16 w-full">
+                    <div className="h-[130px] w-full">
                       {statsLoading || !levelPieData.length ? (
-                        <Skeleton className="h-16 w-full" />
+                        <Skeleton className="h-full w-full" />
                       ) : (
-                        <ResponsiveContainer width="100%" height={80}>
+                        <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
                               data={levelPieData}
@@ -231,9 +238,9 @@ export default function ChargingPileDetectionPage() {
                               nameKey="name"
                               cx="50%"
                               cy="50%"
-                              outerRadius={35}
+                              outerRadius={50}
                               label={(entry) => entry.name}
-                              labelLine={false}
+                              labelLine={true}
                             >
                               {levelPieData.map((entry, index) => (
                                 <Cell 
@@ -394,7 +401,8 @@ function StatCard({
   type = 'default',
   icon,
   loading = false,
-  change
+  change,
+  className
 }: { 
   title: string; 
   value: string; 
@@ -402,9 +410,10 @@ function StatCard({
   icon?: React.ReactNode;
   loading?: boolean;
   change?: number;
+  className?: string;
 }) {
   return (
-    <Card className="p-4 relative overflow-hidden hover:shadow-md transition-all duration-200">
+    <Card className={`p-4 relative overflow-hidden hover:shadow-md transition-all duration-200 ${className || ''}`}>
       {loading ? (
         <>
           <Skeleton className="h-4 w-24 mb-2" />
