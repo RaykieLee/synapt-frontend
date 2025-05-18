@@ -146,26 +146,6 @@ export default function AlertConfigFormPage() {
 
   return (
     <div className="container mx-auto py-6">
-      {isEditMode && (
-        <Breadcrumb className="mb-6">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/dashboard">首页</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/dashboard/platform/alerts">
-                告警配置
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink>编辑配置</BreadcrumbLink>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      )}
-
       <Card>
         <CardHeader>
           <CardTitle>{pageTitle}</CardTitle>

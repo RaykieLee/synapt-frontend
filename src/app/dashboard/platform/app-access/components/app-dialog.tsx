@@ -90,6 +90,8 @@ export function AppDialog({ app, mode, open, onOpenChange, onSuccess }: AppDialo
   const [isEditing, setIsEditing] = useState(mode === "edit" || mode === "create")
   const isViewMode = mode === "view"
   const isCreateMode = mode === "create"
+  // 添加日期选择器的popover状态
+  const [expireTimePopoverOpen, setExpireTimePopoverOpen] = useState(false)
 
   // 安全关闭弹窗的函数
   const safeCloseDialog = useCallback((closeFunc: () => void) => {
@@ -440,16 +442,13 @@ export function AppDialog({ app, mode, open, onOpenChange, onSuccess }: AppDialo
                   control={form.control}
                   name="expire_time"
                   render={({ field }) => {
-                    // 添加内部状态来控制Popover
-                    const [popoverOpen, setPopoverOpen] = useState(false);
-                    
                     return (
                       <FormItem className="flex flex-col">
                         <FormLabel>过期时间</FormLabel>
                         <Popover 
-                          open={popoverOpen} 
+                          open={expireTimePopoverOpen} 
                           onOpenChange={(open) => {
-                            setPopoverOpen(open);
+                            setExpireTimePopoverOpen(open);
                             // 如果关闭Popover，确保表单同步
                             if (!open) {
                               form.trigger("expire_time");
@@ -466,7 +465,7 @@ export function AppDialog({ app, mode, open, onOpenChange, onSuccess }: AppDialo
                                 )}
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  setPopoverOpen(true);
+                                  setExpireTimePopoverOpen(true);
                                 }}
                                 type="button"
                               >
@@ -492,7 +491,7 @@ export function AppDialog({ app, mode, open, onOpenChange, onSuccess }: AppDialo
                                       e.preventDefault();
                                       setPresetDate(30);
                                       // 关闭弹出窗
-                                      setTimeout(() => setPopoverOpen(false), 100);
+                                      setTimeout(() => setExpireTimePopoverOpen(false), 100);
                                     }}
                                   >
                                     30天
@@ -504,7 +503,7 @@ export function AppDialog({ app, mode, open, onOpenChange, onSuccess }: AppDialo
                                       e.preventDefault();
                                       setPresetDate(90);
                                       // 关闭弹出窗
-                                      setTimeout(() => setPopoverOpen(false), 100);
+                                      setTimeout(() => setExpireTimePopoverOpen(false), 100);
                                     }}
                                   >
                                     90天
@@ -516,7 +515,7 @@ export function AppDialog({ app, mode, open, onOpenChange, onSuccess }: AppDialo
                                       e.preventDefault();
                                       setPresetDate(180);
                                       // 关闭弹出窗
-                                      setTimeout(() => setPopoverOpen(false), 100);
+                                      setTimeout(() => setExpireTimePopoverOpen(false), 100);
                                     }}
                                   >
                                     6个月
@@ -528,7 +527,7 @@ export function AppDialog({ app, mode, open, onOpenChange, onSuccess }: AppDialo
                                       e.preventDefault();
                                       setPresetDate(365);
                                       // 关闭弹出窗
-                                      setTimeout(() => setPopoverOpen(false), 100);
+                                      setTimeout(() => setExpireTimePopoverOpen(false), 100);
                                     }}
                                   >
                                     1年
@@ -546,7 +545,7 @@ export function AppDialog({ app, mode, open, onOpenChange, onSuccess }: AppDialo
                                     handleDateSelect(date);
                                     // 选择日期后关闭弹出窗
                                     if (date) {
-                                      setTimeout(() => setPopoverOpen(false), 100);
+                                      setTimeout(() => setExpireTimePopoverOpen(false), 100);
                                     }
                                   }}
                                   defaultMonth={field.value || new Date()}
@@ -579,7 +578,7 @@ export function AppDialog({ app, mode, open, onOpenChange, onSuccess }: AppDialo
                                           now.setHours(23, 59, 59, 999);
                                           handleDateSelect(now);
                                           // 选择今天后关闭弹出窗
-                                          setTimeout(() => setPopoverOpen(false), 100);
+                                          setTimeout(() => setExpireTimePopoverOpen(false), 100);
                                         }}
                                         type="button"
                                       >

@@ -35,7 +35,7 @@ export function RealTimeAlerts() {
   });
   
   // 从响应中提取真正的告警数据数组
-  const alerts = data;
+  const alerts: AlertLog[] = data || [];
   
   const getAlertLevelColor = (level: string) => {
     switch(level) {

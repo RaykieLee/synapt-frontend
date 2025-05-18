@@ -169,5 +169,5 @@ export const alertLogAPI = {
 
   // 获取实时告警（按配置编码）
   getRealtimeAlerts: (configCode: string, limit: number = 8) => 
-    apiRequest<BaseResponse<AlertLog[]>>(`/api/v1/platform/alerts/log/realtime/${configCode}?limit=${limit}`, "GET"),
+    apiRequest<AlertLog[]>(`/api/v1/platform/alerts/log/realtime/${configCode}?limit=${limit}`, "GET"),
 }; 

@@ -228,49 +228,49 @@ export default function ChargingPileDetectionPage() {
                   {/* 告警级别占比图表 */}
                   <Card className="p-4 relative h-full flex flex-col">
                     <h3 className="text-sm text-muted-foreground mb-3">告警级别分布</h3>
-                    {statsLoading || !levelPieData.length ? (
+                      {statsLoading || !levelPieData.length ? (
                       <div className="flex-1 flex items-center justify-center">
                         <Skeleton className="h-[80%] w-[90%]" />
                       </div>
-                    ) : (
+                      ) : (
                       <div className="flex-1 flex items-center">
                         <div className="flex w-full h-[90%] gap-2">
                           {/* 饼图部分 */}
                           <div className="w-[80px] h-[80px] flex-shrink-0">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
-                                <Pie
-                                  data={levelPieData}
-                                  dataKey="value"
-                                  nameKey="name"
-                                  cx="50%"
-                                  cy="50%"
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={levelPieData}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
                                   outerRadius={32}
                                   innerRadius={10}
                                   paddingAngle={3}
                                   stroke="#fff"
                                   strokeWidth={1}
-                                >
-                                  {levelPieData.map((entry, index) => (
-                                    <Cell 
-                                      key={`cell-${index}`} 
-                                      fill={LEVEL_COLORS[entry.level as keyof typeof LEVEL_COLORS] || CHART_COLORS[index % CHART_COLORS.length]} 
-                                    />
-                                  ))}
-                                </Pie>
-                                <Tooltip 
+                            >
+                              {levelPieData.map((entry, index) => (
+                                <Cell 
+                                  key={`cell-${index}`} 
+                                  fill={LEVEL_COLORS[entry.level as keyof typeof LEVEL_COLORS] || CHART_COLORS[index % CHART_COLORS.length]} 
+                                />
+                              ))}
+                            </Pie>
+                            <Tooltip 
                                   formatter={(value: number, name: string) => [`${value}条`, name]}
-                                  contentStyle={{ 
-                                    backgroundColor: 'rgba(23, 23, 23, 0.8)',
-                                    border: 'none',
-                                    borderRadius: '4px',
+                              contentStyle={{ 
+                                backgroundColor: 'rgba(23, 23, 23, 0.8)',
+                                border: 'none',
+                                borderRadius: '4px',
                                     color: 'white',
                                     fontSize: '12px',
                                     padding: '4px 8px'
-                                  }}
-                                />
-                              </PieChart>
-                            </ResponsiveContainer>
+                              }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
                           </div>
                           
                           {/* 自定义图例 */}
