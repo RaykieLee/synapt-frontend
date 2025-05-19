@@ -10,7 +10,6 @@ import { ExternalLink, Bot, Sparkles, Zap } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Menu } from '@/types/menu';
 
@@ -101,10 +100,7 @@ export default function AiExperiencePage() {
     const IconComponent = item.icon ? iconMap[item.icon] || Bot : Bot;
 
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.1 }}
+      <div
         key={item.id}
       >
         <Card 
@@ -135,7 +131,7 @@ export default function AiExperiencePage() {
             )}
           </div>
         </Card>
-      </motion.div>
+      </div>
     );
   };
 
@@ -146,10 +142,7 @@ export default function AiExperiencePage() {
     }
 
     return (
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: index * 0.2 }}
+      <div
         key={directory.id}
         className="mb-12"
       >
@@ -160,7 +153,7 @@ export default function AiExperiencePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {directory.children?.map((item, idx) => renderMenuItem(item, idx))}
         </div>
-      </motion.div>
+      </div>
     );
   };
 
@@ -204,30 +197,24 @@ export default function AiExperiencePage() {
   if (!isLoading && (!menuData || menuData.length === 0)) {
     return (
       <div className="container mx-auto py-12 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+        <div
           className="mb-12 text-center"
         >
           <h1 className="text-4xl font-bold mb-4">AI 体验中心</h1>
           <p className="text-xl text-muted-foreground">暂无可用的AI应用</p>
-        </motion.div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto py-12 px-4">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+      <div
         className="mb-12 text-center"
       >
         <h1 className="text-4xl font-bold mb-4">AI 体验中心</h1>
         <p className="text-xl text-muted-foreground">探索人工智能的无限可能</p>
-      </motion.div>
+      </div>
       
       {isLoading ? renderLoading() : (
         <div className="space-y-12">

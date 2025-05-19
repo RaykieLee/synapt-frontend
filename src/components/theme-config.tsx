@@ -21,7 +21,8 @@ import { Slider } from "@/components/ui/slider"
 
 // 预定义的颜色主题
 const colorThemes = [
-  { name: "默认", value: "#0ea5e9", color: "bg-blue-500" },
+  { name: "默认", value: "#000000", color: "bg-black" },
+  { name: "蓝色", value: "#0ea5e9", color: "bg-blue-500" },
   { name: "紫色", value: "#8b5cf6", color: "bg-purple-500" },
   { name: "粉色", value: "#ec4899", color: "bg-pink-500" },
   { name: "红色", value: "#ef4444", color: "bg-red-500" },
@@ -367,7 +368,7 @@ export function ThemeConfig({ open, onOpenChange }: { open?: boolean, onOpenChan
           <TabsContent value="color" className="py-4">
             <div className="mb-4">
               <Label>主题颜色</Label>
-              <div className="mt-3 grid grid-cols-7 gap-2">
+              <div className="mt-3 grid grid-cols-8 gap-2">
                 {colorThemes.map((item) => (
                   <div
                     key={item.value}
