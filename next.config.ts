@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     console.log('NEXT_PUBLIC_BACKEND_URL', process.env.NEXT_PUBLIC_BACKEND_URL);
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://backend:8000';
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
     return [
       // 统一处理所有API请求
       {
