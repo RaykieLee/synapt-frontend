@@ -44,8 +44,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 // 视频流配置
 const STREAM_URL = "http://172.16.100.177:8085/live/cctv5.flv";
 // const STREAM_URL2 = "http://172.16.100.177:8085/live/cctv4.flv";
-const STREAM_URL2 = "http://localhost:8080/sc_ai_hub/1.live.flv";
-
+const STREAM_URL2 = "http://localhost:8080/live/stream1.live.flv";
+// http://localhost:8080/live/stream1.live.flv
+// rtmp://127.0.0.1:1935/live/stream1
 // 告警级别颜色
 const LEVEL_COLORS = {
   info: "#3b82f6",    // 蓝色

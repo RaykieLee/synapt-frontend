@@ -108,6 +108,18 @@ export function VideoPlayer({ url, className, onLoaded, onError }: VideoPlayerPr
           maxHeight: '100%',
           objectFit: 'contain'
         }}
+        onClick={() => {
+          const video = videoRef.current;
+          if (video) {
+            if (video.requestFullscreen) {
+              video.requestFullscreen();
+            } else if ((video as any).webkitRequestFullscreen) {
+              (video as any).webkitRequestFullscreen();
+            } else if ((video as any).msRequestFullscreen) {
+              (video as any).msRequestFullscreen();
+            }
+          }
+        }}
       />
     </div>
   );
