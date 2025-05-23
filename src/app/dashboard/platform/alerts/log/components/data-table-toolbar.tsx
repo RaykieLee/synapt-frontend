@@ -27,7 +27,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from '@/components/animate-ui/radix/dialog'
 
 // 自定义告警日志批量处理对话框
 interface AlertProcessDialogProps {

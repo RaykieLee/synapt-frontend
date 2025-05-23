@@ -34,7 +34,7 @@ import {
   DialogTitle,
   DialogClose,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from '@/components/animate-ui/radix/dialog'
 import {
   Select,
   SelectContent,

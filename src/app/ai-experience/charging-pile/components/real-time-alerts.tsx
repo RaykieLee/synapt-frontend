@@ -16,7 +16,7 @@ import {
   DialogTitle, 
   DialogTrigger,
   DialogClose
-} from "@/components/ui/dialog";
+} from '@/components/animate-ui/radix/dialog';
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";

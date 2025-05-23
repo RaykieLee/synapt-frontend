@@ -20,7 +20,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from '@/components/animate-ui/radix/dialog'
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { alertConfigAPI } from "@/api"
 import { toast } from "sonner"

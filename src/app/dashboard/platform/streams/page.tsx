@@ -16,7 +16,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/components/animate-ui/radix/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { Pagination } from '@/components/pagination';
 import { 

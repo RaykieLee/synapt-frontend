@@ -47,7 +47,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from '@/components/animate-ui/radix/dialog'
 import { AppAccess, AppAccessCreateDto, AppAccessUpdateDto } from "@/types/app"
 import { appAccessAPI } from "@/api"
 
