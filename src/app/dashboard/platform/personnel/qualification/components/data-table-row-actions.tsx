@@ -14,6 +14,7 @@ import { PersonnelQualification } from "@/types/personnel"
 import { useState } from "react"
 import { PersonnelDetailDialog } from "./personnel-detail-dialog"
 import { PersonnelFormDialog } from "./personnel-form-dialog"
+import { PersonnelCertificateManager } from "./personnel-certificate-manager"
 import { DeleteConfirmationDialog } from "@/components/shared/data-table"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { personnelQualificationAPI } from "@/api/personnel"
@@ -30,6 +31,7 @@ export function DataTableRowActions<TData>({
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showCertificateManager, setShowCertificateManager] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -72,6 +74,10 @@ export function DataTableRowActions<TData>({
             <Edit className="mr-2 h-4 w-4" />
             编辑
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setShowCertificateManager(true)}>
+            <Award className="mr-2 h-4 w-4" />
+            证书管理
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             className="text-red-600"
@@ -96,6 +102,13 @@ export function DataTableRowActions<TData>({
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
         mode="edit"
+      />
+
+      {/* 证书管理对话框 */}
+      <PersonnelCertificateManager
+        personnel={personnel}
+        open={showCertificateManager}
+        onOpenChange={setShowCertificateManager}
       />
 
       {/* 删除确认对话框 */}

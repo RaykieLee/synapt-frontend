@@ -1,7 +1,7 @@
 "use client"
 
 import { Row } from "@tanstack/react-table"
-import { MoreHorizontal, Edit, Trash, Eye, Download } from "lucide-react"
+import { MoreHorizontal, Edit, Trash, Eye, Download, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import { Certificate } from "@/types/personnel"
 import { useState } from "react"
 import { CertificateDetailDialog } from "./certificate-detail-dialog"
 import { CertificateFormDialog } from "./certificate-form-dialog"
+import { CertificatePersonnelManager } from "./certificate-personnel-manager"
 import { DeleteConfirmationDialog } from "@/components/shared/data-table"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { certificateAPI } from "@/api/personnel"
@@ -30,6 +31,7 @@ export function DataTableRowActions<TData>({
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showPersonnelManager, setShowPersonnelManager] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -81,6 +83,10 @@ export function DataTableRowActions<TData>({
             <Edit className="mr-2 h-4 w-4" />
             编辑
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setShowPersonnelManager(true)}>
+            <Users className="mr-2 h-4 w-4" />
+            人员管理
+          </DropdownMenuItem>
           {certificate.certificate_file && (
             <DropdownMenuItem onClick={handleDownload}>
               <Download className="mr-2 h-4 w-4" />
@@ -111,6 +117,13 @@ export function DataTableRowActions<TData>({
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
         mode="edit"
+      />
+
+      {/* 人员管理对话框 */}
+      <CertificatePersonnelManager
+        certificate={certificate}
+        open={showPersonnelManager}
+        onOpenChange={setShowPersonnelManager}
       />
 
       {/* 删除确认对话框 */}

@@ -37,10 +37,9 @@ import { Certificate } from "@/types/personnel"
 import { certificateAPI, personnelQualificationAPI } from "@/api/personnel"
 
 const formSchema = z.object({
-  personnel_id: z.number().min(1, "请选择人员"),
   certificate_name: z.string().min(1, "证书名称不能为空"),
   certificate_category: z.string().min(1, "请选择证书类别"),
-  certificate_level: z.string().min(1, "请选择证书级别"),
+  certificate_level: z.number().min(1, "请选择证书级别").max(4, "证书级别无效"),
   issuing_authority: z.string().optional(),
   certificate_number: z.string().optional(),
   issue_date: z.string().optional(),
@@ -70,10 +69,9 @@ export function CertificateFormDialog({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      personnel_id: certificate?.personnel_id || 0,
       certificate_name: certificate?.certificate_name || "",
       certificate_category: certificate?.certificate_category || "",
-      certificate_level: certificate?.certificate_level || "",
+      certificate_level: certificate?.certificate_level || 0,
       issuing_authority: certificate?.issuing_authority || "",
       certificate_number: certificate?.certificate_number || "",
       issue_date: certificate?.issue_date || "",
@@ -83,12 +81,6 @@ export function CertificateFormDialog({
       remark: certificate?.remark || "",
     },
   })
-
-  // 获取人员选项
-  const { data: personnelOptionsResponse } = useQuery({
-    queryKey: ["personnel", "qualification", "options"],
-    queryFn: () => personnelQualificationAPI.getOptions(),
-  });
 
   // 获取证书类别选项
   const { data: categoriesResponse } = useQuery({
@@ -102,9 +94,8 @@ export function CertificateFormDialog({
     queryFn: () => certificateAPI.getLevels(),
   });
 
-  const personnelOptions = personnelOptionsResponse?.data || [];
-  const categories = categoriesResponse?.data || [];
-  const levels = levelsResponse?.data || [];
+  const categories = Array.isArray(categoriesResponse) ? categoriesResponse : (categoriesResponse?.data || []);
+  const levels = Array.isArray(levelsResponse) ? levelsResponse : (levelsResponse?.data || []);
 
   // 创建证书
   const createMutation = useMutation({
@@ -139,7 +130,6 @@ export function CertificateFormDialog({
   const onSubmit = (data: FormData) => {
     const submitData = {
       ...data,
-      personnel_id: Number(data.personnel_id),
       issuing_authority: data.issuing_authority || undefined,
       certificate_number: data.certificate_number || undefined,
       issue_date: data.issue_date || undefined,
@@ -175,35 +165,6 @@ export function CertificateFormDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              {/* 人员选择 */}
-              <FormField
-                control={form.control}
-                name="personnel_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>人员 *</FormLabel>
-                    <Select 
-                      onValueChange={(value) => field.onChange(Number(value))} 
-                      value={field.value?.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="请选择人员" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {personnelOptions.map((person) => (
-                          <SelectItem key={person.value} value={person.value.toString()}>
-                            {person.label} {person.department && `(${person.department})`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               {/* 证书名称 */}
               <FormField
                 control={form.control}
@@ -233,7 +194,7 @@ export function CertificateFormDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {categories.map((category) => (
+                        {categories.map((category: any) => (
                           <SelectItem key={category.value} value={category.value}>
                             {category.label}
                           </SelectItem>
@@ -252,15 +213,18 @@ export function CertificateFormDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>证书级别 *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select 
+                      onValueChange={(value) => field.onChange(parseInt(value))} 
+                      value={field.value.toString()}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="请选择证书级别" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {levels.map((level) => (
-                          <SelectItem key={level.value} value={level.value}>
+                        {levels.map((level: any) => (
+                          <SelectItem key={level.value} value={level.value.toString()}>
                             {level.label}
                           </SelectItem>
                         ))}

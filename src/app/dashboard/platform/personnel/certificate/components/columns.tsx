@@ -40,10 +40,16 @@ export function getColumns(): ColumnDef<Certificate>[] {
         <DataTableColumnHeader column={column} title="证书级别" />
       ),
       cell: ({ row }) => {
-        const level = row.getValue("certificate_level") as string;
+        const level = row.getValue("certificate_level") as number;
+        const levelMap: Record<number, string> = {
+          1: "初级",
+          2: "中级", 
+          3: "高级",
+          4: "专家级"
+        };
         return (
           <Badge variant="secondary">
-            {level}
+            {levelMap[level] || level}
           </Badge>
         );
       },
@@ -67,6 +73,44 @@ export function getColumns(): ColumnDef<Certificate>[] {
         const number = row.getValue("certificate_number") as string;
         return <div className="w-[120px] font-mono text-sm">{number || "-"}</div>;
       },
+    },
+    {
+      accessorKey: "personnel",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="持有人员" />
+      ),
+      cell: ({ row }) => {
+        const certificate = row.original;
+        const personnel = certificate.personnel || [];
+        
+        if (personnel.length === 0) {
+          return <div className="w-[150px] text-muted-foreground">暂无人员</div>;
+        }
+        
+        if (personnel.length === 1) {
+          return (
+            <div className="w-[150px]">
+              <Badge variant="outline" className="text-xs">
+                {personnel[0].name}
+              </Badge>
+            </div>
+          );
+        }
+        
+        return (
+          <div className="w-[150px] space-y-1">
+            <Badge variant="outline" className="text-xs">
+              {personnel[0].name}
+            </Badge>
+            {personnel.length > 1 && (
+              <Badge variant="secondary" className="text-xs ml-1">
+                +{personnel.length - 1}
+              </Badge>
+            )}
+          </div>
+        );
+      },
+      enableSorting: false,
     },
     {
       accessorKey: "issue_date",

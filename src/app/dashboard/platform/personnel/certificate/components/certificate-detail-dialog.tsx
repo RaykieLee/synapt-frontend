@@ -11,7 +11,7 @@ import {
 } from "@/components/animate-ui/radix/dialog"
 import { Separator } from "@/components/ui/separator"
 import { Certificate } from "@/types/personnel"
-import { Award, Building, Calendar, FileText, Hash, Download } from "lucide-react"
+import { Award, Building, Calendar, FileText, Hash, Download, Users } from "lucide-react"
 
 interface CertificateDetailDialogProps {
   certificate: Certificate
@@ -150,6 +150,47 @@ export function CertificateDetailDialog({
               <Separator />
             </>
           )}
+
+          {/* 持有人员 */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              持有人员 ({certificate.personnel?.length || 0})
+            </h3>
+            {certificate.personnel && certificate.personnel.length > 0 ? (
+              <div className="grid gap-3">
+                {certificate.personnel.map((person) => (
+                  <div key={person.id} className="border rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <h4 className="font-medium">{person.name}</h4>
+                          <div className="flex gap-2 mt-1">
+                            {person.department && (
+                              <Badge variant="outline" className="text-xs">
+                                {person.department}
+                              </Badge>
+                            )}
+                            {person.position && (
+                              <Badge variant="outline" className="text-xs">
+                                {person.position}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground border rounded-lg">
+                暂无持有人员
+              </div>
+            )}
+          </div>
+
+          <Separator />
 
           {/* 证书文件 */}
           {certificate.certificate_file && (

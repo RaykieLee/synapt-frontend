@@ -14,7 +14,11 @@ import {
   PersonnelOption,
   CertificateOption,
   CertificateCategoryOption,
-  CertificateLevelOption
+  CertificateLevelOption,
+  PersonnelCertificateAssignDto,
+  CertificatePersonnelAssignDto,
+  PersonnelCertificateRemoveDto,
+  CertificatePersonnelRemoveDto
 } from "@/types/personnel";
 import { BaseResponse, PageResult } from "@/types/base";
 
@@ -87,7 +91,6 @@ export const certificateAPI = {
           status: params.params?.status,
           certificate_category: params.params?.certificate_category,
           certificate_level: params.params?.certificate_level,
-          personnel_id: params.params?.personnel_id,
           time_range: params.params?.time_range,
           search_mode: params.params?.search_mode || "and"
         }
@@ -134,4 +137,21 @@ export const certificateAPI = {
   // 获取证书级别选项
   getLevels: () => 
     apiRequest<BaseResponse<CertificateLevelOption[]>>("/api/v1/platform/personnel/certificate/options/levels", "GET"),
+
+  // 人员证书关联管理API
+  // 为证书分配人员
+  assignPersonnel: (data: CertificatePersonnelAssignDto) => 
+    apiRequest<BaseResponse<boolean>>("/api/v1/platform/personnel/certificate/assign-personnel", "POST", data),
+
+  // 为人员分配证书
+  assignCertificates: (data: PersonnelCertificateAssignDto) => 
+    apiRequest<BaseResponse<boolean>>("/api/v1/platform/personnel/certificate/assign-certificates", "POST", data),
+
+  // 移除证书人员关联
+  removePersonnel: (data: CertificatePersonnelRemoveDto) => 
+    apiRequest<BaseResponse<boolean>>("/api/v1/platform/personnel/certificate/remove-personnel", "POST", data),
+
+  // 移除人员证书关联
+  removeCertificates: (data: PersonnelCertificateRemoveDto) => 
+    apiRequest<BaseResponse<boolean>>("/api/v1/platform/personnel/certificate/remove-certificates", "POST", data),
 }; 

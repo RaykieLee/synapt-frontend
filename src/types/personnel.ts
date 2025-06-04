@@ -1,10 +1,17 @@
+// 简化的人员信息（用于证书中显示）
+export interface PersonnelQualificationSimple {
+  id: number
+  name: string
+  department?: string
+  position?: string
+}
+
 // 证书接口
 export interface Certificate {
   id: number
-  personnel_id: number
   certificate_name: string
   certificate_category: string
-  certificate_level: string
+  certificate_level: number
   issuing_authority?: string
   certificate_number?: string
   issue_date?: string
@@ -12,6 +19,7 @@ export interface Certificate {
   certificate_file?: string
   status: string
   remark?: string
+  personnel: PersonnelQualificationSimple[]  // 持有该证书的人员列表
   create_time?: string
   create_by?: string
   update_time?: string
@@ -92,8 +100,7 @@ export interface CertificateQuery {
     }
     status?: string
     certificate_category?: string
-    certificate_level?: string
-    personnel_id?: number
+    certificate_level?: number
     time_range?: {
       issue_date?: {
         start?: string
@@ -148,10 +155,9 @@ export interface PersonnelQualificationUpdateDto {
 
 // 创建证书请求
 export interface CertificateCreateDto {
-  personnel_id: number
   certificate_name: string
   certificate_category: string
-  certificate_level: string
+  certificate_level: number
   issuing_authority?: string
   certificate_number?: string
   issue_date?: string
@@ -163,10 +169,9 @@ export interface CertificateCreateDto {
 
 // 更新证书请求
 export interface CertificateUpdateDto {
-  personnel_id?: number
   certificate_name?: string
   certificate_category?: string
-  certificate_level?: string
+  certificate_level?: number
   issuing_authority?: string
   certificate_number?: string
   issue_date?: string
@@ -230,4 +235,36 @@ export interface CertificateCategoryOption {
 export interface CertificateLevelOption {
   value: string
   label: string
+}
+
+// 人员证书关联管理接口
+export interface PersonnelCertificateAssociation {
+  personnel_id: number
+  certificate_id: number
+  obtain_date?: string
+  remark?: string
+}
+
+export interface PersonnelCertificateAssignDto {
+  personnel_id: number
+  certificate_ids: number[]
+  obtain_date?: string
+  remark?: string
+}
+
+export interface CertificatePersonnelAssignDto {
+  certificate_id: number
+  personnel_ids: number[]
+  obtain_date?: string
+  remark?: string
+}
+
+export interface PersonnelCertificateRemoveDto {
+  personnel_id: number
+  certificate_ids: number[]
+}
+
+export interface CertificatePersonnelRemoveDto {
+  certificate_id: number
+  personnel_ids: number[]
 } 
