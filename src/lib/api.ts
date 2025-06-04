@@ -44,47 +44,80 @@ export const getToken = () => {
 export async function apiRequest<T>(
   url: string, 
   method: string = "GET", 
-  data?: any
+  data?: any,
+  options?: {
+    timeout?: number; // 超时时间（毫秒）
+    [key: string]: any;
+  }
 ): Promise<T> {
   try {
     const token = getToken();
     
-    const headers = {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json"
+    // 根据数据类型设置不同的headers
+    const headers: Record<string, string> = {
+      "Authorization": `Bearer ${token}`
     };
     
-    const options: RequestInit = {
+    // 如果数据不是FormData，则设置Content-Type为application/json
+    // FormData会由浏览器自动设置正确的Content-Type (包含boundary)
+    if (data && !(data instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+    }
+    
+    const requestOptions: RequestInit = {
       method,
       headers,
-      ...(data && { body: JSON.stringify(data) })
+      ...(data && { 
+        body: data instanceof FormData ? data : JSON.stringify(data) 
+      })
     };
-    
-    const response = await fetch(url, options);
-    
-    if (response.status === 401) {
-      handleAuthFailure();
-      throw new Error("认证失败");
+
+    // 创建AbortController来处理超时
+    const controller = new AbortController();
+    requestOptions.signal = controller.signal;
+
+    // 设置超时（默认30秒，可通过options自定义）
+    const timeout = options?.timeout || 30000;
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, timeout);
+
+    try {
+      const response = await fetch(url, requestOptions);
+      clearTimeout(timeoutId); // 清除超时定时器
+      
+      if (response.status === 401) {
+        handleAuthFailure();
+        throw new Error("认证失败");
+      }
+      
+      const result = await response.json() as ApiResponse<T>;
+      
+      // 判断是否需要重新登录
+      if (result.code === 401 || (result.msg && result.msg.includes("登录"))) {
+        handleAuthFailure();
+        throw new Error("认证失败");
+      }
+      
+      if (result.code !== 200) {
+        toast({
+          title: "请求失败",
+          description: result.msg || "请稍后重试",
+          variant: "destructive",
+        });
+        throw new Error(result.msg || "请求失败");
+      }
+      
+      return result.data;
+    } catch (fetchError) {
+      clearTimeout(timeoutId); // 确保清除超时定时器
+      
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        throw new Error(`请求超时 (${timeout / 1000}秒)`);
+      }
+      
+      throw fetchError;
     }
-    
-    const result = await response.json() as ApiResponse<T>;
-    
-    // 判断是否需要重新登录
-    if (result.code === 401 || (result.msg && result.msg.includes("登录"))) {
-      handleAuthFailure();
-      throw new Error("认证失败");
-    }
-    
-    if (result.code !== 200) {
-      toast({
-        title: "请求失败",
-        description: result.msg || "请稍后重试",
-        variant: "destructive",
-      });
-      throw new Error(result.msg || "请求失败");
-    }
-    
-    return result.data;
   } catch (error) {
     // 如果是认证失败的错误，已经在相应位置处理了，这里不需要再次显示提示
     if (error instanceof Error && error.message === "认证失败") {

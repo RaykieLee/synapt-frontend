@@ -58,5 +58,5 @@ export const getChargingPileHistory = async (
   if (deviceName) {
     url += `&device_name=${encodeURIComponent(deviceName)}`;
   }
-  return apiRequest<ChargingPileChartData[]>(url, 'POST');
+  return apiRequest<ChargingPileChartData[]>(url, 'GET');
 }; 

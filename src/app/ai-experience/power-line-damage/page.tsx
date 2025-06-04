@@ -114,7 +114,7 @@ export default function PowerLineDamagePage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-1">
                 <Eye className="h-5 w-5" />
-                实时监控演示
+                演示视频
               </CardTitle>
             </CardHeader>
             <CardContent className="h-full flex flex-col">
