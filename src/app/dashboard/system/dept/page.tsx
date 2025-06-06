@@ -395,43 +395,44 @@ export default function DeptPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">部门管理</h2>
-          <p className="text-muted-foreground">
-            管理公司的组织架构和部门信息
-          </p>
+    <div className="container mx-auto px-0 py-6 md:px-6">
+      <div className="flex flex-col space-y-8">
+        <div className="flex items-center justify-between space-y-2">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">部门管理</h2>
+            <p className="text-muted-foreground">
+              管理公司的组织架构和部门信息
+            </p>
+          </div>
         </div>
-      </div>
-      
-      <Card>
-        <CardHeader className="px-6 py-4">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-1 items-center gap-2">
-              <div className="relative w-full max-w-sm">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜索部门名称..."
-                  value={searchTerm}
-                  onChange={handleSearch}
-                  className="w-full pl-8"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="所有状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">所有状态</SelectItem>
-                  <SelectItem value="0">正常</SelectItem>
-                  <SelectItem value="1">停用</SelectItem>
-                </SelectContent>
-              </Select>
+
+        {/* 搜索和操作栏 */}
+        <div className="flex items-center justify-between">
+          <div className="flex flex-1 items-center space-x-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-3 w-3 text-muted-foreground" />
+              <Input
+                placeholder="搜索部门名称..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="h-8 w-[150px] lg:w-[250px] pl-7"
+              />
             </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-8 w-[120px]">
+                <SelectValue placeholder="所有状态" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">所有状态</SelectItem>
+                <SelectItem value="0">正常</SelectItem>
+                <SelectItem value="1">停用</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-2">
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
-                <Button>
+                <Button size="sm" className="h-8">
                   <Plus className="mr-2 h-4 w-4" />
                   添加部门
                 </Button>
@@ -554,8 +555,10 @@ export default function DeptPage() {
               </DialogContent>
             </Dialog>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+
+        {/* 表格 */}
+        <div className="rounded-md border">
           {isLoadingTree ? (
             <div className="flex h-[400px] items-center justify-center">
               <div className="text-center">
@@ -580,8 +583,7 @@ export default function DeptPage() {
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
       {/* 编辑部门对话框 */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
@@ -707,6 +709,7 @@ export default function DeptPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   )
 } 

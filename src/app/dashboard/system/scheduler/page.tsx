@@ -71,7 +71,7 @@ export default function SchedulerPage() {
           name: params.name,
           description: params.description,
         },
-        status: params.status,
+        enabled: params.enabled,
         search_mode: "and"
       }
     }))

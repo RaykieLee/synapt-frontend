@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Checkbox } from "@/components/animate-ui/base/checkbox"
 import { AlertLog } from "@/types/alert"
 import { DataTableColumnHeader } from "@/components/shared/data-table"
 import { DotsHorizontalIcon } from "@radix-ui/react-icons"

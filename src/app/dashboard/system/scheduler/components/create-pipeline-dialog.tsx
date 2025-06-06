@@ -34,7 +34,6 @@ import { PipelineCreate } from "@/types/scheduler"
 
 // 表单验证模式
 const formSchema = z.object({
-  id: z.string().min(1, "管道ID不能为空").max(50, "管道ID不能超过50个字符"),
   name: z.string().min(1, "管道名称不能为空").max(100, "管道名称不能超过100个字符"),
   description: z.string().optional(),
   enabled: z.boolean(),
@@ -57,7 +56,6 @@ export function CreatePipelineDialog({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      id: "",
       name: "",
       description: "",
       enabled: true,
@@ -87,7 +85,6 @@ export function CreatePipelineDialog({
 
   const onSubmit = (values: FormValues) => {
     const createData: PipelineCreate = {
-      id: values.id,
       name: values.name,
       description: values.description || undefined,
       enabled: values.enabled,
@@ -113,26 +110,6 @@ export function CreatePipelineDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
-              <FormField
-                control={form.control}
-                name="id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>管道ID *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="输入唯一的管道ID，如：user_data_sync" 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      管道的唯一标识符，只能包含字母、数字、下划线和连字符
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <FormField
                 control={form.control}
                 name="name"

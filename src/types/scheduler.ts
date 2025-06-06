@@ -74,23 +74,6 @@ export interface Trigger {
 }
 
 /**
- * 管道信息
- */
-export interface Pipeline {
-  id: string;
-  name: string;
-  description?: string;
-  enabled?: boolean;
-  triggers: Trigger[];
-  tasks: Task[];
-  params?: any;
-  create_by?: string;
-  create_time?: string;
-  update_by?: string;
-  update_time?: string;
-}
-
-/**
  * 任务信息
  */
 export interface Task {
@@ -118,7 +101,7 @@ export interface PipelineQuery extends PageParams {
       name?: string;
       description?: string;
     };
-    status?: number; // 1-启用，0-禁用
+    enabled?: number; // 1-启用，0-禁用
     search_mode?: string;
   };
 }
@@ -204,6 +187,8 @@ export interface PipelineTriggerBase {
 export interface PipelineTrigger extends PipelineTriggerBase {
   id: number;
   pipeline_id: string;
+  schedule?: string; // 兼容旧版API的schedule字段
+  next_fire_time?: string; // 下次执行时间
   create_by?: string;
   create_time?: string;
   update_by?: string;
@@ -231,10 +216,27 @@ export interface PipelineTriggerUpdate {
 }
 
 /**
+ * 管道信息
+ */
+export interface Pipeline {
+  id: string;
+  name: string;
+  description?: string;
+  enabled?: boolean;
+  triggers: PipelineTrigger[];
+  tasks: PipelineTask[];
+  params?: any;
+  create_by?: string;
+  create_time?: string;
+  update_by?: string;
+  update_time?: string;
+}
+
+/**
  * 创建管道
  */
 export interface PipelineCreate {
-  id: string;
+  id?: string;
   name: string;
   description?: string;
   enabled?: boolean;
@@ -367,7 +369,7 @@ export interface PipelineDetailList {
 export interface PipelineSearchParams {
   name?: string;
   description?: string;
-  status?: number; // 1-启用，0-禁用
+  enabled?: number; // 1-启用，0-禁用
 }
 
 /**

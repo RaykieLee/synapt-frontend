@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Checkbox } from "@/components/animate-ui/base/checkbox"
 import { ChevronRight, ChevronDown } from "lucide-react"
 
 interface MenuNode {

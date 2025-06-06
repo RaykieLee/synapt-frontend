@@ -13,11 +13,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card"
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,7 +50,7 @@ import {
 
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Checkbox } from "@/components/animate-ui/base/checkbox"
 import { userApi } from "@/api/user"
 
 // 导入类型，但使用导入类型语法避免命名冲突
@@ -274,40 +270,41 @@ export default function UsersPage() {
   const totalUsers = userData?.total || 0
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">用户管理</h2>
-          <p className="text-muted-foreground">
-            管理系统用户，控制账号访问与权限
-          </p>
-        </div>
-      </div>
-      
-      <Card>
-        <CardHeader className="px-6 py-4">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-1 items-center gap-2">
-              <Input
-                placeholder="搜索用户名、昵称、邮箱或手机号..."
-                value={searchTerm}
-                onChange={handleSearch}
-                className="w-full max-w-sm"
-              />
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="所有状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">所有状态</SelectItem>
-                  <SelectItem value="0">正常</SelectItem>
-                  <SelectItem value="1">禁用</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+    <div className="container mx-auto px-0 py-6 md:px-6">
+      <div className="flex flex-col space-y-8">
+        <div className="flex items-center justify-between space-y-2">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">用户管理</h2>
+            <p className="text-muted-foreground">
+              管理系统用户，控制账号访问与权限
+            </p>
+          </div>
+                </div>
+
+        {/* 搜索和操作栏 */}
+        <div className="flex items-center justify-between">
+          <div className="flex flex-1 items-center space-x-2">
+            <Input
+              placeholder="搜索用户名、昵称、邮箱或手机号..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="h-8 w-[150px] lg:w-[250px]"
+            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-8 w-[120px]">
+                <SelectValue placeholder="所有状态" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">所有状态</SelectItem>
+                <SelectItem value="0">正常</SelectItem>
+                <SelectItem value="1">禁用</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-2">
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
-                <Button>
+                <Button size="sm" className="h-8">
                   <UserPlus className="mr-2 h-4 w-4" />
                   添加用户
                 </Button>
@@ -454,8 +451,10 @@ export default function UsersPage() {
               </DialogContent>
             </Dialog>
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+
+        {/* 表格 */}
+        <div className="rounded-md border">
           {isLoading ? (
             <div className="flex h-[400px] items-center justify-center">
               <div className="text-center">
@@ -464,8 +463,7 @@ export default function UsersPage() {
               </div>
             </div>
           ) : (
-            <>
-              <Table>
+            <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>用户名</TableHead>
@@ -543,36 +541,38 @@ export default function UsersPage() {
                   )}
                 </TableBody>
               </Table>
-              <div className="flex items-center justify-between space-x-2 py-4">
-                <div className="text-sm text-muted-foreground">
-                  共 {totalUsers} 条数据
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePagination(pagination.pageNum - 1)}
-                    disabled={pagination.pageNum <= 1}
-                  >
-                    上一页
-                  </Button>
-                  <div className="text-sm">
-                    第 {pagination.pageNum} 页 / 共 {Math.ceil(totalUsers / pagination.pageSize)} 页
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePagination(pagination.pageNum + 1)}
-                    disabled={pagination.pageNum >= Math.ceil(totalUsers / pagination.pageSize)}
-                  >
-                    下一页
-                  </Button>
-                </div>
+            )}
+        </div>
+
+        {/* 分页 */}
+        {!isLoading && (
+          <div className="flex items-center justify-between space-x-2 py-4">
+            <div className="text-sm text-muted-foreground">
+              共 {totalUsers} 条数据
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePagination(pagination.pageNum - 1)}
+                disabled={pagination.pageNum <= 1}
+              >
+                上一页
+              </Button>
+              <div className="text-sm">
+                第 {pagination.pageNum} 页 / 共 {Math.ceil(totalUsers / pagination.pageSize)} 页
               </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePagination(pagination.pageNum + 1)}
+                disabled={pagination.pageNum >= Math.ceil(totalUsers / pagination.pageSize)}
+              >
+                下一页
+              </Button>
+            </div>
+          </div>
+        )}
 
       {/* 编辑用户对话框 */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
@@ -706,6 +706,7 @@ export default function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   )
 } 

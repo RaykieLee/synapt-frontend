@@ -18,7 +18,7 @@ import { useState } from "react";
 import * as z from "zod";
 import { configAPI } from "@/api/config";
 import { Config } from "@/types/config";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@/components/animate-ui/base/checkbox";
 
 // 表单验证规则
 const configFormSchema = z.object({
@@ -267,36 +267,48 @@ export default function ConfigPage() {
   };
   
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">系统参数配置</h1>
-        <div className="flex gap-2">
-          <Input
-            placeholder="请输入配置名称或键名"
-            value={searchKey}
-            onChange={(e) => setSearchKey(e.target.value)}
-            className="w-64"
-          />
-          <Button variant="outline" onClick={handleSearch}>
-            搜索
-          </Button>
-          <Button onClick={() => setShowCreateDialog(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            新建配置
-          </Button>
-          {selectedConfigIds.length > 0 && (
-            <Button
-              variant="destructive"
-              onClick={() => setShowBatchDeleteDialog(true)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              批量删除
-            </Button>
-          )}
+    <div className="container mx-auto px-0 py-6 md:px-6">
+      <div className="flex flex-col space-y-8">
+        <div className="flex items-center justify-between space-y-2">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">系统参数配置</h2>
+            <p className="text-muted-foreground">
+              管理系统运行时的各项参数配置
+            </p>
+          </div>
         </div>
-      </div>
-      
-      <Separator className="my-4" />
+
+        {/* 搜索和操作栏 */}
+        <div className="flex items-center justify-between">
+          <div className="flex flex-1 items-center space-x-2">
+            <Input
+              placeholder="请输入配置名称或键名"
+              value={searchKey}
+              onChange={(e) => setSearchKey(e.target.value)}
+              className="h-8 w-[150px] lg:w-[250px]"
+            />
+            <Button variant="outline" size="sm" className="h-8" onClick={handleSearch}>
+              搜索
+            </Button>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button size="sm" className="h-8" onClick={() => setShowCreateDialog(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              新建配置
+            </Button>
+            {selectedConfigIds.length > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8"
+                onClick={() => setShowBatchDeleteDialog(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                批量删除
+              </Button>
+            )}
+          </div>
+        </div>
       
       {/* 配置列表表格 */}
       <div className="border rounded-md">
@@ -638,6 +650,7 @@ export default function ConfigPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 } 

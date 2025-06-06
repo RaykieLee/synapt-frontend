@@ -4,7 +4,7 @@ import { Stream, StreamStatus } from "@/types/stream";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@/components/animate-ui/base/checkbox";
 import { VideoPlayer } from "./video-player";
 import { Pencil, Trash2, MoreVertical } from "lucide-react";
 import {

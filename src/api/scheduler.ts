@@ -99,32 +99,26 @@ export const schedulerApi = {
     /**
      * 获取管道任务列表
      */
-    getList: (query: PipelineTaskQuery) =>
-      apiRequest<PipelineTaskList>("/api/v1/system/scheduler/tasks/list", "POST", query),
-
-    /**
-     * 获取单个任务详情
-     */
-    getDetail: (taskId: number) =>
-      apiRequest<PipelineTask>(`/api/v1/system/scheduler/tasks/${taskId}`, "GET"),
+    getList: (pipelineId: string) =>
+      apiRequest<PipelineTask[]>(`/api/v1/system/scheduler/pipelines/${pipelineId}/tasks`, "GET"),
 
     /**
      * 创建任务
      */
-    create: (data: PipelineTaskCreate) =>
-      apiRequest<PipelineTask>("/api/v1/system/scheduler/tasks/create", "POST", data),
+    create: (pipelineId: string, data: PipelineTaskCreate) =>
+      apiRequest<PipelineTask>(`/api/v1/system/scheduler/pipelines/${pipelineId}/tasks`, "POST", data),
 
     /**
      * 更新任务
      */
     update: (taskId: number, data: PipelineTaskUpdate) =>
-      apiRequest<PipelineTask>(`/api/v1/system/scheduler/tasks/${taskId}`, "PUT", data),
+      apiRequest<PipelineTask>(`/api/v1/system/scheduler/pipelines/tasks/${taskId}`, "PUT", data),
 
     /**
      * 删除任务
      */
     delete: (taskId: number) =>
-      apiRequest<void>(`/api/v1/system/scheduler/tasks/${taskId}`, "DELETE"),
+      apiRequest<boolean>(`/api/v1/system/scheduler/pipelines/tasks/${taskId}`, "DELETE"),
   },
 
   // 管道触发器相关API
@@ -132,32 +126,26 @@ export const schedulerApi = {
     /**
      * 获取管道触发器列表
      */
-    getList: (query: PipelineTriggerQuery) =>
-      apiRequest<PipelineTriggerList>("/api/v1/system/scheduler/triggers/list", "POST", query),
-
-    /**
-     * 获取单个触发器详情
-     */
-    getDetail: (triggerId: number) =>
-      apiRequest<PipelineTrigger>(`/api/v1/system/scheduler/triggers/${triggerId}`, "GET"),
+    getList: (pipelineId: string) =>
+      apiRequest<PipelineTrigger[]>(`/api/v1/system/scheduler/pipelines/${pipelineId}/triggers`, "GET"),
 
     /**
      * 创建触发器
      */
-    create: (data: PipelineTriggerCreate) =>
-      apiRequest<PipelineTrigger>("/api/v1/system/scheduler/triggers/create", "POST", data),
+    create: (pipelineId: string, data: PipelineTriggerCreate) =>
+      apiRequest<PipelineTrigger>(`/api/v1/system/scheduler/pipelines/${pipelineId}/triggers`, "POST", data),
 
     /**
      * 更新触发器
      */
     update: (triggerId: number, data: PipelineTriggerUpdate) =>
-      apiRequest<PipelineTrigger>(`/api/v1/system/scheduler/triggers/${triggerId}`, "PUT", data),
+      apiRequest<PipelineTrigger>(`/api/v1/system/scheduler/pipelines/triggers/${triggerId}`, "PUT", data),
 
     /**
      * 删除触发器
      */
     delete: (triggerId: number) =>
-      apiRequest<void>(`/api/v1/system/scheduler/triggers/${triggerId}`, "DELETE"),
+      apiRequest<boolean>(`/api/v1/system/scheduler/pipelines/triggers/${triggerId}`, "DELETE"),
   },
 
   // 运行记录相关API

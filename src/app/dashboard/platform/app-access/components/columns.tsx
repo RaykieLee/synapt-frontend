@@ -2,7 +2,7 @@
 
 import { ColumnDef, Row } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Checkbox } from "@/components/animate-ui/base/checkbox"
 import { DataTableColumnHeader } from "@/components/shared/data-table"
 import { AppAccess } from "@/types/app"
 import { formatDateTime } from "@/lib/utils"

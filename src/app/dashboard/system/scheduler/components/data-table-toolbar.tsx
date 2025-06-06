@@ -161,14 +161,15 @@ export function DataTableToolbar<TData extends object>({
             title="状态"
             options={statusOptions}
             onSelect={(selectedValue) => {
-              const status = selectedValue && selectedValue.length > 0 ? parseInt(selectedValue[0]) : undefined
-              updateSearchParams("status", status)
-              if (onSearch) {
-                const updatedParams = {
+              const enabled = selectedValue && selectedValue.length > 0 ? parseInt(selectedValue[0]) : undefined
+              console.log('状态过滤选择：', selectedValue, '转换为enabled：', enabled)
+              searchParamsRef.current = {
                   ...searchParamsRef.current,
-                  status: status
+                  enabled: enabled
                 }
-                onSearch(updatedParams)
+              // 立即触发搜索，不使用防抖
+              if (onSearch) {
+                onSearch(searchParamsRef.current)
               }
             }}
           />
@@ -177,8 +178,16 @@ export function DataTableToolbar<TData extends object>({
           <Button
             variant="ghost"
             onClick={() => {
+              console.log('重置所有筛选条件')
+              // 清除所有输入框的值
+              table.getColumn("name")?.setFilterValue("")
+              table.getColumn("description")?.setFilterValue("")
+              table.getColumn("enabled")?.setFilterValue(undefined)
+              // 重置表格的列过滤器
               table.resetColumnFilters()
+              // 清空搜索参数
               searchParamsRef.current = {}
+              // 触发搜索
               if (onSearch) {
                 onSearch({})
               }

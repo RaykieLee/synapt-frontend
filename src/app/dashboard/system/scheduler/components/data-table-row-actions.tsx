@@ -3,7 +3,7 @@
 import { Row } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { MoreHorizontal, Play, Edit, Trash2, Power, PowerOff } from "lucide-react"
+import { MoreHorizontal, Play, Edit, Trash2, Power, PowerOff, Eye } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -91,11 +91,11 @@ export function DataTableRowActions<TData>({
   })
 
   const handleEdit = () => {
-    router.push(`/dashboard/system/scheduler/${pipeline.id}/edit`)
+    router.push(`/dashboard/system/scheduler/pipelines/${pipeline.id}?mode=edit`)
   }
 
   const handleView = () => {
-    router.push(`/dashboard/system/scheduler/${pipeline.id}`)
+    router.push(`/dashboard/system/scheduler/pipelines/${pipeline.id}`)
   }
 
   const handleToggleEnable = () => {
@@ -125,6 +125,7 @@ export function DataTableRowActions<TData>({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
         <DropdownMenuItem onClick={handleView}>
+          <Eye className="mr-2 h-4 w-4" />
           查看详情
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleEdit}>
