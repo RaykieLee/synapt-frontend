@@ -10,18 +10,7 @@ export const configAPI = {
    * 获取配置列表
    */
   getList: (params: ConfigQuery) => {
-    const requestBody: Record<string, any> = {
-      page_num: params.pageNum || 1,
-      page_size: params.pageSize || 10,
-      search_params: {}
-    };
-
-    if (params.config_name) requestBody.search_params.config_name = params.config_name;
-    if (params.config_key) requestBody.search_params.config_key = params.config_key;
-    if (params.config_value) requestBody.search_params.config_value = params.config_value;
-    if (params.status !== undefined) requestBody.search_params.status = params.status;
-
-    return apiRequest<PaginationResult<Config>>('/api/v1/system/configs/list', 'POST', requestBody);
+    return apiRequest<PaginationResult<Config>>('/api/v1/system/configs/list', 'POST', params);
   },
 
   /**

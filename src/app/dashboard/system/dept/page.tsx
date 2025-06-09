@@ -398,37 +398,37 @@ export default function DeptPage() {
     <div className="container mx-auto px-0 py-6 md:px-6">
       <div className="flex flex-col space-y-8">
         <div className="flex items-center justify-between space-y-2">
-          <div>
+        <div>
             <h2 className="text-2xl font-bold tracking-tight">部门管理</h2>
-            <p className="text-muted-foreground">
-              管理公司的组织架构和部门信息
-            </p>
-          </div>
+          <p className="text-muted-foreground">
+            管理公司的组织架构和部门信息
+          </p>
         </div>
-
+      </div>
+      
         {/* 搜索和操作栏 */}
         <div className="flex items-center justify-between">
           <div className="flex flex-1 items-center space-x-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-3 w-3 text-muted-foreground" />
-              <Input
-                placeholder="搜索部门名称..."
-                value={searchTerm}
-                onChange={handleSearch}
+                <Input
+                  placeholder="搜索部门名称..."
+                  value={searchTerm}
+                  onChange={handleSearch}
                 className="h-8 w-[150px] lg:w-[250px] pl-7"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="h-8 w-[120px]">
-                <SelectValue placeholder="所有状态" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">所有状态</SelectItem>
-                <SelectItem value="0">正常</SelectItem>
-                <SelectItem value="1">停用</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+                  <SelectValue placeholder="所有状态" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">所有状态</SelectItem>
+                  <SelectItem value="0">正常</SelectItem>
+                  <SelectItem value="1">停用</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           <div className="flex items-center space-x-2">
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>

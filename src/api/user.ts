@@ -1,42 +1,19 @@
 import { apiRequest } from "@/lib/api";
 import { User, UserCreateDto, UserQuery, UserUpdateDto } from "@/types/user";
-import { Role } from "@/types/role";
 
+// 新版本用户列表响应
 interface UserListResponse {
   rows: User[];
   total: number;
-}
-
-// 符合接口文档的请求体结构
-interface UserSearchRequest {
   page_num: number;
   page_size: number;
-  order_by_column?: string;
-  is_asc?: string;
-  search_params: {
-    user_name?: string;
-    nick_name?: string;
-    status?: string;
-    phonenumber?: string;
-  };
+  pages: number;
 }
 
 export const userApi = {
-  // 获取用户列表 - 修改为POST请求，符合API文档规范
+  // 获取用户列表
   getList: (params: UserQuery = {}) => {
-    // 构建请求体
-    const requestBody: UserSearchRequest = {
-      page_num: params.page_num || 1,
-      page_size: params.page_size || 10,
-      search_params: {}
-    };
-    
-    // 将查询参数转换为search_params
-    if (params.user_name) requestBody.search_params.user_name = params.user_name;
-    if (params.status) requestBody.search_params.status = params.status;
-    if (params.phonenumber) requestBody.search_params.phonenumber = params.phonenumber;
-    
-    return apiRequest<UserListResponse>("/api/v1/system/users/list", "POST", requestBody);
+    return apiRequest<UserListResponse>("/api/v1/system/users/list", "POST", params);
   },
   
   // 获取用户详情
@@ -51,11 +28,19 @@ export const userApi = {
   
   // 删除用户
   delete: (userId: number) => apiRequest<any>(`/api/v1/system/users/${userId}`, "DELETE"),
-  
-  // 重置用户密码
-  resetPassword: (userId: number, password: string) => 
-    apiRequest<any>(`/api/v1/system/users/${userId}/password`, "PUT", { password }),
-  
+
+  // 检查用户名是否已存在
+  checkUsername: (username: string, userId?: number) => 
+    apiRequest<boolean>(`/api/v1/system/users/check-username/${username}${userId ? `?user_id=${userId}` : ''}`, "GET"),
+
+  // 批量删除用户
+  batchDelete: (userIds: number[]) => 
+    apiRequest<any>(`/api/v1/system/users/batch/${userIds.join(',')}`, "DELETE"),
+
+  // 重置密码
+  resetPassword: (userId: number, newPassword: string) => 
+    apiRequest<any>(`/api/v1/system/users/${userId}/reset-password?new_password=${newPassword}`, "PUT"),
+
   // 获取可分配角色列表
-  getRoles: () => apiRequest<Role[]>("/api/v1/system/roles/actions/optionselect")
+  getRoles: () => apiRequest<any[]>("/api/v1/system/roles/actions/optionselect")
 }; 

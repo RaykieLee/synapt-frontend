@@ -409,27 +409,27 @@ const IconSelector = ({
             {/* 基础图标 */}
             <div>
               <h4 className="text-sm font-medium text-gray-700 mb-2">基础图标</h4>
-              <div className="grid grid-cols-8 gap-2">
+            <div className="grid grid-cols-8 gap-2">
                 {['home', 'settings', 'settings2', 'cog', 'dashboard', 'layers', 'activity', 'wrench'].map((key) => (
-                  <Button
-                    key={key}
-                    variant="ghost"
+                <Button
+                  key={key}
+                  variant="ghost"
                     className={`h-10 w-10 p-0 ${value === key ? "bg-gray-100 border border-gray-300" : ""}`}
-                    onClick={() => {
-                      onChange(key);
-                      setOpen(false);
-                    }}
-                  >
-                    <div className="relative">
+                  onClick={() => {
+                    onChange(key);
+                    setOpen(false);
+                  }}
+                >
+                  <div className="relative">
                       {iconMap[key]}
-                      {value === key && (
-                        <div className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-green-500"></div>
-                      )}
-                    </div>
-                  </Button>
-                ))}
-              </div>
+                    {value === key && (
+                      <div className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-green-500"></div>
+                    )}
+                  </div>
+                </Button>
+              ))}
             </div>
+          </div>
 
             {/* 用户管理 */}
             <div>
@@ -1151,13 +1151,13 @@ export default function MenusPage() {
     <div className="container mx-auto px-0 py-6 md:px-6">
       <div className="flex flex-col space-y-8">
         <div className="flex items-center justify-between space-y-2">
-          <div>
+        <div>
             <h2 className="text-2xl font-bold tracking-tight">菜单管理</h2>
-            <p className="text-muted-foreground">
-              管理系统菜单和权限配置
-            </p>
-          </div>
+          <p className="text-muted-foreground">
+            管理系统菜单和权限配置
+          </p>
         </div>
+      </div>
       
       <Card>
         <CardHeader className="px-6 py-4">
@@ -1203,27 +1203,27 @@ export default function MenusPage() {
                       菜单类型 *
                     </Label>
                     <div className="col-span-3">
-                      <Select 
-                        value={newMenu.menu_type} 
-                        onValueChange={(value) => {
-                          setNewMenu({ 
-                            ...newMenu, 
-                            menu_type: value,
-                            // 重置与类型相关的字段
-                            path: value === "F" ? "" : newMenu.path,
-                            component: value === "F" ? "" : newMenu.component
-                          })
-                        }}
-                      >
+                    <Select 
+                      value={newMenu.menu_type} 
+                      onValueChange={(value) => {
+                        setNewMenu({ 
+                          ...newMenu, 
+                          menu_type: value,
+                          // 重置与类型相关的字段
+                          path: value === "F" ? "" : newMenu.path,
+                          component: value === "F" ? "" : newMenu.component
+                        })
+                      }}
+                    >
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="选择菜单类型" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="M">目录</SelectItem>
-                          <SelectItem value="C">菜单</SelectItem>
-                          <SelectItem value="F">按钮</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        <SelectValue placeholder="选择菜单类型" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="M">目录</SelectItem>
+                        <SelectItem value="C">菜单</SelectItem>
+                        <SelectItem value="F">按钮</SelectItem>
+                      </SelectContent>
+                    </Select>
                     </div>
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
@@ -1231,21 +1231,21 @@ export default function MenusPage() {
                       上级菜单
                     </Label>
                     <div className="col-span-3">
-                      <Select 
-                        value={newMenu.parent_id?.toString()} 
-                        onValueChange={(value) => setNewMenu({ ...newMenu, parent_id: parseInt(value) })}
-                      >
+                    <Select 
+                      value={newMenu.parent_id?.toString()} 
+                      onValueChange={(value) => setNewMenu({ ...newMenu, parent_id: parseInt(value) })}
+                    >
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="选择上级菜单" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {parentMenus.map(menu => (
-                            <SelectItem key={menu.id} value={menu.id.toString()}>
-                              {menu.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        <SelectValue placeholder="选择上级菜单" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {parentMenus.map(menu => (
+                          <SelectItem key={menu.id} value={menu.id.toString()}>
+                            {menu.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     </div>
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
@@ -1318,18 +1318,18 @@ export default function MenusPage() {
                       状态
                     </Label>
                     <div className="col-span-3">
-                      <Select 
-                        value={newMenu.status} 
-                        onValueChange={(value) => setNewMenu({ ...newMenu, status: value })}
-                      >
+                    <Select 
+                      value={newMenu.status} 
+                      onValueChange={(value) => setNewMenu({ ...newMenu, status: value })}
+                    >
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="选择状态" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0">正常</SelectItem>
-                          <SelectItem value="1">停用</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        <SelectValue placeholder="选择状态" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">正常</SelectItem>
+                        <SelectItem value="1">停用</SelectItem>
+                      </SelectContent>
+                    </Select>
                     </div>
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
@@ -1490,27 +1490,27 @@ export default function MenusPage() {
                   菜单类型 *
                 </Label>
                 <div className="col-span-3">
-                  <Select 
-                    value={currentMenu.menu_type} 
-                    onValueChange={(value) => {
-                      setCurrentMenu({ 
-                        ...currentMenu, 
-                        menu_type: value,
-                        // 重置与类型相关的字段
-                        path: value === "F" ? "" : currentMenu.path,
-                        component: value === "F" ? "" : currentMenu.component
-                      })
-                    }}
-                  >
+                <Select 
+                  value={currentMenu.menu_type} 
+                  onValueChange={(value) => {
+                    setCurrentMenu({ 
+                      ...currentMenu, 
+                      menu_type: value,
+                      // 重置与类型相关的字段
+                      path: value === "F" ? "" : currentMenu.path,
+                      component: value === "F" ? "" : currentMenu.component
+                    })
+                  }}
+                >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="选择菜单类型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="M">目录</SelectItem>
-                      <SelectItem value="C">菜单</SelectItem>
-                      <SelectItem value="F">按钮</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <SelectValue placeholder="选择菜单类型" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M">目录</SelectItem>
+                    <SelectItem value="C">菜单</SelectItem>
+                    <SelectItem value="F">按钮</SelectItem>
+                  </SelectContent>
+                </Select>
                 </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -1518,21 +1518,21 @@ export default function MenusPage() {
                   上级菜单
                 </Label>
                 <div className="col-span-3">
-                  <Select 
-                    value={currentMenu.parent_id.toString()} 
-                    onValueChange={(value) => setCurrentMenu({ ...currentMenu, parent_id: parseInt(value) })}
-                  >
+                <Select 
+                  value={currentMenu.parent_id.toString()} 
+                  onValueChange={(value) => setCurrentMenu({ ...currentMenu, parent_id: parseInt(value) })}
+                >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="选择上级菜单" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {parentMenus.map(menu => (
-                        <SelectItem key={menu.id} value={menu.id.toString()}>
-                          {menu.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <SelectValue placeholder="选择上级菜单" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {parentMenus.map(menu => (
+                      <SelectItem key={menu.id} value={menu.id.toString()}>
+                        {menu.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -1629,18 +1629,18 @@ export default function MenusPage() {
                   状态
                 </Label>
                 <div className="col-span-3">
-                  <Select 
-                    value={currentMenu.status} 
-                    onValueChange={(value) => setCurrentMenu({ ...currentMenu, status: value })}
-                  >
+                <Select 
+                  value={currentMenu.status} 
+                  onValueChange={(value) => setCurrentMenu({ ...currentMenu, status: value })}
+                >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="选择状态" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0">正常</SelectItem>
-                      <SelectItem value="1">停用</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <SelectValue placeholder="选择状态" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">正常</SelectItem>
+                    <SelectItem value="1">停用</SelectItem>
+                  </SelectContent>
+                </Select>
                 </div>
               </div>
             </div>

@@ -4,11 +4,28 @@ import { PaginationResult } from '@/types/pagination';
  * 系统配置查询参数
  */
 export interface ConfigQuery {
-  pageNum?: number;
-  pageSize?: number;
+  page_num?: number;
+  page_size?: number;
+  sorts?: Array<{
+    field: string;
+    order: 'asc' | 'desc';
+  }>;
+  params?: {
+    keywords?: {
+      config_name?: string;
+      config_key?: string;
+    };
+    status?: string;
+    search_mode?: 'and' | 'or';
+  };
+}
+
+/**
+ * 配置搜索参数
+ */
+export interface ConfigSearchParams {
   config_name?: string;
   config_key?: string;
-  config_value?: string;
   status?: string;
 }
 
