@@ -45,18 +45,23 @@ export const dictAPI = {
   deleteDictType: (dictId: number) => apiRequest<void>(`/api/v1/system/dicts/types/${dictId}`, 'DELETE'),
 
   /**
+   * 批量删除字典类型
+   */
+  batchDeleteDictTypes: (dictIds: number[]) => apiRequest<void>('/api/v1/system/dicts/types/batch', 'DELETE', dictIds),
+
+  /**
    * 获取字典数据列表
    */
   getDictDataList: (params: DictDataQuery) => {
     const requestBody: Record<string, any> = {
       page_num: params.pageNum || 1,
       page_size: params.pageSize || 10,
-      search_params: {}
+      dict_type: params.dictType,
+      params: {}
     };
 
-    if (params.dictType) requestBody.search_params.dict_type = params.dictType;
-    if (params.dictLabel) requestBody.search_params.dict_label = params.dictLabel;
-    if (params.status !== undefined) requestBody.search_params.status = params.status;
+    if (params.dictLabel) requestBody.params.dict_label = params.dictLabel;
+    if (params.status !== undefined) requestBody.params.status = params.status;
 
     return apiRequest<PaginationResult<DictData>>('/api/v1/system/dicts/data/list', 'POST', requestBody);
   },

@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Checkbox } from "@/components/animate-ui/base/checkbox" 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { 

@@ -12,6 +12,23 @@ export interface DictTypeQuery {
 }
 
 /**
+ * 字典类型搜索参数
+ */
+export interface DictTypeSearchParams {
+  dict_name?: string;
+  dict_type?: string;
+  status?: string;
+}
+
+/**
+ * 字典数据搜索参数
+ */
+export interface DictDataSearchParams {
+  dict_label?: string;
+  status?: string;
+}
+
+/**
  * 字典类型实体
  */
 export interface DictType {
@@ -66,8 +83,6 @@ export interface DictData {
   dict_label: string;
   dict_value: string;
   dict_type: string;
-  css_class?: string;
-  list_class?: string;
   is_default: string;
   status: string;
   remark?: string;
@@ -85,8 +100,6 @@ export interface DictDataCreateDto {
   dict_label: string;
   dict_value: string;
   dict_type: string;
-  css_class?: string;
-  list_class?: string;
   is_default?: string;
   status: string;
   remark?: string;
@@ -100,8 +113,6 @@ export interface DictDataUpdateDto {
   dict_label?: string;
   dict_value?: string;
   dict_type?: string;
-  css_class?: string;
-  list_class?: string;
   is_default?: string;
   status?: string;
   remark?: string;
