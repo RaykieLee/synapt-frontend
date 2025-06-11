@@ -39,13 +39,12 @@ export function TaskManagement({ pipelineId }: TaskManagementProps) {
   // 查询任务列表
   const { data: response, isLoading } = useQuery({
     queryKey: ["scheduler", "tasks", "list", pipelineId, query],
-    queryFn: () => schedulerApi.tasks.getList(query),
+    queryFn: () => schedulerApi.tasks.getList(pipelineId),
     enabled: !!pipelineId,
   });
 
   // 从响应中提取数据
-  const taskData = response as PipelineTaskList || { list: [], total: 0, pages: 1, page_num: 1, page_size: 10 };
-  const list = taskData.list || [];
+  const list = response || [];
 
   return (
     <Card>

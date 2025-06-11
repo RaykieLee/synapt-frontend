@@ -25,7 +25,7 @@ export const handleAuthFailure = () => {
     if (currentPath !== "/login") {
       localStorage.setItem("redirectAfterLogin", currentPath);
       // 执行跳转
-      // window.location.href = "/login";
+      window.location.href = "/login";
     }
   }
 };

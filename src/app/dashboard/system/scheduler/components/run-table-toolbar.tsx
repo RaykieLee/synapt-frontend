@@ -22,7 +22,7 @@ interface RunTableToolbarProps<TData> {
   columnLabels?: Record<string, string>
 }
 
-export function RunTableToolbar<TData extends object>({
+export function RunTableToolbar<TData>({
   table,
   onSearch,
   columnLabels,

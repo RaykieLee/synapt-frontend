@@ -101,6 +101,7 @@ export interface CertificateQuery {
     status?: string
     certificate_category?: string
     certificate_level?: number
+    personnel_id?: number
     time_range?: {
       issue_date?: {
         start?: string

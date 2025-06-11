@@ -24,7 +24,7 @@ interface DataTableToolbarProps<TData> {
   columnLabels?: Record<string, string>
 }
 
-export function DataTableToolbar<TData extends object>({
+export function DataTableToolbar<TData>({
   table,
   onSearch,
   columnLabels,

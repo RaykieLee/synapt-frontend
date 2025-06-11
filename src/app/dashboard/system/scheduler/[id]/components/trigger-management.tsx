@@ -39,13 +39,12 @@ export function TriggerManagement({ pipelineId }: TriggerManagementProps) {
   // 查询触发器列表
   const { data: response, isLoading } = useQuery({
     queryKey: ["scheduler", "triggers", "list", pipelineId, query],
-    queryFn: () => schedulerApi.triggers.getList(query),
+    queryFn: () => schedulerApi.triggers.getList(pipelineId),
     enabled: !!pipelineId,
   });
 
   // 从响应中提取数据
-  const triggerData = response as PipelineTriggerList || { list: [], total: 0, pages: 1, page_num: 1, page_size: 10 };
-  const list = triggerData.list || [];
+  const list = response || [];
 
   return (
     <Card>
