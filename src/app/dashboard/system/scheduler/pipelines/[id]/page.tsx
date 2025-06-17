@@ -24,7 +24,10 @@ import {
   Save,
   X,
   Plus,
-  Trash2
+  Trash2,
+  Search,
+  Check,
+  ChevronsUpDown
 } from "lucide-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
@@ -66,8 +69,21 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
-import { schedulerApi } from "@/api/scheduler"
+import { schedulerApi, TaskTypeInfo, TaskRegistryInfo, TaskDetailInfo } from "@/api/scheduler"
 import { Pipeline, PipelineRun, PipelineRunStatus, PipelineRunInput, PipelineUpdate, PipelineTask, PipelineTrigger } from "@/types/scheduler"
 
 // 表单验证模式
@@ -105,6 +121,9 @@ export default function PipelineDetailPage() {
   const [showTaskDialog, setShowTaskDialog] = useState(false)
   const [selectedTask, setSelectedTask] = useState<PipelineTask | null>(null)
   const [taskEnabled, setTaskEnabled] = useState(true)
+  const [selectedTaskType, setSelectedTaskType] = useState<string>("")
+  const [selectedBuiltinTask, setSelectedBuiltinTask] = useState<string>("")
+  const [builtinTaskSelectorOpen, setBuiltinTaskSelectorOpen] = useState(false)
   
   // 触发器相关状态  
   const [showTriggerDialog, setShowTriggerDialog] = useState(false)
@@ -123,8 +142,17 @@ export default function PipelineDetailPage() {
   const { data: runsData, isLoading: runsLoading } = useQuery({
     queryKey: ['scheduler', 'runs', pipelineId],
     queryFn: () => schedulerApi.runs.getList({ 
+      page_num: 1,
+      page_size: 20,
+      sorts: [
+        {
+          field: "start_time",
+          order: "desc"
+        }
+      ],
       params: { 
-        pipeline_id: pipelineId 
+        pipeline_id: pipelineId,
+        search_mode: "and"
       } 
     }),
     staleTime: 30 * 1000, // 30秒
@@ -137,6 +165,21 @@ export default function PipelineDetailPage() {
     queryKey: ['scheduler', 'pipelines', pipelineId, 'schema'],
     queryFn: () => schedulerApi.pipelines.getInputSchema(pipelineId),
     enabled: !!pipeline,
+    staleTime: 5 * 60 * 1000, // 5分钟
+  })
+
+  // 获取任务类型列表
+  const { data: taskTypes } = useQuery({
+    queryKey: ['scheduler', 'task-types'],
+    queryFn: () => schedulerApi.taskRegistry.getTypes(),
+    staleTime: 10 * 60 * 1000, // 10分钟
+  })
+
+  // 获取内置函数列表（当选择内置函数类型时）
+  const { data: builtinTasks } = useQuery({
+    queryKey: ['scheduler', 'builtin-tasks'],
+    queryFn: () => schedulerApi.taskRegistry.getBuiltinFunctions(),
+    enabled: selectedTaskType === 'builtin_function',
     staleTime: 5 * 60 * 1000, // 5分钟
   })
 
@@ -248,7 +291,38 @@ export default function PipelineDetailPage() {
     // 暂时使用any类型，稍后会完善
     setSelectedTask(task)
     setTaskEnabled(task?.enabled !== false)
+    setSelectedTaskType(task?.task_type || "")
+    // 如果是内置函数类型，设置对应的内置任务ID
+    setSelectedBuiltinTask(task?.task_type === 'builtin_function' ? task?.task_id || "" : "")
+    setBuiltinTaskSelectorOpen(false)
     setShowTaskDialog(true)
+  }
+
+  // 处理内置函数选择
+  const handleBuiltinTaskSelect = async (taskId: string) => {
+    if (!taskId) return
+    
+    try {
+      const taskDetail = await schedulerApi.taskRegistry.getBuiltinFunctionDetail(taskId)
+      
+      // 自动填充表单字段
+      const taskNameInput = document.getElementById('task-name') as HTMLInputElement
+      const taskDescInput = document.getElementById('task-description') as HTMLTextAreaElement
+      const taskIdInput = document.getElementById('task-id') as HTMLInputElement
+      
+      if (taskNameInput) taskNameInput.value = taskDetail.name || taskDetail.id
+      if (taskDescInput) taskDescInput.value = taskDetail.description || ""
+      if (taskIdInput) taskIdInput.value = taskDetail.id
+      
+      setSelectedBuiltinTask(taskId)
+      setBuiltinTaskSelectorOpen(false)
+    } catch (error) {
+      toast({
+        title: "错误",
+        description: "获取任务详情失败",
+        variant: "destructive",
+      })
+    }
   }
 
   // 创建任务的mutation
@@ -269,6 +343,9 @@ export default function PipelineDetailPage() {
       })
       setShowTaskDialog(false)
       setSelectedTask(null)
+      setSelectedTaskType("")
+      setSelectedBuiltinTask("")
+      setBuiltinTaskSelectorOpen(false)
       // 刷新管道详情
       queryClient.invalidateQueries({ queryKey: ['scheduler', 'pipelines', pipelineId] })
     },
@@ -291,6 +368,9 @@ export default function PipelineDetailPage() {
       })
       setShowTaskDialog(false)
       setSelectedTask(null)
+      setSelectedTaskType("")
+      setSelectedBuiltinTask("")
+      setBuiltinTaskSelectorOpen(false)
       // 刷新管道详情
       queryClient.invalidateQueries({ queryKey: ['scheduler', 'pipelines', pipelineId] })
     },
@@ -340,10 +420,16 @@ export default function PipelineDetailPage() {
 
   // 保存任务
   const handleSaveTask = () => {
+    // 如果选择的是内置函数，使用内置函数的ID，否则使用输入的或生成的ID
+    const taskId = selectedTaskType === 'builtin_function' && selectedBuiltinTask
+      ? selectedBuiltinTask
+      : (document.getElementById('task-id') as HTMLInputElement)?.value || `task_${Date.now()}`
+    
     const formData = {
+      task_id: taskId,
       name: (document.getElementById('task-name') as HTMLInputElement)?.value || '',
       description: (document.getElementById('task-description') as HTMLTextAreaElement)?.value || '',
-      task_type: (document.getElementById('task-type') as HTMLInputElement)?.value || '',
+      task_type: selectedTaskType,
       config: (document.getElementById('task-config') as HTMLTextAreaElement)?.value || '',
       enabled: taskEnabled,
     }
@@ -353,6 +439,25 @@ export default function PipelineDetailPage() {
       toast({
         title: "错误",
         description: "请输入任务名称",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!selectedTaskType) {
+      toast({
+        title: "错误",
+        description: "请选择任务类型",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // 如果选择的是内置函数类型，验证是否已选择内置函数
+    if (selectedTaskType === 'builtin_function' && !selectedBuiltinTask) {
+      toast({
+        title: "错误",
+        description: "请选择内置函数",
         variant: "destructive",
       })
       return
@@ -671,7 +776,7 @@ export default function PipelineDetailPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-8">
+    <div className="container mx-auto px-0 py-6 md:px-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -968,6 +1073,9 @@ export default function PipelineDetailPage() {
                   onClick={() => {
                     setSelectedTask(null)
                     setTaskEnabled(true)
+                    setSelectedTaskType("")
+                    setSelectedBuiltinTask("")
+                    setBuiltinTaskSelectorOpen(false)
                     setShowTaskDialog(true)
                   }}
                 >
@@ -987,6 +1095,9 @@ export default function PipelineDetailPage() {
                       onClick={() => {
                         setSelectedTask(null)
                         setTaskEnabled(true)
+                        setSelectedTaskType("")
+                        setSelectedBuiltinTask("")
+                        setBuiltinTaskSelectorOpen(false)
                         setShowTaskDialog(true)
                       }}
                     >
@@ -1293,6 +1404,16 @@ export default function PipelineDetailPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
+              <Label htmlFor="task-id">任务ID</Label>
+              <Input
+                id="task-id"
+                placeholder="任务标识符"
+                defaultValue={selectedTask?.task_id || ""}
+                readOnly={!!selectedTask}
+                className={selectedTask ? "bg-muted" : ""}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="task-name">任务名称 *</Label>
               <Input
                 id="task-name"
@@ -1311,14 +1432,25 @@ export default function PipelineDetailPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="task-type">任务类型</Label>
-                <Input
+                <Label htmlFor="task-type">任务类型 *</Label>
+                <select
                   id="task-type"
-                  placeholder="输入任务类型"
-                  defaultValue={selectedTask?.task_type || ""}
-                />
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={selectedTaskType}
+                  onChange={(e) => {
+                    setSelectedTaskType(e.target.value)
+                    setSelectedBuiltinTask("") // 重置内置函数选择
+                  }}
+                >
+                  <option value="">请选择任务类型</option>
+                  {taskTypes?.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.display_name}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 mt-7">
                 <Switch 
                   id="task-enabled" 
                   checked={taskEnabled}
@@ -1327,6 +1459,69 @@ export default function PipelineDetailPage() {
                 <Label htmlFor="task-enabled">启用任务</Label>
               </div>
             </div>
+            
+            {/* 当选择内置函数时显示函数选择器 */}
+            {selectedTaskType === 'builtin_function' && (
+              <div className="space-y-2">
+                <Label htmlFor="builtin-task">选择内置函数 *</Label>
+                <Popover open={builtinTaskSelectorOpen} onOpenChange={setBuiltinTaskSelectorOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={builtinTaskSelectorOpen}
+                      className="w-full justify-between"
+                    >
+                      {selectedBuiltinTask
+                        ? builtinTasks?.find((task) => task.id === selectedBuiltinTask)?.name ||
+                          builtinTasks?.find((task) => task.id === selectedBuiltinTask)?.id ||
+                          "选择内置函数"
+                        : "请选择内置函数"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput placeholder="搜索内置函数..." />
+                      <CommandList>
+                        <CommandEmpty>未找到匹配的内置函数</CommandEmpty>
+                        <CommandGroup>
+                          {builtinTasks?.map((task) => (
+                            <CommandItem
+                              key={task.id}
+                              value={`${task.id} ${task.name} ${task.description || ''}`}
+                              onSelect={() => handleBuiltinTaskSelect(task.id)}
+                            >
+                              <Check
+                                className={`mr-2 h-4 w-4 ${
+                                  selectedBuiltinTask === task.id ? "opacity-100" : "opacity-0"
+                                }`}
+                              />
+                              <div className="flex flex-col">
+                                <div className="font-medium">{task.name}</div>
+                                {task.description && (
+                                  <div className="text-xs text-muted-foreground">
+                                    {task.description}
+                                  </div>
+                                )}
+                                <div className="text-xs text-muted-foreground">
+                                  ID: {task.id}
+                                </div>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                {selectedBuiltinTask && (
+                  <div className="text-xs text-muted-foreground">
+                    已选择内置函数，任务名称和描述将自动填充
+                  </div>
+                )}
+              </div>
+            )}
                           <div className="space-y-2">
                 <Label htmlFor="task-config">配置信息</Label>
                 <Textarea
@@ -1344,6 +1539,9 @@ export default function PipelineDetailPage() {
               onClick={() => {
                 setShowTaskDialog(false)
                 setSelectedTask(null)
+                setSelectedTaskType("")
+                setSelectedBuiltinTask("")
+                setBuiltinTaskSelectorOpen(false)
               }}
             >
               取消

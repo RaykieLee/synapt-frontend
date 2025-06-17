@@ -16,8 +16,10 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    console.log('NEXT_PUBLIC_BACKEND_URL', process.env.NEXT_PUBLIC_BACKEND_URL);
+    // 在运行时获取环境变量
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+    console.log('Rewrites - NEXT_PUBLIC_BACKEND_URL:', backendUrl);
+    
     return [
       // 统一处理所有API请求
       {
@@ -25,7 +27,13 @@ const nextConfig: NextConfig = {
         destination: `${backendUrl}/api/:path*`
       }
     ]
-  }
+  },
+  
+  // 确保环境变量在客户端可用
+  env: {
+    NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  },
 };
 
 export default nextConfig;

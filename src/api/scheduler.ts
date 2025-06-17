@@ -21,6 +21,25 @@ import {
   PipelineTriggerList
 } from "@/types/scheduler";
 
+// 任务注册表相关类型
+export interface TaskRegistryInfo {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+export interface TaskTypeInfo {
+  value: string;
+  display_name: string;
+}
+
+export interface TaskDetailInfo {
+  id: string;
+  name: string;
+  description: string | null;
+  function_name: string;
+}
+
 /**
  * 调度器API服务
  */
@@ -197,6 +216,45 @@ export const schedulerApi = {
      */
     getStats: () =>
       apiRequest<any>("/api/v1/system/scheduler/runs/stats/summary", "GET"),
+  },
+
+  // 任务注册表相关API
+  taskRegistry: {
+    /**
+     * 获取任务类型列表
+     */
+    getTypes: () =>
+      apiRequest<TaskTypeInfo[]>("/api/v1/system/scheduler/tasks/types", "GET"),
+
+    /**
+     * 获取所有已注册任务
+     */
+    getRegistry: () =>
+      apiRequest<TaskRegistryInfo[]>("/api/v1/system/scheduler/tasks/registry", "GET"),
+
+    /**
+     * 获取内置函数任务列表
+     */
+    getBuiltinFunctions: () =>
+      apiRequest<TaskRegistryInfo[]>("/api/v1/system/scheduler/tasks/builtin-functions", "GET"),
+
+    /**
+     * 获取指定内置函数任务详情
+     */
+    getBuiltinFunctionDetail: (taskId: string) =>
+      apiRequest<TaskDetailInfo>(`/api/v1/system/scheduler/tasks/builtin-functions/${taskId}`, "GET"),
+
+    /**
+     * 刷新任务注册表
+     */
+    refresh: () =>
+      apiRequest<any>("/api/v1/system/scheduler/tasks/registry/refresh", "POST"),
+
+    /**
+     * 获取任务统计信息
+     */
+    getStatistics: () =>
+      apiRequest<any>("/api/v1/system/scheduler/tasks/statistics", "GET"),
   },
 
   // 统计信息相关API

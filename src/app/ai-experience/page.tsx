@@ -210,7 +210,7 @@ export default function AiExperiencePage() {
           transition={{ duration: 0.5 }}
           className="mb-12 text-center"
         >
-          <h1 className="text-4xl font-bold mb-4">AI 体验中心</h1>
+          <h1 className="text-4xl font-bold mb-4">顺畅AI 体验中心</h1>
           <p className="text-xl text-muted-foreground">暂无可用的AI应用</p>
         </motion.div>
       </div>
@@ -225,7 +225,7 @@ export default function AiExperiencePage() {
         transition={{ duration: 0.5 }}
         className="mb-12 text-center"
       >
-        <h1 className="text-4xl font-bold mb-4">AI 体验中心</h1>
+        <h1 className="text-4xl font-bold mb-4">顺畅AI 体验中心</h1>
         <p className="text-xl text-muted-foreground">探索人工智能的无限可能</p>
       </motion.div>
       

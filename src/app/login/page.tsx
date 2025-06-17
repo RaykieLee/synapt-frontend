@@ -153,7 +153,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-6">
-            <h2 className="text-2xl font-bold">人工智能应用平台</h2>
+            <h2 className="text-2xl font-bold">顺畅人工智能应用平台</h2>
           </div>
           <CardTitle className="text-xl">登录系统</CardTitle>
           <CardDescription>选择您偏好的登录方式</CardDescription>
@@ -229,7 +229,7 @@ export default function LoginPage() {
         
         <CardFooter className="flex flex-col">
           <p className="text-sm text-center text-gray-500 mt-4">
-            © {new Date().getFullYear()} 人工智能应用平台. 版权所有.
+            © {new Date().getFullYear()} 顺畅人工智能应用平台. 版权所有.
           </p>
         </CardFooter>
       </Card>
