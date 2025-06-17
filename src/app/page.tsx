@@ -27,8 +27,8 @@ interface Item {
   updated_at?: string;
 }
 
-// API基础URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// 使用相对路径，通过 Next.js 的 rewrites 代理到后端
+const API_BASE_URL = "";
 
 export default function Home() {
   const [items, setItems] = useState<Item[]>([]);

@@ -49,10 +49,10 @@ export function NavUser({
   
   const handleLogout = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+      // 使用相对路径，通过 Next.js 的 rewrites 代理到后端
       const token = localStorage.getItem("token");
       
-      await fetch(`${apiUrl}/api/v1/logout`, {
+      await fetch('/api/v1/logout', {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,

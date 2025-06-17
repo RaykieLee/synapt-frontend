@@ -42,11 +42,16 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // 视频流配置
-const STREAM_URL = "http://172.16.100.177:8085/live/cctv5.flv";
-// const STREAM_URL2 = "http://172.16.100.177:8085/live/cctv4.flv";
-const STREAM_URL2 = "http://localhost:8080/live/stream1.live.flv";
-// http://localhost:8080/live/stream1.live.flv
-// rtmp://127.0.0.1:1935/live/stream1
+const videoHost = process.env.NEXT_PUBLIC_VIDEO_HOST || '172.16.100.177';
+const videoPort = process.env.NEXT_PUBLIC_VIDEO_PORT || '8085';
+const localVideoHost = process.env.NEXT_PUBLIC_LOCAL_VIDEO_HOST || 'localhost';
+const localVideoPort = process.env.NEXT_PUBLIC_LOCAL_VIDEO_PORT || '8080';
+
+const STREAM_URL = `http://${videoHost}:${videoPort}/live/cctv5.flv`;
+// const STREAM_URL2 = `http://${videoHost}:${videoPort}/live/cctv4.flv`;
+const STREAM_URL2 = `http://${localVideoHost}:${localVideoPort}/live/stream1.live.flv`;
+// http://${localVideoHost}:${localVideoPort}/live/stream1.live.flv
+// rtmp://${localVideoHost}:1935/live/stream1
 // 告警级别颜色
 const LEVEL_COLORS = {
   info: "#3b82f6",    // 蓝色

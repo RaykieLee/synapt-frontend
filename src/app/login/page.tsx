@@ -48,9 +48,10 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-      console.log('Attempting to login with URL:', `${apiUrl}/api/v1/login`);
-      const response = await fetch(`${apiUrl}/api/v1/login`, {
+      // 使用相对路径，通过 Next.js 的 rewrites 代理到后端
+      const loginUrl = '/api/v1/login';
+      console.log('Attempting to login with URL:', loginUrl);
+      const response = await fetch(loginUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",

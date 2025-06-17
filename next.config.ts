@@ -1,5 +1,12 @@
 import type { NextConfig } from "next";
 
+// 在模块加载时立即打印环境变量信息（这会在启动时显示）
+console.log('=== Next.js 配置加载 ===');
+console.log('NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000');
+console.log('NEXT_PUBLIC_VIDEO_HOST:', process.env.NEXT_PUBLIC_VIDEO_HOST || '127.0.0.1');
+console.log('NEXT_PUBLIC_VIDEO_PORT:', process.env.NEXT_PUBLIC_VIDEO_PORT || '8080');
+console.log('========================');
+
 const nextConfig: NextConfig = {
   // output: 'export',
   // images: {
@@ -16,9 +23,9 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    // 在运行时获取环境变量
+    // 在构建时获取环境变量
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-    console.log('Rewrites - NEXT_PUBLIC_BACKEND_URL:', backendUrl);
+    console.log('构建时 Rewrites - NEXT_PUBLIC_BACKEND_URL:', backendUrl);
     
     return [
       // 统一处理所有API请求

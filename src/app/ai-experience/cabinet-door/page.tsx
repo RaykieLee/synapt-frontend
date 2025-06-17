@@ -13,7 +13,9 @@ export default function CabinetDoorPage() {
   const [videoError, setVideoError] = useState<string>('');
   const [videoLoaded, setVideoLoaded] = useState(false);
 
-  const videoUrl = "http://127.0.0.1:8080/record/%E6%9C%BA%E6%88%BF%E6%9F%9C%E9%97%A8%E7%8A%B6%E6%80%81%E8%AF%86%E5%88%AB%E5%B1%95%E7%A4%BA.mp4";
+  const videoHost = process.env.NEXT_PUBLIC_VIDEO_HOST || '127.0.0.1';
+  const videoPort = process.env.NEXT_PUBLIC_VIDEO_PORT || '8080';
+  const videoUrl = `http://${videoHost}:${videoPort}/record/%E6%9C%BA%E6%88%BF%E6%9F%9C%E9%97%A8%E7%8A%B6%E6%80%81%E8%AF%86%E5%88%AB%E5%B1%95%E7%A4%BA.mp4`;
 
   useEffect(() => {
     const video = videoRef.current;

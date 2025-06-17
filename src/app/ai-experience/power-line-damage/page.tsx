@@ -13,7 +13,9 @@ export default function PowerLineDamagePage() {
   const [videoError, setVideoError] = useState<string>('');
   const [videoLoaded, setVideoLoaded] = useState(false);
 
-  const videoUrl = "http://127.0.0.1:8080/record/%E8%BE%93%E7%94%B5%E7%BA%BF%E8%B7%AF%E5%A4%96%E5%8A%9B%E7%A0%B4%E5%9D%8F%E8%AF%86%E5%88%AB.mp4";
+  const videoHost = process.env.NEXT_PUBLIC_VIDEO_HOST || '127.0.0.1';
+  const videoPort = process.env.NEXT_PUBLIC_VIDEO_PORT || '8080';
+  const videoUrl = `http://${videoHost}:${videoPort}/record/%E8%BE%93%E7%94%B5%E7%BA%BF%E8%B7%AF%E5%A4%96%E5%8A%9B%E7%A0%B4%E5%9D%8F%E8%AF%86%E5%88%AB.mp4`;
 
   useEffect(() => {
     const video = videoRef.current;

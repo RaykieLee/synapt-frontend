@@ -36,7 +36,9 @@ export default function DataReliabilityVerificationPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
-  const videoUrl = "http://127.0.0.1:8080/record/%E6%95%B0%E6%8D%AE%E5%8F%AF%E9%9D%A0%E6%80%A7%E6%A0%A1%E9%AA%8C%E7%B3%BB%E7%BB%9F%E6%BC%94%E7%A4%BA.mp4";
+  const videoHost = process.env.NEXT_PUBLIC_VIDEO_HOST || '127.0.0.1';
+  const videoPort = process.env.NEXT_PUBLIC_VIDEO_PORT || '8080';
+  const videoUrl = `http://${videoHost}:${videoPort}/record/%E6%95%B0%E6%8D%AE%E5%8F%AF%E9%9D%A0%E6%80%A7%E6%A0%A1%E9%AA%8C%E7%B3%BB%E7%BB%9F%E6%BC%94%E7%A4%BA.mp4`;
 
   // 功能模块数据
   const modules = [
