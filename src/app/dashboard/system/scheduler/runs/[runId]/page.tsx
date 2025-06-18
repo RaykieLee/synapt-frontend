@@ -389,9 +389,9 @@ export default function RunDetailPage() {
                     {(run?.status === PipelineRunStatus.RUNNING || run?.status === PipelineRunStatus.PENDING) ? (
                       <>
                         <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-                        <span className="text-xs text-muted-foreground">
+                        {/* <span className="text-xs text-muted-foreground">
                           {isConnected ? '实时连接' : '连接断开'}
-                        </span>
+                        </span> */}
                       </>
                     ) : (
                       <>
