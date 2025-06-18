@@ -1,11 +1,11 @@
 import type { NextConfig } from "next";
 
-// 在模块加载时立即打印环境变量信息（这会在启动时显示）
-console.log('=== Next.js 配置加载 ===');
-console.log('NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000');
-console.log('NEXT_PUBLIC_VIDEO_HOST:', process.env.NEXT_PUBLIC_VIDEO_HOST || '127.0.0.1');
-console.log('NEXT_PUBLIC_VIDEO_PORT:', process.env.NEXT_PUBLIC_VIDEO_PORT || '8080');
-console.log('========================');
+// // 在模块加载时立即打印环境变量信息（这会在启动时显示）
+// console.log('=== Next.js 配置加载 ===');
+// console.log('NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000');
+// console.log('NEXT_PUBLIC_VIDEO_HOST:', process.env.NEXT_PUBLIC_VIDEO_HOST || '127.0.0.1');
+// console.log('NEXT_PUBLIC_VIDEO_PORT:', process.env.NEXT_PUBLIC_VIDEO_PORT || '8080');
+// console.log('========================');
 
 const nextConfig: NextConfig = {
   // output: 'export',

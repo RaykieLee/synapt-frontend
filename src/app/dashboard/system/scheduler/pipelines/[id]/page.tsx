@@ -1,35 +1,30 @@
 "use client"
 
-import * as React from "react"
-import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { useToast } from "@/components/ui/use-toast"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import { useState } from "react"
 import { 
-  ArrowLeft,
+  ArrowLeft, 
   Play, 
+  RefreshCw, 
+  Activity, 
+  Settings, 
   Clock, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle,
-  Eye,
-  RefreshCw,
   Calendar,
-  Activity,
-  Settings,
-  FileText,
   Edit,
   Save,
   X,
   Plus,
   Trash2,
+  Power,
+  PowerOff,
   Search,
   Check,
   ChevronsUpDown
 } from "lucide-react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -38,14 +33,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import {
   Dialog,
   DialogContent,
@@ -64,10 +51,9 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import {
   Command,
@@ -82,16 +68,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-
-import { schedulerApi, TaskTypeInfo, TaskRegistryInfo, TaskDetailInfo } from "@/api/scheduler"
-import { Pipeline, PipelineRun, PipelineRunStatus, PipelineRunInput, PipelineUpdate, PipelineTask, PipelineTrigger } from "@/types/scheduler"
+import { useToast } from "@/components/ui/use-toast"
+import { schedulerApi } from "@/api/scheduler"
+import { PipelineUpdate } from "@/types/scheduler"
 
 // 表单验证模式
 const formSchema = z.object({
   name: z.string().min(1, "管道名称不能为空").max(100, "管道名称不能超过100个字符"),
   description: z.string().optional(),
   enabled: z.boolean(),
-  params_schema: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -104,68 +89,45 @@ export default function PipelineDetailPage() {
   
   const pipelineId = params.id as string
 
-  // 检查URL参数，确定是否进入编辑模式
-  const [isEditMode, setIsEditMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search)
-      return urlParams.get('mode') === 'edit'
-    }
-    return false
-  })
+  // 状态管理
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [showTaskDialog, setShowTaskDialog] = useState(false)
+  const [showTriggerDialog, setShowTriggerDialog] = useState(false)
   const [showRunDialog, setShowRunDialog] = useState(false)
-  const [showRunDetailDialog, setShowRunDetailDialog] = useState(false)
-  const [selectedRun, setSelectedRun] = useState<PipelineRun | null>(null)
-  const [runParams, setRunParams] = useState<Record<string, any>>({})
+  const [selectedTask, setSelectedTask] = useState<any>(null)
+  const [selectedTrigger, setSelectedTrigger] = useState<any>(null)
+  const [selectedRunTrigger, setSelectedRunTrigger] = useState<any>(null)
   
   // 任务相关状态
-  const [showTaskDialog, setShowTaskDialog] = useState(false)
-  const [selectedTask, setSelectedTask] = useState<PipelineTask | null>(null)
   const [taskEnabled, setTaskEnabled] = useState(true)
   const [selectedTaskType, setSelectedTaskType] = useState<string>("")
   const [selectedBuiltinTask, setSelectedBuiltinTask] = useState<string>("")
   const [builtinTaskSelectorOpen, setBuiltinTaskSelectorOpen] = useState(false)
   
   // 触发器相关状态  
-  const [showTriggerDialog, setShowTriggerDialog] = useState(false)
-  const [selectedTrigger, setSelectedTrigger] = useState<PipelineTrigger | null>(null)
   const [triggerType, setTriggerType] = useState<string>("manual")
   const [triggerEnabled, setTriggerEnabled] = useState(true)
+
+  // 删除确认弹窗状态
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
+    open: boolean
+    type: 'task' | 'trigger'
+    item: any
+    title: string
+    description: string
+  }>({
+    open: false,
+    type: 'task',
+    item: null,
+    title: '',
+    description: ''
+  })
 
   // 获取管道详情
   const { data: pipeline, isLoading: pipelineLoading } = useQuery({
     queryKey: ['scheduler', 'pipelines', pipelineId],
     queryFn: () => schedulerApi.pipelines.getDetail(pipelineId),
-    staleTime: 5 * 60 * 1000, // 5分钟
-  })
-
-  // 获取管道的运行记录
-  const { data: runsData, isLoading: runsLoading } = useQuery({
-    queryKey: ['scheduler', 'runs', pipelineId],
-    queryFn: () => schedulerApi.runs.getList({ 
-      page_num: 1,
-      page_size: 20,
-      sorts: [
-        {
-          field: "start_time",
-          order: "desc"
-        }
-      ],
-      params: { 
-        pipeline_id: pipelineId,
-        search_mode: "and"
-      } 
-    }),
-    staleTime: 30 * 1000, // 30秒
-  })
-
-  const runs = runsData?.list || []
-
-  // 获取管道输入参数模式
-  const { data: inputSchema } = useQuery({
-    queryKey: ['scheduler', 'pipelines', pipelineId, 'schema'],
-    queryFn: () => schedulerApi.pipelines.getInputSchema(pipelineId),
-    enabled: !!pipeline,
-    staleTime: 5 * 60 * 1000, // 5分钟
+    staleTime: 5 * 60 * 1000,
   })
 
   // 获取任务类型列表
@@ -190,7 +152,6 @@ export default function PipelineDetailPage() {
       name: pipeline?.name || "",
       description: pipeline?.description || "",
       enabled: pipeline?.enabled || false,
-      params_schema: "",
     },
   })
 
@@ -203,9 +164,6 @@ export default function PipelineDetailPage() {
         description: "管道信息已更新",
       })
       setIsEditMode(false)
-      // 移除URL中的编辑模式参数
-      router.replace(`/dashboard/system/scheduler/pipelines/${pipelineId}`)
-      // 刷新管道详情
       queryClient.invalidateQueries({ queryKey: ['scheduler', 'pipelines', pipelineId] })
     },
     onError: (error: any) => {
@@ -217,119 +175,123 @@ export default function PipelineDetailPage() {
     },
   })
 
-  // 运行管道的mutation
-  const runPipelineMutation = useMutation({
-    mutationFn: (input: PipelineRunInput) =>
-      schedulerApi.pipelines.run(pipelineId, input),
+  // 运行管道
+  const runMutation = useMutation({
+    mutationFn: (triggerData: any) => schedulerApi.pipelines.run(pipelineId, triggerData),
     onSuccess: () => {
       toast({
         title: "成功",
         description: "管道已开始运行",
       })
       setShowRunDialog(false)
-      setRunParams({})
-      // 刷新运行记录列表
-      queryClient.invalidateQueries({ queryKey: ['scheduler', 'runs', pipelineId] })
+      setSelectedRunTrigger(null)
+      queryClient.invalidateQueries({ queryKey: ["scheduler", "runs"] })
     },
     onError: (error: any) => {
       toast({
         title: "错误",
-        description: error.message || "运行管道失败",
+        description: error.message || "运行失败",
         variant: "destructive",
       })
     },
   })
 
-  // 处理编辑模式切换
-  const handleEditToggle = () => {
-    if (isEditMode) {
-      // 取消编辑，重置表单并移除URL参数
-      form.reset()
-      setIsEditMode(false)
-      router.replace(`/dashboard/system/scheduler/pipelines/${pipelineId}`)
-    } else {
-      setIsEditMode(true)
-      router.replace(`/dashboard/system/scheduler/pipelines/${pipelineId}?mode=edit`)
-    }
-  }
-
-  // 提交表单
-  const onSubmit = (values: FormValues) => {
-    const updateData: PipelineUpdate = {
-      name: values.name,
-      description: values.description || undefined,
-      enabled: values.enabled,
-      params_schema: values.params_schema || undefined,
-    }
-    updatePipelineMutation.mutate(updateData)
-  }
-
-  // 处理运行管道
-  const handleRunPipeline = () => {
-    setRunParams({})
-    setShowRunDialog(true)
-  }
-
-  // 提交运行管道
-  const handleSubmitRun = () => {
-    const input: PipelineRunInput = {}
-    if (Object.keys(runParams).length > 0) {
-      input.params = runParams
-    }
-    
-    runPipelineMutation.mutate(input)
-  }
-
-  // 查看运行详情
-  const handleViewRunDetail = (run: PipelineRun) => {
-    setSelectedRun(run)
-    setShowRunDetailDialog(true)
-  }
-
-  // 处理任务编辑
-  const handleEditTask = (task: any) => {
-    // 暂时使用any类型，稍后会完善
-    setSelectedTask(task)
-    setTaskEnabled(task?.enabled !== false)
-    setSelectedTaskType(task?.task_type || "")
-    // 如果是内置函数类型，设置对应的内置任务ID
-    setSelectedBuiltinTask(task?.task_type === 'builtin_function' ? task?.task_id || "" : "")
-    setBuiltinTaskSelectorOpen(false)
-    setShowTaskDialog(true)
-  }
-
-  // 处理内置函数选择
-  const handleBuiltinTaskSelect = async (taskId: string) => {
-    if (!taskId) return
-    
-    try {
-      const taskDetail = await schedulerApi.taskRegistry.getBuiltinFunctionDetail(taskId)
-      
-      // 自动填充表单字段
-      const taskNameInput = document.getElementById('task-name') as HTMLInputElement
-      const taskDescInput = document.getElementById('task-description') as HTMLTextAreaElement
-      const taskIdInput = document.getElementById('task-id') as HTMLInputElement
-      
-      if (taskNameInput) taskNameInput.value = taskDetail.name || taskDetail.id
-      if (taskDescInput) taskDescInput.value = taskDetail.description || ""
-      if (taskIdInput) taskIdInput.value = taskDetail.id
-      
-      setSelectedBuiltinTask(taskId)
-      setBuiltinTaskSelectorOpen(false)
-    } catch (error) {
+  // 删除任务的mutation
+  const deleteTaskMutation = useMutation({
+    mutationFn: (taskId: number) => schedulerApi.tasks.delete(taskId),
+    onSuccess: () => {
+      toast({
+        title: "成功",
+        description: "任务已删除",
+      })
+      queryClient.invalidateQueries({ queryKey: ['scheduler', 'pipelines', pipelineId] })
+    },
+    onError: (error: any) => {
       toast({
         title: "错误",
-        description: "获取任务详情失败",
+        description: error.message || "删除任务失败",
         variant: "destructive",
       })
-    }
-  }
+    },
+  })
+
+  // 更新任务的mutation
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ taskId, data }: { taskId: number; data: any }) => schedulerApi.tasks.update(taskId, data),
+    onSuccess: () => {
+      toast({
+        title: "成功",
+        description: "任务已更新",
+      })
+      // 如果是在弹窗中更新，关闭弹窗
+      if (showTaskDialog) {
+        setShowTaskDialog(false)
+        setSelectedTask(null)
+        setSelectedTaskType("")
+        setSelectedBuiltinTask("")
+        setBuiltinTaskSelectorOpen(false)
+      }
+      queryClient.invalidateQueries({ queryKey: ['scheduler', 'pipelines', pipelineId] })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "错误",
+        description: error.message || "更新任务失败",
+        variant: "destructive",
+      })
+      // 不关闭弹窗，让用户可以修改后重试
+    },
+  })
+
+  // 删除触发器的mutation
+  const deleteTriggerMutation = useMutation({
+    mutationFn: (triggerId: number) => schedulerApi.triggers.delete(triggerId),
+    onSuccess: () => {
+      toast({
+        title: "成功",
+        description: "触发器已删除",
+      })
+      queryClient.invalidateQueries({ queryKey: ['scheduler', 'pipelines', pipelineId] })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "错误",
+        description: error.message || "删除触发器失败",
+        variant: "destructive",
+      })
+    },
+  })
+
+  // 更新触发器的mutation
+  const updateTriggerMutation = useMutation({
+    mutationFn: ({ triggerId, data }: { triggerId: number; data: any }) => schedulerApi.triggers.update(triggerId, data),
+    onSuccess: () => {
+      toast({
+        title: "成功",
+        description: "触发器已更新",
+      })
+      // 如果是在弹窗中更新，关闭弹窗
+      if (showTriggerDialog) {
+        setShowTriggerDialog(false)
+        setSelectedTrigger(null)
+      }
+      queryClient.invalidateQueries({ queryKey: ['scheduler', 'pipelines', pipelineId] })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "错误",
+        description: error.message || "更新触发器失败",
+        variant: "destructive",
+      })
+      // 不关闭弹窗，让用户可以修改后重试
+    },
+  })
 
   // 创建任务的mutation
   const createTaskMutation = useMutation({
     mutationFn: (data: any) => schedulerApi.tasks.create(pipelineId, {
       pipeline_id: pipelineId,
-      task_id: `task_${Date.now()}`, // 生成临时ID，后端会用UUID替换
+      task_id: data.task_id, // 使用传入的task_id，不自动生成
       name: data.name,
       description: data.description,
       task_type: data.task_type,
@@ -346,7 +308,6 @@ export default function PipelineDetailPage() {
       setSelectedTaskType("")
       setSelectedBuiltinTask("")
       setBuiltinTaskSelectorOpen(false)
-      // 刷新管道详情
       queryClient.invalidateQueries({ queryKey: ['scheduler', 'pipelines', pipelineId] })
     },
     onError: (error: any) => {
@@ -355,62 +316,116 @@ export default function PipelineDetailPage() {
         description: error.message || "创建任务失败",
         variant: "destructive",
       })
+      // 不关闭弹窗，让用户可以修改后重试
     },
   })
 
-  // 更新任务的mutation
-  const updateTaskMutation = useMutation({
-    mutationFn: ({ taskId, data }: { taskId: number; data: any }) => schedulerApi.tasks.update(taskId, data),
+  // 创建触发器的mutation
+  const createTriggerMutation = useMutation({
+    mutationFn: (data: any) => schedulerApi.triggers.create(pipelineId, {
+      pipeline_id: pipelineId,
+      trigger_id: `trigger_${Date.now()}`, // 生成临时ID，后端会用UUID替换
+      name: data.name,
+      description: data.description,
+      trigger_type: data.trigger_type,
+      schedule_config: data.schedule_config,
+      params: data.params,
+      enabled: data.enabled,
+    }),
     onSuccess: () => {
       toast({
         title: "成功",
-        description: "任务已更新",
+        description: "触发器已创建",
       })
-      setShowTaskDialog(false)
-      setSelectedTask(null)
-      setSelectedTaskType("")
-      setSelectedBuiltinTask("")
-      setBuiltinTaskSelectorOpen(false)
-      // 刷新管道详情
+      setShowTriggerDialog(false)
+      setSelectedTrigger(null)
       queryClient.invalidateQueries({ queryKey: ['scheduler', 'pipelines', pipelineId] })
     },
     onError: (error: any) => {
       toast({
         title: "错误",
-        description: error.message || "更新任务失败",
+        description: error.message || "创建触发器失败",
         variant: "destructive",
       })
+      // 不关闭弹窗，让用户可以修改后重试
     },
   })
 
-  // 删除任务的mutation
-  const deleteTaskMutation = useMutation({
-    mutationFn: (taskId: number) => schedulerApi.tasks.delete(taskId),
-    onSuccess: () => {
-      toast({
-        title: "成功",
-        description: "任务已删除",
-      })
-      // 刷新管道详情
-      queryClient.invalidateQueries({ queryKey: ['scheduler', 'pipelines', pipelineId] })
-    },
-    onError: (error: any) => {
-      toast({
-        title: "错误",
-        description: error.message || "删除任务失败",
-        variant: "destructive",
-      })
-    },
-  })
-
-  // 处理任务删除
-  const handleDeleteTask = (task: any) => {
-    if (confirm(`确认删除任务 "${task.name || task.id}"？`)) {
-      deleteTaskMutation.mutate(task.id)
+  const handleEditToggle = () => {
+    if (isEditMode) {
+      form.reset()
+      setIsEditMode(false)
+    } else {
+      setIsEditMode(true)
     }
   }
 
-  // 切换任务启用状态
+  const onSubmit = (values: FormValues) => {
+    const updateData: PipelineUpdate = {
+      name: values.name,
+      description: values.description || undefined,
+      enabled: values.enabled,
+    }
+    updatePipelineMutation.mutate(updateData)
+  }
+
+  const handleRunPipeline = () => {
+    const enabledTriggers = pipeline?.triggers?.filter(t => t.enabled) || []
+    
+    if (enabledTriggers.length === 0) {
+      toast({
+        title: "提示",
+        description: "该管道没有启用的触发器，请先创建并启用一个触发器",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    if (enabledTriggers.length === 1) {
+      // 只有一个触发器，直接运行
+      runMutation.mutate({ trigger_id: String(enabledTriggers[0].trigger_id) })
+    } else {
+      // 多个触发器，显示选择对话框
+      setSelectedRunTrigger(null)
+      setShowRunDialog(true)
+    }
+  }
+
+  const handleSubmitRun = () => {
+    if (!selectedRunTrigger) {
+      toast({
+        title: "错误",
+        description: "请选择一个触发器",
+        variant: "destructive",
+      })
+      return
+    }
+    runMutation.mutate({ trigger_id: String(selectedRunTrigger.trigger_id) })
+  }
+
+  const handleViewRuns = () => {
+    router.push(`/dashboard/system/scheduler/${pipelineId}/runs`)
+  }
+
+  const handleEditTask = (task: any) => {
+    setSelectedTask(task)
+    setTaskEnabled(task?.enabled !== false)
+    setSelectedTaskType(task?.task_type || "")
+    setSelectedBuiltinTask(task?.task_type === 'builtin_function' ? task?.task_id || "" : "")
+    setBuiltinTaskSelectorOpen(false)
+    setShowTaskDialog(true)
+  }
+
+  const handleDeleteTask = (task: any) => {
+    setDeleteConfirmDialog({
+      open: true,
+      type: 'task',
+      item: task,
+      title: `确认删除任务 "${task.name || task.id}"？`,
+      description: '删除任务将不可恢复，请确认操作。'
+    })
+  }
+
   const toggleTaskEnabled = (task: any) => {
     updateTaskMutation.mutate({
       taskId: task.id,
@@ -418,12 +433,42 @@ export default function PipelineDetailPage() {
     })
   }
 
+  // 处理内置函数选择
+  const handleBuiltinTaskSelect = async (taskId: string) => {
+    if (!taskId) return
+    
+    try {
+      const taskDetail = await schedulerApi.taskRegistry.getBuiltinFunctionDetail(taskId)
+      
+      // 自动填充表单字段
+      const taskNameInput = document.getElementById('task-name') as HTMLInputElement
+      const taskDescInput = document.getElementById('task-description') as HTMLTextAreaElement
+      
+      if (taskNameInput) taskNameInput.value = taskDetail.name || taskDetail.id
+      if (taskDescInput) taskDescInput.value = taskDetail.description || ""
+      
+      setSelectedBuiltinTask(taskId)
+      setBuiltinTaskSelectorOpen(false)
+    } catch (error) {
+      toast({
+        title: "错误",
+        description: "获取任务详情失败",
+        variant: "destructive",
+      })
+    }
+  }
+
   // 保存任务
   const handleSaveTask = () => {
-    // 如果选择的是内置函数，使用内置函数的ID，否则使用输入的或生成的ID
-    const taskId = selectedTaskType === 'builtin_function' && selectedBuiltinTask
-      ? selectedBuiltinTask
-      : (document.getElementById('task-id') as HTMLInputElement)?.value || `task_${Date.now()}`
+    let taskId = '';
+    
+    if (selectedTaskType === 'builtin_function' && selectedBuiltinTask) {
+      // 内置函数类型：使用选择的内置函数ID
+      taskId = selectedBuiltinTask;
+    } else {
+      // 其他类型：使用用户输入的task_id，如果为空则自动生成
+      taskId = (document.getElementById('task-id') as HTMLInputElement)?.value || `task_${Date.now()}`;
+    }
     
     const formData = {
       task_id: taskId,
@@ -453,7 +498,6 @@ export default function PipelineDetailPage() {
       return
     }
 
-    // 如果选择的是内置函数类型，验证是否已选择内置函数
     if (selectedTaskType === 'builtin_function' && !selectedBuiltinTask) {
       toast({
         title: "错误",
@@ -489,7 +533,6 @@ export default function PipelineDetailPage() {
     }
   }
 
-  // 处理触发器编辑
   const handleEditTrigger = (trigger: any) => {
     setSelectedTrigger(trigger)
     setTriggerType(trigger?.trigger_type || "manual")
@@ -497,87 +540,16 @@ export default function PipelineDetailPage() {
     setShowTriggerDialog(true)
   }
 
-  // 创建触发器的mutation
-  const createTriggerMutation = useMutation({
-    mutationFn: (data: any) => schedulerApi.triggers.create(pipelineId, {
-      pipeline_id: pipelineId,
-      trigger_id: `trigger_${Date.now()}`, // 生成临时ID，后端会用UUID替换
-      name: data.name,
-      description: data.description,
-      trigger_type: data.trigger_type,
-      schedule_config: data.schedule_config,
-      params: data.params,
-      enabled: data.enabled,
-    }),
-    onSuccess: () => {
-      toast({
-        title: "成功",
-        description: "触发器已创建",
-      })
-      setShowTriggerDialog(false)
-      setSelectedTrigger(null)
-      // 刷新管道详情
-      queryClient.invalidateQueries({ queryKey: ['scheduler', 'pipelines', pipelineId] })
-    },
-    onError: (error: any) => {
-      toast({
-        title: "错误",
-        description: error.message || "创建触发器失败",
-        variant: "destructive",
-      })
-    },
-  })
-
-  // 更新触发器的mutation
-  const updateTriggerMutation = useMutation({
-    mutationFn: ({ triggerId, data }: { triggerId: number; data: any }) => schedulerApi.triggers.update(triggerId, data),
-    onSuccess: () => {
-      toast({
-        title: "成功",
-        description: "触发器已更新",
-      })
-      setShowTriggerDialog(false)
-      setSelectedTrigger(null)
-      // 刷新管道详情
-      queryClient.invalidateQueries({ queryKey: ['scheduler', 'pipelines', pipelineId] })
-    },
-    onError: (error: any) => {
-      toast({
-        title: "错误",
-        description: error.message || "更新触发器失败",
-        variant: "destructive",
-      })
-    },
-  })
-
-  // 删除触发器的mutation
-  const deleteTriggerMutation = useMutation({
-    mutationFn: (triggerId: number) => schedulerApi.triggers.delete(triggerId),
-    onSuccess: () => {
-      toast({
-        title: "成功",
-        description: "触发器已删除",
-      })
-      // 刷新管道详情
-      queryClient.invalidateQueries({ queryKey: ['scheduler', 'pipelines', pipelineId] })
-    },
-    onError: (error: any) => {
-      toast({
-        title: "错误",
-        description: error.message || "删除触发器失败",
-        variant: "destructive",
-      })
-    },
-  })
-
-  // 处理触发器删除
   const handleDeleteTrigger = (trigger: any) => {
-    if (confirm(`确认删除触发器 "${trigger.name || trigger.id}"？`)) {
-      deleteTriggerMutation.mutate(trigger.id)
-    }
+    setDeleteConfirmDialog({
+      open: true,
+      type: 'trigger',
+      item: trigger,
+      title: `确认删除触发器 "${trigger.name || trigger.id}"？`,
+      description: '删除触发器将不可恢复，请确认操作。'
+    })
   }
 
-  // 切换触发器启用状态
   const toggleTriggerEnabled = (trigger: any) => {
     updateTriggerMutation.mutate({
       triggerId: trigger.id,
@@ -681,78 +653,8 @@ export default function PipelineDetailPage() {
     }
   }
 
-  // 获取状态徽章
-  const getStatusBadge = (status: PipelineRunStatus) => {
-    const statusConfig: Record<PipelineRunStatus, {
-      variant: "default" | "destructive" | "outline" | "secondary";
-      icon: any;
-      text: string;
-      className?: string;
-    }> = {
-      [PipelineRunStatus.PENDING]: { 
-        variant: "secondary", 
-        icon: Clock, 
-        text: "等待中" 
-      },
-      [PipelineRunStatus.RUNNING]: { 
-        variant: "default", 
-        icon: RefreshCw, 
-        text: "运行中" 
-      },
-      [PipelineRunStatus.COMPLETED]: { 
-        variant: "default", 
-        icon: CheckCircle, 
-        text: "已完成",
-        className: "bg-green-100 text-green-800 hover:bg-green-100"
-      },
-      [PipelineRunStatus.FAILED]: { 
-        variant: "destructive", 
-        icon: XCircle, 
-        text: "失败" 
-      },
-      [PipelineRunStatus.CANCELLED]: { 
-        variant: "secondary", 
-        icon: AlertCircle, 
-        text: "已取消" 
-      },
-    }
-
-    const config = statusConfig[status]
-    const Icon = config.icon
-
-    return (
-      <Badge variant={config.variant} className={config.className}>
-        <Icon className="w-3 h-3 mr-1" />
-        {config.text}
-      </Badge>
-    )
-  }
-
-  // 格式化持续时间
-  const formatDuration = (duration: number) => {
-    if (duration < 1000) {
-      return `${Math.round(duration)}ms`
-    } else if (duration < 60000) {
-      return `${(duration / 1000).toFixed(1)}s`
-    } else {
-      return `${(duration / 60000).toFixed(1)}m`
-    }
-  }
-
-  // 格式化时间
   const formatTime = (timeString: string) => {
     return new Date(timeString).toLocaleString('zh-CN')
-  }
-
-  // 格式化触发器类型
-  const formatTriggerType = (triggerType: string) => {
-    const typeMap: Record<string, string> = {
-      'manual': '手动',
-      'cron': 'Cron表达式',
-      'interval': '时间间隔',
-      'date': '定时执行'
-    }
-    return typeMap[triggerType] || triggerType || '手动'
   }
 
   if (pipelineLoading) {
@@ -777,7 +679,7 @@ export default function PipelineDetailPage() {
 
   return (
     <div className="container mx-auto px-0 py-6 md:px-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           返回
@@ -785,145 +687,147 @@ export default function PipelineDetailPage() {
         <div className="flex-1">
           <h2 className="text-3xl font-bold tracking-tight">{pipeline.name}</h2>
           <p className="text-muted-foreground">
-            {pipeline.description || '管道详情和运行历史'}
+            {pipeline.description || '管道详情信息'}
           </p>
         </div>
-
+        <div className="flex items-center gap-2">
+          {isEditMode ? (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleEditToggle}
+                disabled={updatePipelineMutation.isPending}
+              >
+                <X className="h-4 w-4 mr-2" />
+                取消
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={updatePipelineMutation.isPending}
+              >
+                {updatePipelineMutation.isPending && (
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                <Save className="h-4 w-4 mr-2" />
+                保存
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleEditToggle}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                编辑
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleViewRuns}
+              >
+                <Clock className="h-4 w-4 mr-2" />
+                运行历史
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={handleRunPipeline}
+                disabled={!pipeline.enabled || runMutation.isPending}
+              >
+                {runMutation.isPending && (
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                <Play className="h-4 w-4 mr-2" />
+                立即运行
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <div className="flex items-center justify-between">
-        <TabsList>
-          <TabsTrigger value="overview">概览</TabsTrigger>
-          <TabsTrigger value="runs">运行历史</TabsTrigger>
-          <TabsTrigger value="config">配置</TabsTrigger>
-        </TabsList>
-          <div className="flex items-center gap-2">
+      <div className="space-y-6">
+        {/* 基本信息 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              基本信息
+              {isEditMode && (
+                <Badge variant="outline" className="ml-auto">
+                  编辑模式
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             {isEditMode ? (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleEditToggle}
-                  disabled={updatePipelineMutation.isPending}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  取消
-                </Button>
-                <Button 
-                  size="sm" 
-                  onClick={form.handleSubmit(onSubmit)}
-                  disabled={updatePipelineMutation.isPending}
-                >
-                  {updatePipelineMutation.isPending && (
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  <Save className="h-4 w-4 mr-2" />
-                  保存
-                </Button>
-              </>
+              <Form {...form}>
+                <div className="space-y-4">
+                  <div>
+                    <Label>管道ID</Label>
+                    <div className="mt-1 text-sm font-mono text-muted-foreground">{pipeline.id}</div>
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>管道名称 *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="输入管道名称" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>描述</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="输入管道描述（可选）"
+                            className="resize-none"
+                            rows={3}
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="enabled"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">启用管道</FormLabel>
+                          <FormDescription className="text-sm">
+                            控制管道是否可以被触发执行
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </Form>
             ) : (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleEditToggle}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  编辑
-                </Button>
-                <Button 
-                  size="sm" 
-                  onClick={handleRunPipeline}
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  立即运行
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5" />
-                  基本信息
-                  {isEditMode && (
-                    <Badge variant="outline" className="ml-auto">
-                      编辑模式
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {isEditMode ? (
-                  <Form {...form}>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>管道ID</Label>
-                        <div className="mt-1 text-sm font-mono text-muted-foreground">{pipeline.id}</div>
-                      </div>
-                      
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>管道名称 *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="输入管道名称" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>描述</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="输入管道描述（可选）"
-                                className="resize-none"
-                                rows={3}
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="enabled"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                            <div className="space-y-0.5">
-                              <FormLabel className="text-base">启用管道</FormLabel>
-                              <FormDescription className="text-sm">
-                                控制管道是否可以被触发执行
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </Form>
-                ) : (
-                  <>
+              <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <Label>管道ID</Label>
                   <div className="mt-1 text-sm font-mono">{pipeline.id}</div>
@@ -938,188 +842,199 @@ export default function PipelineDetailPage() {
                     {pipeline.description || '无描述'}
                   </div>
                 </div>
-                    <div>
-                      <Label>状态</Label>
-                      <div className="mt-1">
-                        <Badge variant={pipeline.enabled ? "default" : "secondary"}>
-                          {pipeline.enabled ? "已启用" : "已禁用"}
-                        </Badge>
-                      </div>
-                    </div>
                 <div>
-                  <Label>任务数量</Label>
+                  <Label>状态</Label>
                   <div className="mt-1">
-                    <Badge variant="outline">{pipeline.tasks.length}</Badge>
+                    <Badge variant={pipeline.enabled ? "default" : "secondary"}>
+                      {pipeline.enabled ? "已启用" : "已禁用"}
+                    </Badge>
                   </div>
                 </div>
-                    <div>
-                      <Label>触发器数量</Label>
-                      <div className="mt-1">
-                        <Badge variant="outline">{pipeline.triggers.length}</Badge>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  触发器
+                <div>
+                  <Label>创建时间</Label>
+                  <div className="mt-1 text-sm">
+                    {pipeline.create_time ? formatTime(pipeline.create_time) : "-"}
                   </div>
+                </div>
+                <div>
+                  <Label>更新时间</Label>
+                  <div className="mt-1 text-sm">
+                    {pipeline.update_time ? formatTime(pipeline.update_time) : "-"}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 触发器管理 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                触发器管理
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedTrigger(null)
+                  setTriggerType("manual")
+                  setTriggerEnabled(true)
+                  setShowTriggerDialog(true)
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                添加触发器
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!pipeline.triggers || pipeline.triggers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                无触发器配置
+                <div className="mt-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
                       setSelectedTrigger(null)
                       setTriggerType("manual")
+                      setTriggerEnabled(true)
                       setShowTriggerDialog(true)
                     }}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    添加触发器
+                    添加第一个触发器
                   </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {pipeline.triggers.length === 0 ? (
-                  <div className="text-center py-4 text-muted-foreground">
-                    无触发器配置
-                    <div className="mt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedTrigger(null)
-                          setTriggerType("manual")
-                          setTriggerEnabled(true)
-                          setShowTriggerDialog(true)
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        添加第一个触发器
-                      </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {pipeline.triggers.map((trigger, index) => (
+                  <div key={trigger.id} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="font-medium">{trigger.name || `触发器 ${index + 1}`}</div>
+                        {trigger.schedule && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            调度: {trigger.schedule}
+                          </div>
+                        )}
+                        {trigger.next_fire_time && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            下次执行: {formatTime(trigger.next_fire_time)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">
+                          {trigger.trigger_type === 'manual' ? '手动' : 
+                           trigger.trigger_type === 'cron' ? 'Cron' :
+                           trigger.trigger_type === 'interval' ? '间隔' : 
+                           trigger.trigger_type}
+                        </Badge>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={trigger.enabled}
+                            onCheckedChange={() => toggleTriggerEnabled(trigger)}
+                            disabled={updateTriggerMutation.isPending}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            {trigger.enabled ? "启用" : "禁用"}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditTrigger(trigger)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteTrigger(trigger)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {pipeline.triggers.map((trigger, index) => (
-                      <div key={trigger.id} className="p-3 border rounded-lg">
-                        <div className="flex items-center justify-between">
-                                                  <div className="flex-1">
-                          <div className="font-medium">{trigger.name || "未命名触发器"}</div>
-                            {trigger.schedule && (
-                              <div className="text-xs text-muted-foreground mt-1">
-                                调度: {trigger.schedule}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">
-                              {formatTriggerType(trigger.trigger_type)}
-                            </Badge>
-                            <div className="flex items-center space-x-2">
-                              <Switch
-                                checked={trigger.enabled}
-                                onCheckedChange={() => toggleTriggerEnabled(trigger)}
-                                disabled={updateTriggerMutation.isPending}
-                              />
-                              <span className="text-xs text-muted-foreground">
-                                {trigger.enabled ? "启用" : "禁用"}
-                              </span>
-                          </div>
-                          {trigger.next_fire_time && (
-                            <div className="text-xs text-muted-foreground">
-                              下次: {formatTime(trigger.next_fire_time)}
-                            </div>
-                          )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditTrigger(trigger)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteTrigger(trigger)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+        {/* 任务管理 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
                 <Settings className="h-5 w-5" />
-                任务列表
+                任务管理
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedTask(null)
+                  setTaskEnabled(true)
+                  setSelectedTaskType("")
+                  setSelectedBuiltinTask("")
+                  setBuiltinTaskSelectorOpen(false)
+                  setShowTaskDialog(true)
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                添加任务
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!pipeline.tasks || pipeline.tasks.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                无任务配置
+                <div className="mt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedTask(null)
+                      setTaskEnabled(true)
+                      setSelectedTaskType("")
+                      setSelectedBuiltinTask("")
+                      setBuiltinTaskSelectorOpen(false)
+                      setShowTaskDialog(true)
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    添加第一个任务
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedTask(null)
-                    setTaskEnabled(true)
-                    setSelectedTaskType("")
-                    setSelectedBuiltinTask("")
-                    setBuiltinTaskSelectorOpen(false)
-                    setShowTaskDialog(true)
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  添加任务
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {pipeline.tasks.length === 0 ? (
-                <div className="text-center py-4 text-muted-foreground">
-                  无任务配置
-                  <div className="mt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedTask(null)
-                        setTaskEnabled(true)
-                        setSelectedTaskType("")
-                        setSelectedBuiltinTask("")
-                        setBuiltinTaskSelectorOpen(false)
-                        setShowTaskDialog(true)
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      添加第一个任务
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {pipeline.tasks.map((task, index) => (
-                    <div key={task.id} className="flex items-center justify-between p-3 border rounded-lg">
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {pipeline.tasks.map((task, index) => (
+                  <div key={task.id} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <div className="font-medium">{task.name || "未命名任务"}</div>
+                        <div className="font-medium">{task.name || `任务 ${index + 1}`}</div>
                         {task.description && (
                           <div className="text-xs text-muted-foreground mt-1">
                             {task.description}
                           </div>
                         )}
+                        {task.task_type && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            类型: {task.task_type}
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
-                      <Badge variant="outline">#{index + 1}</Badge>
+                        <Badge variant="outline">#{index + 1}</Badge>
                         <div className="flex items-center space-x-2">
                           <Switch
                             checked={task.enabled}
@@ -1146,250 +1061,13 @@ export default function PipelineDetailPage() {
                         </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="runs" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                运行历史
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {runsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="h-6 w-6 animate-spin" />
-                  <span className="ml-2">加载中...</span>
-                </div>
-              ) : runs.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无运行记录
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>运行ID</TableHead>
-                      <TableHead>触发器ID</TableHead>
-                      <TableHead>状态</TableHead>
-                      <TableHead>开始时间</TableHead>
-                      <TableHead>持续时间</TableHead>
-                      <TableHead>任务数量</TableHead>
-                      <TableHead className="text-right">操作</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {runs.map((run) => (
-                      <TableRow key={run.id}>
-                        <TableCell className="font-medium">
-                          #{run.id}
-                        </TableCell>
-                        <TableCell>{run.trigger_id}</TableCell>
-                        <TableCell>
-                          {getStatusBadge(run.status)}
-                        </TableCell>
-                        <TableCell>
-                          {formatTime(run.start_time)}
-                        </TableCell>
-                        <TableCell>
-                          {run.duration ? formatDuration(run.duration) : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {run.tasks_run.length}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleViewRunDetail(run)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="config" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                参数配置
-                {isEditMode && (
-                  <Badge variant="outline" className="ml-auto">
-                    编辑模式
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isEditMode ? (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="params_schema"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>参数JSON Schema</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder='请输入JSON Schema格式的参数定义，例如：&#10;{&#10;  "type": "object",&#10;  "properties": {&#10;    "param1": {"type": "string"}&#10;  }&#10;}'
-                            className="resize-none font-mono text-sm"
-                            rows={12}
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          定义管道运行时接受的参数格式（JSON Schema）
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              ) : (
-                <>
-              {inputSchema && Object.keys(inputSchema).length > 0 ? (
-                <div className="space-y-4">
-                  <Label>输入参数模式</Label>
-                      <pre className="bg-muted p-4 rounded-lg text-sm overflow-auto">
-                    {JSON.stringify(inputSchema, null, 2)}
-                  </pre>
-                </div>
-              ) : (
-                <div className="text-center py-4 text-muted-foreground">
-                  该管道无需输入参数
-                </div>
-                  )}
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* 运行管道对话框 */}
-      <Dialog open={showRunDialog} onOpenChange={setShowRunDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>运行管道</DialogTitle>
-            <DialogDescription>
-              配置参数并运行管道: {pipeline.name}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {inputSchema && Object.keys(inputSchema).length > 0 && (
-              <div className="space-y-4">
-                <Label>运行参数</Label>
-                <Textarea
-                  placeholder="请输入JSON格式的参数"
-                  value={JSON.stringify(runParams, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      const params = JSON.parse(e.target.value || '{}')
-                      setRunParams(params)
-                    } catch {
-                      // 忽略JSON解析错误
-                    }
-                  }}
-                  rows={6}
-                />
+                  </div>
+                ))}
               </div>
             )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRunDialog(false)}>
-              取消
-            </Button>
-            <Button 
-              onClick={handleSubmitRun}
-              disabled={runPipelineMutation.isPending}
-            >
-              {runPipelineMutation.isPending && (
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              运行
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 运行详情对话框 */}
-      <Dialog open={showRunDetailDialog} onOpenChange={setShowRunDetailDialog}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>运行详情</DialogTitle>
-            <DialogDescription>
-              运行ID: #{selectedRun?.id}
-            </DialogDescription>
-          </DialogHeader>
-          {selectedRun && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>管道ID</Label>
-                  <div className="mt-1 text-sm">{selectedRun.pipeline_id}</div>
-                </div>
-                <div>
-                  <Label>触发器ID</Label>
-                  <div className="mt-1 text-sm">{selectedRun.trigger_id}</div>
-                </div>
-                <div>
-                  <Label>状态</Label>
-                  <div className="mt-1">{getStatusBadge(selectedRun.status)}</div>
-                </div>
-                <div>
-                  <Label>持续时间</Label>
-                  <div className="mt-1 text-sm">
-                    {selectedRun.duration ? formatDuration(selectedRun.duration) : '-'}
-                  </div>
-                </div>
-              </div>
-              <div>
-                <Label>开始时间</Label>
-                <div className="mt-1 text-sm">{formatTime(selectedRun.start_time)}</div>
-              </div>
-              <div>
-                <Label>任务运行情况</Label>
-                <div className="mt-2 space-y-2">
-                  {selectedRun.tasks_run.map((task, index) => (
-                                            <div key={index} className="flex items-center justify-between p-2 border rounded-lg">
-                      <span className="text-sm font-medium">{task.task_id}</span>
-                      <div className="flex items-center gap-2">
-                        {task.status && getStatusBadge(task.status)}
-                        {task.duration && (
-                          <span className="text-xs text-muted-foreground">
-                            {formatDuration(task.duration)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRunDetailDialog(false)}>
-              关闭
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* 任务编辑弹窗 */}
       <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
@@ -1403,16 +1081,35 @@ export default function PipelineDetailPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="task-id">任务ID</Label>
-              <Input
-                id="task-id"
-                placeholder="任务标识符"
-                defaultValue={selectedTask?.task_id || ""}
-                readOnly={!!selectedTask}
-                className={selectedTask ? "bg-muted" : ""}
-              />
-            </div>
+            {/* 任务ID输入框 - 内置函数类型时隐藏，因为会自动使用函数ID */}
+            {selectedTaskType !== 'builtin_function' && (
+              <div className="space-y-2">
+                <Label htmlFor="task-id">任务ID</Label>
+                <Input
+                  id="task-id"
+                  placeholder="任务标识符（留空自动生成）"
+                  defaultValue={selectedTask?.task_id || ""}
+                  readOnly={!!selectedTask}
+                  className={selectedTask ? "bg-muted" : ""}
+                />
+                <div className="text-xs text-muted-foreground">
+                  用于在管道中唯一标识此任务，留空将自动生成
+                </div>
+              </div>
+            )}
+            
+            {/* 内置函数类型时显示当前选择的函数ID */}
+            {selectedTaskType === 'builtin_function' && selectedBuiltinTask && (
+              <div className="space-y-2">
+                <Label>任务ID</Label>
+                <div className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">
+                  {selectedBuiltinTask}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  内置函数的任务ID自动使用函数标识符
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="task-name">任务名称 *</Label>
               <Input
@@ -1522,16 +1219,17 @@ export default function PipelineDetailPage() {
                 )}
               </div>
             )}
-                          <div className="space-y-2">
-                <Label htmlFor="task-config">配置信息</Label>
-                <Textarea
-                  id="task-config"
-                  placeholder="输入JSON格式的配置信息（可选）"
-                  rows={6}
-                  className="font-mono text-sm"
-                  defaultValue={selectedTask?.config ? JSON.stringify(selectedTask.config, null, 2) : ""}
-                />
-              </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="task-config">配置信息</Label>
+              <Textarea
+                id="task-config"
+                placeholder="输入JSON格式的配置信息（可选）"
+                rows={6}
+                className="font-mono text-sm"
+                defaultValue={selectedTask?.config ? JSON.stringify(selectedTask.config, null, 2) : ""}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button 
@@ -1546,7 +1244,7 @@ export default function PipelineDetailPage() {
             >
               取消
             </Button>
-            <Button onClick={() => handleSaveTask()}>
+            <Button onClick={handleSaveTask}>
               保存
             </Button>
           </DialogFooter>
@@ -1783,6 +1481,7 @@ export default function PipelineDetailPage() {
                 </div>
               </div>
             )}
+            
             <div className="space-y-2">
               <Label htmlFor="trigger-params">触发器参数</Label>
               <Textarea
@@ -1812,8 +1511,114 @@ export default function PipelineDetailPage() {
             >
               取消
             </Button>
-            <Button onClick={() => handleSaveTrigger()}>
+            <Button onClick={handleSaveTrigger}>
               保存
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 运行管道触发器选择对话框 */}
+      <Dialog open={showRunDialog} onOpenChange={setShowRunDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>选择触发器运行</DialogTitle>
+            <DialogDescription>
+              该管道有多个启用的触发器，请选择一个用于运行
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-3">
+              {pipeline?.triggers?.filter(t => t.enabled).map((trigger) => (
+                <div
+                  key={trigger.id}
+                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                    selectedRunTrigger?.id === trigger.id 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:bg-muted/50'
+                  }`}
+                  onClick={() => setSelectedRunTrigger(trigger)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="font-medium">{trigger.name}</div>
+                      {trigger.description && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {trigger.description}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">
+                        {trigger.trigger_type === 'manual' ? '手动' : 
+                         trigger.trigger_type === 'cron' ? 'Cron' :
+                         trigger.trigger_type === 'interval' ? '间隔' : 
+                         trigger.trigger_type}
+                      </Badge>
+                      {selectedRunTrigger?.id === trigger.id && (
+                        <Check className="h-4 w-4 text-primary" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowRunDialog(false)
+                setSelectedRunTrigger(null)
+              }}
+            >
+              取消
+            </Button>
+            <Button 
+              onClick={handleSubmitRun}
+              disabled={!selectedRunTrigger || runMutation.isPending}
+            >
+              {runMutation.isPending && (
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              运行
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 删除确认弹窗 */}
+      <Dialog open={deleteConfirmDialog.open} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteConfirmDialog({ ...deleteConfirmDialog, open: false })
+        }
+      }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{deleteConfirmDialog.title}</DialogTitle>
+            <DialogDescription>{deleteConfirmDialog.description}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setDeleteConfirmDialog({ ...deleteConfirmDialog, open: false })
+              }}
+            >
+              取消
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                if (deleteConfirmDialog.type === 'task') {
+                  deleteTaskMutation.mutate(deleteConfirmDialog.item.id)
+                } else if (deleteConfirmDialog.type === 'trigger') {
+                  deleteTriggerMutation.mutate(deleteConfirmDialog.item.id)
+                }
+                setDeleteConfirmDialog({ ...deleteConfirmDialog, open: false })
+              }}
+            >
+              删除
             </Button>
           </DialogFooter>
         </DialogContent>

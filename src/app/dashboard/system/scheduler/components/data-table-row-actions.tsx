@@ -3,7 +3,7 @@
 import { Row } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { MoreHorizontal, Play, Edit, Trash2, Power, PowerOff, Eye } from "lucide-react"
+import { MoreHorizontal, Play, Trash2, Power, PowerOff, Eye, Clock } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -90,12 +90,12 @@ export function DataTableRowActions<TData>({
     },
   })
 
-  const handleEdit = () => {
-    router.push(`/dashboard/system/scheduler/pipelines/${pipeline.id}?mode=edit`)
-  }
-
   const handleView = () => {
     router.push(`/dashboard/system/scheduler/pipelines/${pipeline.id}`)
+  }
+
+  const handleViewRuns = () => {
+    router.push(`/dashboard/system/scheduler/${pipeline.id}/runs`)
   }
 
   const handleToggleEnable = () => {
@@ -128,9 +128,9 @@ export function DataTableRowActions<TData>({
           <Eye className="mr-2 h-4 w-4" />
           查看详情
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleEdit}>
-          <Edit className="mr-2 h-4 w-4" />
-          编辑
+        <DropdownMenuItem onClick={handleViewRuns}>
+          <Clock className="mr-2 h-4 w-4" />
+          运行历史
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleRun} disabled={!pipeline.enabled}>

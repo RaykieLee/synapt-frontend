@@ -377,6 +377,7 @@ export interface PipelineSearchParams {
  */
 export interface PipelineRunSearchParams {
   pipeline_id?: string;
+  trigger_id?: string;
   status?: string;
 }
 
