@@ -122,9 +122,9 @@ function DialogContent({
           <DialogOverlay asChild forceMount>
             <motion.div
               key="dialog-overlay"
-              initial={{ opacity: 0, filter: 'blur(4px)' }}
-              animate={{ opacity: 1, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, filter: 'blur(4px)' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
             />
           </DialogOverlay>
