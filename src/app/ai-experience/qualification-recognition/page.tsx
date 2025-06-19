@@ -414,10 +414,7 @@ export default function QualificationRecognitionPage() {
   };
 
   // 渲染文件上传组件
-  const renderFileUpload = () => {
-    console.log('渲染文件上传组件, 状态:', { selectedFile: !!selectedFile, textInput: textInput.length, activeTab, isProcessing });
-    
-    return (
+  const renderFileUpload = () => (
       <Card className="h-full">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -488,7 +485,7 @@ export default function QualificationRecognitionPage() {
         </Tabs>
 
         {/* 按钮区域 */}
-        <div className="flex gap-3 p-2 border border-gray-200 rounded bg-gray-50">
+        <div className="flex gap-3">
           <Button 
             onClick={handleProcessFile}
             disabled={isProcessing || (!selectedFile && !textInput.trim())}
