@@ -34,9 +34,12 @@ import { ResultDisplay } from './components/result-display';
 import { EditableTenderRequirements } from './components/editable-tender-requirements';
 import { StreamingJsonDisplay } from './components/streaming-json-display';
 import { websocketService, fileToBase64, QualificationRecognitionCallbacks } from '@/services/websocket';
+import { Attachment } from '@/types/attachment';
+import { attachmentApi } from '@/api/attachment';
 
 export default function QualificationRecognitionPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedAttachment, setSelectedAttachment] = useState<Attachment | null>(null);
   const [textInput, setTextInput] = useState('');
   const [result, setResult] = useState<RecognitionResult | null>(null);
   const [activeTab, setActiveTab] = useState('file');
@@ -99,86 +102,10 @@ export default function QualificationRecognitionPage() {
           "持有证书的最小比例": 80,
           "最低人数要求": 15,
           "所需工作经验年限": 3
-        // },
-        // {
-        //   "评分": 5,
-        //   "证书要求": [
-        //     {
-        //       "证书类型": "工程类",
-        //       "证书等级": "中级"
-        //     },
-        //     {
-        //       "证书类型": "软件类",
-        //       "证书等级": "中级"
-        //     }
-        //   ],
-        //   "持有证书的最小比例": 60,
-        //   "最低人数要求": 15,
-        //   "所需工作经验年限": 3
-        // },
-        // {
-        //   "评分": 3,
-        //   "证书要求": [
-        //     {
-        //       "证书类型": "工程类",
-        //       "证书等级": "中级"
-        //     },
-        //     {
-        //       "证书类型": "软件类",
-        //       "证书等级": "中级"
-        //     }
-        //   ],
-        //   "持有证书的最小比例": 40,
-        //   "最低人数要求": 15,
-        //   "所需工作经验年限": 3
-        // },
-        // {
-        //   "评分": 1,
-        //   "证书要求": [
-        //     {
-        //       "证书类型": "工程类",
-        //       "证书等级": "中级"
-        //     },
-        //     {
-        //       "证书类型": "软件类",
-        //       "证书等级": "中级"
-        //     }
-        //   ],
-        //   "持有证书的最小比例": 20,
-        //   "最低人数要求": 15,
-        //   "所需工作经验年限": 3
         }
       ]
     }
   };
-
-  // 示例图片数据
-  const exampleImages = [
-    {
-      id: 1,
-      title: '标书人员要求文档',
-      description: '包含负责人要求、团队要求、学历证书等完整的人员资质规范',
-      category: '要求文档'
-    },
-    {
-      id: 2,
-      title: '投标人员配置表',
-      description: '详细的人员配置要求、评分标准、证书等级等信息',
-      category: '配置表'
-    },
-    {
-      id: 3,
-      title: '资质要求明细',
-      description: '包含不同角色的学历、经验、证书要求及对应评分',
-      category: '明细表'
-    },
-    {
-      id: 4,
-      title: '技术团队规范',
-      description: '技术团队人员配置标准、证书持有比例等综合要求',
-      category: '团队规范'
-    }
-  ];
 
   // 示例结果数据（作为演示用）
   const exampleResult: RecognitionResult = {
@@ -198,150 +125,213 @@ export default function QualificationRecognitionPage() {
         project_experience: [
           '要求具备5年以上相关工作经验',
           '必须具备博士学历，专业为计算机、电气自动化或信息通信',
-          '需要持有PMP或高级信息系统项目管理师证书'
+          '持有PMP或高级信息系统项目管理师证书'
         ],
         skills: ['项目管理', '团队领导', '技术架构', '质量控制'],
         confidence: 0.98
-      },
-      {
-        name: '技术团队要求',
-        id_card: '--',
-        education: '硕士以上',
-        major: '相关技术专业',
-        work_experience: '3年以上',
-        certifications: ['工程类中级证书', '软件类中级证书'],
-        position: '技术团队成员',
-        company: '--',
-        project_experience: [
-          '团队最低人数要求：15人',
-          '硕士学历人员最少2人',
-          '持有中级工程类或软件类证书比例需达到要求标准',
-          '根据证书持有比例不同，可获得1-7分的评分'
-        ],
-        skills: ['软件开发', '系统集成', '工程实施', '技术支持'],
-        confidence: 0.95
       }
     ]
   };
 
-  // WebSocket连接初始化
-  useEffect(() => {
-    const connectWebSocket = async () => {
-      try {
-        await websocketService.connect();
-        setIsWebSocketConnected(true);
-        toast({
-          title: "WebSocket连接成功",
-          description: "已启用实时流式传输功能",
-        });
-      } catch (error) {
-        console.error('WebSocket连接失败:', error);
-        setIsWebSocketConnected(false);
-        setUseWebSocket(false);
-      }
-    };
-
-    if (useWebSocket) {
-      connectWebSocket();
-    }
-
-    return () => {
-      websocketService.disconnect();
-    };
-  }, [useWebSocket, toast]);
-
-  // 文件识别 mutation
-  const fileRecognitionMutation = useMutation({
+  // 使用Mutation处理文件识别
+  const fileMutation = useMutation({
     mutationFn: recognizeFileQualification,
     onSuccess: (data) => {
       setResult(data);
       toast({
         title: "识别完成",
-        description: `成功识别到标书要求信息`,
+        description: "文件内容已成功识别并提取关键信息",
       });
     },
     onError: (error) => {
-      console.error('文件识别失败:', error);
-      // 使用示例数据作为后备
-      setResult(exampleResult);
+      console.error('识别失败:', error);
       toast({
-        title: "演示模式",
-        description: "当前为演示模式，显示示例识别结果",
-        variant: "default",
+        title: "识别失败",
+        description: error instanceof Error ? error.message : "请稍后重试",
+        variant: "destructive",
       });
-    }
+    },
   });
 
-  // 文本识别 mutation
-  const textRecognitionMutation = useMutation({
+  // 使用Mutation处理文本识别
+  const textMutation = useMutation({
     mutationFn: recognizeTextQualification,
     onSuccess: (data) => {
       setResult(data);
       toast({
         title: "识别完成",
-        description: `成功识别到标书要求信息`,
+        description: "文本内容已成功识别并提取关键信息",
       });
     },
     onError: (error) => {
-      console.error('文本识别失败:', error);
-      // 使用示例数据作为后备
-      setResult(exampleResult);
+      console.error('识别失败:', error);
       toast({
-        title: "演示模式",
-        description: "当前为演示模式，显示示例识别结果",
-        variant: "default",
+        title: "识别失败",
+        description: error instanceof Error ? error.message : "请稍后重试",
+        variant: "destructive",
       });
-    }
+    },
   });
 
-  const isProcessing = fileRecognitionMutation.isPending || textRecognitionMutation.isPending || isStreaming;
+  const isProcessing = fileMutation.isPending || textMutation.isPending;
 
-  // 处理文件选择
-  const handleFileSelect = (file: File) => {
-    setSelectedFile(file);
-    toast({
-      title: "文件已选择",
-      description: `已选择文件: ${file.name}`,
-    });
-  };
+  // WebSocket连接初始化
+  useEffect(() => {
+    const initWebSocket = async () => {
+      try {
+        await connectWebSocket();
+      } catch (error) {
+        console.log('WebSocket连接失败，将使用标准HTTP模式');
+      }
+    };
 
-  // WebSocket流式识别
-  const handleStreamingRecognition = async (file: File) => {
+    initWebSocket();
+
+    return () => {
+      if (websocketService.isConnected()) {
+        websocketService.disconnect();
+      }
+    };
+  }, []);
+
+  // WebSocket连接函数
+  const connectWebSocket = async () => {
     try {
-      setIsStreaming(true);
-      setStreamingProgress(undefined);
-      setAccumulatedContent('');
-      setFinalStreamData(null);
-
-      const base64Data = await fileToBase64(file);
-      const imageFormat = file.type.split('/')[1] || 'jpeg';
+      if (websocketService.isConnected()) {
+        setIsWebSocketConnected(true);
+        return;
+      }
 
       const callbacks: QualificationRecognitionCallbacks = {
-        onProgress: (message, step) => {
+        onProgress: (message: string, step?: string) => {
+          console.log('识别进度:', message, step);
           setStreamingProgress({ message, step });
         },
-        onContent: (content, accumulated) => {
+        onContent: (content: string, accumulated: string) => {
+          console.log('收到流式内容:', content);
           setAccumulatedContent(accumulated);
         },
-        onSuccess: (data, rawContent) => {
+        onSuccess: (data: any, rawContent?: string) => {
+          console.log('流式识别完成:', data);
+          setIsStreaming(false);
           setFinalStreamData(data);
-          setStreamingProgress({ message: '识别完成' });
           
-          // 构建结果对象
-          const result: RecognitionResult = {
-            success: true,
-            processing_time: 0,
-            tender_requirements: data,
-            data: []
-          };
-          setResult(result);
-          
-          toast({
-            title: "流式识别完成",
-            description: "标书要求已成功识别并解析",
-          });
+          // 解析完整结果
+          try {
+            if (data) {
+              setResult(data);
+              toast({
+                title: "识别完成",
+                description: "流式识别已完成，结果已更新",
+              });
+            }
+          } catch (error) {
+            console.error('解析流式结果失败:', error);
+          }
         },
-        onError: (error) => {
+        onError: (error: string) => {
+          console.error('WebSocket错误:', error);
+          setIsStreaming(false);
+          toast({
+            title: "连接错误",
+            description: "实时连接已断开，请检查网络连接",
+            variant: "destructive",
+          });
+        }
+      };
+
+      await websocketService.connect();
+      // 注意：这里不需要setCallbacks，因为callbacks会在调用时传递
+      setIsWebSocketConnected(true);
+      
+      toast({
+        title: "实时连接已建立",
+        description: "现在可以使用流式识别功能",
+      });
+    } catch (error) {
+      console.error('WebSocket连接失败:', error);
+      setIsWebSocketConnected(false);
+      throw error;
+    }
+  };
+
+  const handleFileSelect = (file: File | null) => {
+    setSelectedFile(file);
+    setSelectedAttachment(null); // 清除附件选择
+    setResult(null);
+    
+    // 清除流式状态
+    setAccumulatedContent('');
+    setFinalStreamData(null);
+    setStreamingProgress(undefined);
+  };
+
+  // 新增：处理示例附件选择
+  const handleExampleSelect = async (attachment: Attachment) => {
+    try {
+      // 获取附件的下载URL
+      const downloadUrl = await attachmentApi.getPreviewUrl(attachment.id);
+      
+      // 创建文件对象
+      const response = await fetch(downloadUrl);
+      const blob = await response.blob();
+      const file = new File([blob], attachment.file_name, { type: attachment.mime_type });
+      
+      // 使用handleFileSelect来正确设置文件和预览
+      handleFileSelect(file);
+      setSelectedAttachment(attachment);
+      
+      toast({
+        title: "示例文档已选择",
+        description: `已选择示例文档: ${attachment.file_name}`,
+      });
+    } catch (error) {
+      console.error('获取示例文档失败:', error);
+      toast({
+        title: "获取示例失败",
+        description: "无法获取示例文档，请重试",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStreamingRecognition = async (file: File) => {
+    if (!websocketService.isConnected()) {
+      throw new Error('WebSocket连接未建立');
+    }
+
+    try {
+      setIsStreaming(true);
+      setAccumulatedContent('');
+      setFinalStreamData(null);
+      setStreamingProgress({ message: '正在准备文件...', step: 'prepare' });
+
+      // 将文件转换为base64
+      const base64Data = await fileToBase64(file);
+      
+      setStreamingProgress({ message: '开始流式识别...', step: 'start' });
+
+      // 使用现有的qualificationRecognitionStream方法
+      const callbacks: QualificationRecognitionCallbacks = {
+        onProgress: (message: string, step?: string) => {
+          setStreamingProgress({ message, step });
+        },
+        onContent: (content: string, accumulated: string) => {
+          setAccumulatedContent(accumulated);
+        },
+        onSuccess: (data: any) => {
+          setIsStreaming(false);
+          setFinalStreamData(data);
+          if (data) {
+            setResult(data);
+            toast({
+              title: "识别完成",
+              description: "流式识别已完成，结果已更新",
+            });
+          }
+        },
+        onError: (error: string) => {
+          setIsStreaming(false);
           toast({
             title: "识别失败",
             description: error,
@@ -352,77 +342,60 @@ export default function QualificationRecognitionPage() {
 
       await websocketService.qualificationRecognitionStream(
         base64Data,
-        imageFormat,
+        file.type.split('/')[1] || 'jpeg',
         callbacks
       );
 
     } catch (error) {
       console.error('流式识别失败:', error);
-      toast({
-        title: "连接错误",
-        description: "WebSocket连接失败，请尝试刷新页面",
-        variant: "destructive",
-      });
-    } finally {
       setIsStreaming(false);
+      throw error;
     }
   };
 
-  // 处理文件或文本处理
   const handleProcessFile = async () => {
-    if (!selectedFile && !textInput.trim()) {
-      toast({
-        title: "请选择文件或输入文本",
-        description: "请先上传文件或输入要识别的文本",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // 显示处理提示
-    toast({
-      title: "开始AI识别",
-      description: "AI正在分析中，预计需要30秒-2分钟，请耐心等待...",
-    });
+    if (!selectedFile && !textInput.trim()) return;
 
     try {
-      if (activeTab === 'file' && selectedFile) {
-        if (useWebSocket && isWebSocketConnected) {
+      // 清除之前的结果
+      setResult(null);
+      setAccumulatedContent('');
+      setFinalStreamData(null);
+      setStreamingProgress(undefined);
+
+      if (selectedFile) {
+        // 如果WebSocket连接可用且用户选择使用WebSocket
+        if (isWebSocketConnected && useWebSocket) {
           await handleStreamingRecognition(selectedFile);
         } else {
-          await fileRecognitionMutation.mutateAsync({ file: selectedFile });
+          // 使用标准HTTP请求
+          await fileMutation.mutateAsync({
+            file: selectedFile
+          });
         }
-      } else if (activeTab === 'text' && textInput.trim()) {
-        await textRecognitionMutation.mutateAsync({ text: textInput });
-      }
-    } catch (error) {
-      // 检查是否是超时错误
-      if (error instanceof Error && error.message.includes('超时')) {
-        toast({
-          title: "请求超时",
-          description: "AI处理时间较长，建议尝试使用实时流式模式或稍后重试",
-          variant: "destructive",
+      } else if (textInput.trim()) {
+        await textMutation.mutateAsync({
+          text: textInput.trim()
         });
       }
-      // 错误已在 mutation 的 onError 中处理
+    } catch (error) {
+      console.error('处理失败:', error);
     }
   };
 
-  // 重置状态
   const handleReset = () => {
     setSelectedFile(null);
+    setSelectedAttachment(null);
     setTextInput('');
     setResult(null);
+    
+    // 清除流式状态
     setAccumulatedContent('');
     setFinalStreamData(null);
     setStreamingProgress(undefined);
-    toast({
-      title: "已重置",
-      description: "所有输入和结果已清空",
-    });
+    setIsStreaming(false);
   };
 
-  // 处理JSON复制
   const handleCopyJSON = (data: string) => {
     navigator.clipboard.writeText(data);
     toast({
@@ -431,7 +404,6 @@ export default function QualificationRecognitionPage() {
     });
   };
 
-  // 处理标书要求更新
   const handleTenderRequirementsUpdate = (requirements: TenderRequirement) => {
     if (result) {
       setResult({
@@ -441,108 +413,36 @@ export default function QualificationRecognitionPage() {
     }
   };
 
-  // 渲染示例图片组件
-  const renderExampleImages = () => (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ImageIcon className="h-5 w-5" />
-          示例图片
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {exampleImages.map((example) => (
-            <motion.div
-              key={example.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: example.id * 0.1 }}
-              className="group cursor-pointer"
-              onClick={() => {
-                // 演示点击示例的效果
-                toast({
-                  title: "示例演示",
-                  description: `查看${example.title}的识别效果`,
-                });
-                setResult(exampleResult);
-              }}
-            >
-              <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105">
-                <div className="relative">
-                  <div className="aspect-video bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-900 flex items-center justify-center">
-                    <FileText className="h-12 w-12 text-blue-500" />
-                    <motion.div
-                      className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100"
-                      initial={false}
-                      animate={{ opacity: 0 }}
-                      whileHover={{ opacity: 1 }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </div>
-                  <Badge 
-                    variant="secondary" 
-                    className="absolute top-2 right-2"
-                  >
-                    {example.category}
-                  </Badge>
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <Eye className="h-6 w-6 text-white" />
-                  </div>
-                </div>
-                <CardContent className="p-4">
-                  <h4 className="font-semibold mb-1 group-hover:text-primary transition-colors">
-                    {example.title}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {example.description}
-                  </p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-        
-        <div className="mt-6">
-          <Alert>
-            <Eye className="h-4 w-4" />
-            <AlertDescription>
-              点击任意示例图片可以查看详细的标书要求信息提取效果。
-              支持识别各种标书文档格式。
-            </AlertDescription>
-          </Alert>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   // 渲染文件上传组件
-  const renderFileUpload = () => (
-    <Card className="h-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
-            文件识别
-          </CardTitle>
-          
-          {/* WebSocket连接状态 */}
-          <div className="flex items-center gap-2">
-            {isWebSocketConnected ? (
-              <Badge variant="default" className="flex items-center gap-1">
-                <Wifi className="h-3 w-3" />
-                实时连接
-              </Badge>
-            ) : (
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <WifiOff className="h-3 w-3" />
-                标准模式
-              </Badge>
-            )}
+  const renderFileUpload = () => {
+    console.log('渲染文件上传组件, 状态:', { selectedFile: !!selectedFile, textInput: textInput.length, activeTab, isProcessing });
+    
+    return (
+      <Card className="h-full">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              文件识别
+            </CardTitle>
+            
+            {/* WebSocket连接状态 */}
+            <div className="flex items-center gap-2">
+              {isWebSocketConnected ? (
+                <Badge variant="default" className="flex items-center gap-1">
+                  <Wifi className="h-3 w-3" />
+                  实时连接
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <WifiOff className="h-3 w-3" />
+                  标准模式
+                </Badge>
+              )}
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
+        </CardHeader>
+        <CardContent className="space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="file" className="flex items-center gap-2">
@@ -559,6 +459,7 @@ export default function QualificationRecognitionPage() {
             <UploadZone
               selectedFile={selectedFile}
               onFileSelect={handleFileSelect}
+              onExampleSelect={handleExampleSelect}
               accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt"
               maxSize={10 * 1024 * 1024}
             />
@@ -586,7 +487,8 @@ export default function QualificationRecognitionPage() {
           </TabsContent>
         </Tabs>
 
-        <div className="flex gap-3">
+        {/* 按钮区域 */}
+        <div className="flex gap-3 p-2 border border-gray-200 rounded bg-gray-50">
           <Button 
             onClick={handleProcessFile}
             disabled={isProcessing || (!selectedFile && !textInput.trim())}
@@ -632,9 +534,10 @@ export default function QualificationRecognitionPage() {
       </CardContent>
     </Card>
   );
+};
 
   return (
-    <div className="container mx-auto py-6 px-4">
+    <div className="container mx-auto py-6 px-4 max-w-screen-2xl">
       {/* 页面标题 */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -663,34 +566,24 @@ export default function QualificationRecognitionPage() {
         </p>
       </motion.div>
 
-      {/* 主要内容区域 */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 min-h-[calc(100vh-250px)]">
-        {/* 左侧：示例图片 */}
+      {/* 主要内容区域 - 修改为2列布局，左侧更宽 */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 xl:grid-cols-7 gap-6 min-h-[calc(100vh-250px)]">
+        {/* 左侧：文件上传/文本输入 - 根据屏幕大小占不同比例 */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="xl:col-span-1"
-        >
-          {renderExampleImages()}
-        </motion.div>
-
-        {/* 中间：文件上传/文本输入 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="xl:col-span-1"
+          className="lg:col-span-3 xl:col-span-4"
         >
           {renderFileUpload()}
         </motion.div>
 
-        {/* 右侧：结果展示 */}
+        {/* 右侧：结果展示 - 根据屏幕大小占不同比例 */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="xl:col-span-1"
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="lg:col-span-2 xl:col-span-3"
         >
           {/* 显示流式JSON或结果 */}
           {isStreaming || accumulatedContent || finalStreamData ? (
@@ -724,7 +617,7 @@ export default function QualificationRecognitionPage() {
             className="mt-8"
           >
             <EditableTenderRequirements
-              requirements={result.tender_requirements}
+              requirements={result.tender_requirements!}
               onUpdate={handleTenderRequirementsUpdate}
             />
           </motion.div>
