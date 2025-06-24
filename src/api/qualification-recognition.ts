@@ -75,7 +75,7 @@ export interface RecognitionResult {
 
 // 文件上传参数
 export interface FileUploadParams {
-  file: File;
+  attachment_id: string; // 改为接收附件ID
 }
 
 // 文本识别参数
@@ -88,15 +88,11 @@ export interface TextRecognitionParams {
  * @param params 文件上传参数
  */
 export const recognizeFileQualification = async (params: FileUploadParams): Promise<RecognitionResult> => {
-  const formData = new FormData();
-  formData.append('file', params.file);
-  
-  // AI图像识别需要较长时间，设置2分钟超时
   return apiRequest<RecognitionResult>(
     '/api/v1/ai/qualification/recognize/file', 
     'POST', 
-    formData,
-    { timeout: 600000 } // 2分钟超时
+    { attachment_id: params.attachment_id },
+    { timeout: 2000000 } // 2分钟超时
   );
 };
 

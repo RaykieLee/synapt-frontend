@@ -1,13 +1,16 @@
 "use client"
 
 import { Table } from "@tanstack/react-table"
-import { X, Plus, Search, Filter } from "lucide-react"
+import { X, Plus, Search, Filter, Trash2, CheckCircle, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DataTableViewOptions } from "@/components/shared/data-table"
 import { CertificateQuery } from "@/types/personnel"
 import { useState } from "react"
 import { CertificateFormDialog } from "./certificate-form-dialog"
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
+import { certificateAPI, personnelQualificationAPI } from "@/api/personnel"
+import { toast } from "sonner"
 import {
   Select,
   SelectContent,
@@ -15,8 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useQuery } from "@tanstack/react-query"
-import { certificateAPI, personnelQualificationAPI } from "@/api/personnel"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
@@ -31,6 +32,7 @@ export function DataTableToolbar<TData>({
 }: DataTableToolbarProps<TData>) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [searchValue, setSearchValue] = useState(query.params?.keywords?.certificate_name || "");
+  const queryClient = useQueryClient();
 
   // 获取证书类别选项
   const { data: categoriesResponse } = useQuery({
@@ -51,6 +53,39 @@ export function DataTableToolbar<TData>({
                     query.params?.status || 
                     query.params?.certificate_category || 
                     query.params?.personnel_id;
+
+  // 获取选中的行
+  const selectedRows = table.getFilteredSelectedRowModel().rows;
+  const selectedIds = selectedRows.map(row => (row.original as any).id);
+  const hasSelection = selectedRows.length > 0;
+
+  // 批量删除
+  const batchDeleteMutation = useMutation({
+    mutationFn: (certificate_ids: number[]) => certificateAPI.batchDelete({ certificate_ids }),
+    onSuccess: (data) => {
+      toast.success(`批量删除成功，共删除${data.data.count}条记录`);
+      queryClient.invalidateQueries({ queryKey: ["personnel", "certificate", "list"] });
+      table.resetRowSelection();
+    },
+    onError: (error) => {
+      toast.error("批量删除失败：" + error.message);
+    }
+  });
+
+  // 批量更新状态
+  const batchUpdateStatusMutation = useMutation({
+    mutationFn: ({ certificate_ids, status }: { certificate_ids: number[], status: string }) => 
+      certificateAPI.batchUpdateStatus(certificate_ids, status),
+    onSuccess: (data, variables) => {
+      const statusText = variables.status === "1" ? "启用" : "禁用";
+      toast.success(`批量${statusText}成功，共${statusText}${data.data.count}条记录`);
+      queryClient.invalidateQueries({ queryKey: ["personnel", "certificate", "list"] });
+      table.resetRowSelection();
+    },
+    onError: (error) => {
+      toast.error("批量操作失败：" + error.message);
+    }
+  });
 
   // 处理搜索
   const handleSearch = (value: string) => {
@@ -115,6 +150,24 @@ export function DataTableToolbar<TData>({
         search_mode: "and"
       }
     }));
+  };
+
+  // 批量删除处理
+  const handleBatchDelete = () => {
+    if (!hasSelection) return;
+    batchDeleteMutation.mutate(selectedIds);
+  };
+
+  // 批量启用处理
+  const handleBatchEnable = () => {
+    if (!hasSelection) return;
+    batchUpdateStatusMutation.mutate({ certificate_ids: selectedIds, status: "1" });
+  };
+
+  // 批量禁用处理
+  const handleBatchDisable = () => {
+    if (!hasSelection) return;
+    batchUpdateStatusMutation.mutate({ certificate_ids: selectedIds, status: "0" });
   };
 
   return (
@@ -196,6 +249,51 @@ export function DataTableToolbar<TData>({
       </div>
 
       <div className="flex items-center space-x-2">
+        {/* 批量操作按钮 */}
+        {hasSelection && (
+          <>
+            {/* 批量启用 */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBatchEnable}
+              disabled={batchUpdateStatusMutation.isPending}
+              className="h-8"
+            >
+              <CheckCircle className="mr-1 h-3 w-3" />
+              批量启用
+            </Button>
+
+            {/* 批量禁用 */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBatchDisable}
+              disabled={batchUpdateStatusMutation.isPending}
+              className="h-8"
+            >
+              <XCircle className="mr-1 h-3 w-3" />
+              批量禁用
+            </Button>
+
+            {/* 批量删除 */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (window.confirm(`您确定要删除选中的 ${selectedRows.length} 条证书记录吗？此操作不可撤销。`)) {
+                  handleBatchDelete();
+                }
+              }}
+              disabled={batchDeleteMutation.isPending}
+              className="h-8 text-destructive hover:text-destructive"
+            >
+              <Trash2 className="mr-1 h-3 w-3" />
+              批量删除
+            </Button>
+          </>
+        )}
+
         {/* 新增按钮 */}
         <Button
           size="sm"

@@ -2,12 +2,40 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/animate-ui/base/checkbox"
 import { DataTableColumnHeader } from "@/components/shared/data-table"
 import { DataTableRowActions } from "./data-table-row-actions"
 import { Certificate } from "@/types/personnel"
 
 export function getColumns(): ColumnDef<Certificate>[] {
   return [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <label className="translate-y-[2px]">
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={(value) => {
+              table.toggleAllPageRowsSelected(!!value)
+            }}
+            aria-label="全选"
+          />
+        </label>
+      ),
+      cell: ({ row }) => (
+        <label className="translate-y-[2px]">
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => {
+              row.toggleSelected(!!value)
+            }}
+            aria-label="选择行"
+          />
+        </label>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "certificate_name",
       header: ({ column }) => (
@@ -61,7 +89,14 @@ export function getColumns(): ColumnDef<Certificate>[] {
       ),
       cell: ({ row }) => {
         const authority = row.getValue("issuing_authority") as string;
-        return <div className="w-[120px]">{authority || "-"}</div>;
+        return (
+          <div 
+            className="w-[160px] truncate" 
+            title={authority}
+          >
+            {authority || "-"}
+          </div>
+        );
       },
     },
     {
@@ -71,7 +106,14 @@ export function getColumns(): ColumnDef<Certificate>[] {
       ),
       cell: ({ row }) => {
         const number = row.getValue("certificate_number") as string;
-        return <div className="w-[120px] font-mono text-sm">{number || "-"}</div>;
+        return (
+          <div 
+            className="w-[160px] font-mono text-sm truncate" 
+            title={number}
+          >
+            {number || "-"}
+          </div>
+        );
       },
     },
     {
@@ -84,13 +126,13 @@ export function getColumns(): ColumnDef<Certificate>[] {
         const personnel = certificate.personnel || [];
         
         if (personnel.length === 0) {
-          return <div className="w-[150px] text-muted-foreground">暂无人员</div>;
+          return <div className="w-[120px] text-muted-foreground">暂无人员</div>;
         }
         
         if (personnel.length === 1) {
           return (
-            <div className="w-[150px]">
-              <Badge variant="outline" className="text-xs">
+            <div className="w-[120px]">
+              <Badge variant="outline" className="text-xs truncate max-w-full">
                 {personnel[0].name}
               </Badge>
             </div>
@@ -98,8 +140,8 @@ export function getColumns(): ColumnDef<Certificate>[] {
         }
         
         return (
-          <div className="w-[150px] space-y-1">
-            <Badge variant="outline" className="text-xs">
+          <div className="w-[120px] space-y-1">
+            <Badge variant="outline" className="text-xs truncate max-w-full">
               {personnel[0].name}
             </Badge>
             {personnel.length > 1 && (

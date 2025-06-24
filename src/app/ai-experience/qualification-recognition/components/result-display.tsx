@@ -272,14 +272,14 @@ export function ResultDisplay({ result, isProcessing, onCopyJSON }: ResultDispla
   };
 
   return (
-    <Card className="h-full">
-      <CardHeader>
+    <Card className="h-full max-h-[calc(100vh-200px)] flex flex-col">
+      <CardHeader className="flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <Award className="h-5 w-5" />
           识别结果
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
           {isProcessing ? (
             <motion.div
@@ -348,11 +348,11 @@ export function ResultDisplay({ result, isProcessing, onCopyJSON }: ResultDispla
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="space-y-6"
+              className="h-full flex flex-col"
             >
               {/* 处理结果摘要 */}
               <motion.div 
-                className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-200 dark:border-green-800"
+                className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-200 dark:border-green-800 mb-6 flex-shrink-0"
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.5, type: "spring" }}
@@ -387,70 +387,72 @@ export function ResultDisplay({ result, isProcessing, onCopyJSON }: ResultDispla
               </motion.div>
 
               {/* 识别结果详情 */}
-              <Tabs defaultValue="structured" className="w-full">
-                <TabsList className={`grid w-full ${result.tender_requirements ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                  <TabsTrigger value="structured" className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    结构化结果
-                  </TabsTrigger>
-                  {result.tender_requirements && (
-                    <TabsTrigger value="requirements" className="flex items-center gap-2">
-                      <Target className="h-4 w-4" />
-                      标书要求
+              <div className="flex-1 overflow-hidden">
+                <Tabs defaultValue="structured" className="h-full flex flex-col">
+                  <TabsList className={`grid w-full ${result.tender_requirements ? 'grid-cols-3' : 'grid-cols-2'} flex-shrink-0`}>
+                    <TabsTrigger value="structured" className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      结构化结果
                     </TabsTrigger>
-                  )}
-                  <TabsTrigger value="json" className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    JSON格式
-                  </TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="structured" className="space-y-6 mt-6">
-                  {result.data.map((person, index) => (
-                    <PersonCard key={index} person={person} index={index} />
-                  ))}
-                </TabsContent>
+                    {result.tender_requirements && (
+                      <TabsTrigger value="requirements" className="flex items-center gap-2">
+                        <Target className="h-4 w-4" />
+                        标书要求
+                      </TabsTrigger>
+                    )}
+                    <TabsTrigger value="json" className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      JSON格式
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="structured" className="flex-1 overflow-y-auto mt-6 space-y-6">
+                    {result.data.map((person, index) => (
+                      <PersonCard key={index} person={person} index={index} />
+                    ))}
+                  </TabsContent>
 
-                {result.tender_requirements && (
-                  <TabsContent value="requirements" className="mt-6">
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
+                  {result.tender_requirements && (
+                    <TabsContent value="requirements" className="flex-1 overflow-y-auto mt-6">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <TenderRequirementsDisplay requirements={result.tender_requirements} />
+                      </motion.div>
+                    </TabsContent>
+                  )}
+                  
+                  <TabsContent value="json" className="flex-1 overflow-y-auto mt-6">
+                    <motion.div 
+                      className="relative h-full"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <TenderRequirementsDisplay requirements={result.tender_requirements} />
+                      <pre className="bg-muted p-4 rounded-lg text-sm h-full overflow-auto border">
+                        {JSON.stringify(result, null, 2)}
+                      </pre>
+                      <motion.div
+                        className="absolute top-2 right-2"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCopyJSON}
+                          className="bg-background/80 backdrop-blur-sm"
+                        >
+                          <Copy className="h-3 w-3 mr-1" />
+                          复制
+                        </Button>
+                      </motion.div>
                     </motion.div>
                   </TabsContent>
-                )}
-                
-                <TabsContent value="json" className="mt-6">
-                  <motion.div 
-                    className="relative"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <pre className="bg-muted p-4 rounded-lg text-sm overflow-auto max-h-96 border">
-                      {JSON.stringify(result, null, 2)}
-                    </pre>
-                    <motion.div
-                      className="absolute top-2 right-2"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCopyJSON}
-                        className="bg-background/80 backdrop-blur-sm"
-                      >
-                        <Copy className="h-3 w-3 mr-1" />
-                        复制
-                      </Button>
-                    </motion.div>
-                  </motion.div>
-                </TabsContent>
-              </Tabs>
+                </Tabs>
+              </div>
             </motion.div>
           ) : (
             <motion.div

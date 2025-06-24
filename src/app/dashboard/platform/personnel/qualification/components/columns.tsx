@@ -2,12 +2,40 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/animate-ui/base/checkbox"
 import { DataTableColumnHeader } from "@/components/shared/data-table"
 import { DataTableRowActions } from "./data-table-row-actions"
 import { PersonnelQualification } from "@/types/personnel"
 
 export function getColumns(): ColumnDef<PersonnelQualification>[] {
   return [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <label className="translate-y-[2px]">
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={(value) => {
+              table.toggleAllPageRowsSelected(!!value)
+            }}
+            aria-label="全选"
+          />
+        </label>
+      ),
+      cell: ({ row }) => (
+        <label className="translate-y-[2px]">
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => {
+              row.toggleSelected(!!value)
+            }}
+            aria-label="选择行"
+          />
+        </label>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "name",
       header: ({ column }) => (

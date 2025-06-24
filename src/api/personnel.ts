@@ -66,6 +66,10 @@ export const personnelQualificationAPI = {
   batchDelete: (data: PersonnelQualificationBatchDeleteDto) => 
     apiRequest<BaseResponse<{ count: number }>>("/api/v1/platform/personnel/qualification/batch-delete", "POST", data),
 
+  // 批量更新人员状态
+  batchUpdateStatus: (personnel_ids: number[], status: string) => 
+    apiRequest<BaseResponse<{ count: number }>>("/api/v1/platform/personnel/qualification/batch-status", "POST", { personnel_ids, status }),
+
   // 获取人员选项列表
   getOptions: () => 
     apiRequest<BaseResponse<PersonnelOption[]>>("/api/v1/platform/personnel/qualification/options/list", "GET"),
@@ -117,6 +121,10 @@ export const certificateAPI = {
   // 批量删除证书
   batchDelete: (data: CertificateBatchDeleteDto) => 
     apiRequest<BaseResponse<{ count: number }>>("/api/v1/platform/personnel/certificate/batch-delete", "POST", data),
+
+  // 批量更新证书状态
+  batchUpdateStatus: (certificate_ids: number[], status: string) => 
+    apiRequest<BaseResponse<{ count: number }>>("/api/v1/platform/personnel/certificate/batch-status", "POST", { certificate_ids, status }),
 
   // 根据人员ID获取证书列表
   getByPersonnelId: (personnel_id: number) => 
