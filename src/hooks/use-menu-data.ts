@@ -27,7 +27,8 @@ import {
   MessageSquare,
   Search,
   CreditCard,
-  Calendar
+  Calendar,
+  ScanFace
 } from "lucide-react"
 
 // 图标映射表

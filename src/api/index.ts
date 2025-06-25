@@ -8,4 +8,5 @@ export * from './dict';
 export * from './stream';
 export * from './alert';
 export * from './app';
-export * from './attachment'; 
+export * from './attachment';
+export * from './face'; 
