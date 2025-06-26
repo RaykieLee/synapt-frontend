@@ -7,11 +7,7 @@ import {
   FacePerson,
   FacePersonCreateDto,
   FacePersonQuery,
-  FacePersonUpdateDto,
-  FaceImage,
-  FaceImageCreateDto,
-  FaceImageQuery,
-  FaceImageUpdateDto
+  FacePersonUpdateDto
 } from "@/types/face";
 import { BaseResponse, PageResult } from "@/types/base";
 
@@ -110,56 +106,4 @@ export const facePersonAPI = {
     apiRequest<BaseResponse<void>>("/api/v1/platform/face/person/batch-delete", "POST", { person_ids }),
 };
 
-// 人脸图片API
-export const faceImageAPI = {
-  // 获取人脸图片列表
-  getList: (params: FaceImageQuery) => {
-    return apiRequest<BaseResponse<PageResult<FaceImage>>>("/api/v1/platform/face/image/list", "POST", {
-      page_num: params.page_num || 1,
-      page_size: params.page_size || 10,
-      sorts: params.sorts || [
-        {
-          field: "create_time",
-          order: "desc"
-        }
-      ],
-      params: {
-        keywords: params.params?.keywords || {},
-        status: params.params?.status,
-        person_id: params.params?.person_id,
-        library_id: params.params?.library_id,
-        time_range: params.params?.time_range,
-        search_mode: params.params?.search_mode || "and"
-      }
-    });
-  },
-
-  // 获取所有启用的人脸图片（用于下拉选择）
-  getAll: (person_id?: string, library_id?: string) => {
-    const params = new URLSearchParams();
-    if (person_id) params.append('person_id', person_id);
-    if (library_id) params.append('library_id', library_id);
-    
-    return apiRequest<BaseResponse<FaceImage[]>>(`/api/v1/platform/face/image/all${params.toString() ? `?${params.toString()}` : ''}`, "GET");
-  },
-
-  // 获取人脸图片详情
-  getDetail: (image_id: string) => 
-    apiRequest<BaseResponse<FaceImage>>(`/api/v1/platform/face/image/${image_id}`, "GET"),
-
-  // 创建人脸图片
-  create: (image: FaceImageCreateDto) => 
-    apiRequest<BaseResponse<FaceImage>>("/api/v1/platform/face/image/create", "POST", image),
-
-  // 更新人脸图片
-  update: (image_id: string, image: FaceImageUpdateDto) => 
-    apiRequest<BaseResponse<FaceImage>>(`/api/v1/platform/face/image/${image_id}`, "PUT", image),
-
-  // 删除人脸图片
-  delete: (image_id: string) => 
-    apiRequest<BaseResponse<void>>(`/api/v1/platform/face/image/${image_id}`, "DELETE"),
-
-  // 批量删除人脸图片
-  batchDelete: (image_ids: string[]) => 
-    apiRequest<BaseResponse<void>>("/api/v1/platform/face/image/batch-delete", "POST", { image_ids }),
-}; 
+ 

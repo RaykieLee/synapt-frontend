@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { Row } from "@tanstack/react-table"
-import { Edit, MoreHorizontal, Trash, Image } from "lucide-react"
+import { Edit, MoreHorizontal, Trash } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -41,7 +41,7 @@ export function DataTableRowActions<TData>({
 
   // 删除人员
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => facePersonAPI.delete(id),
+    mutationFn: (id: string) => facePersonAPI.delete(id),
     onSuccess: () => {
       toast.success("删除成功")
       queryClient.invalidateQueries({ queryKey: ["face", "person"] })
@@ -72,12 +72,7 @@ export function DataTableRowActions<TData>({
             <Edit className="mr-2 h-4 w-4" />
             编辑
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => router.push(`/dashboard/platform/face/image?person_id=${person.id}&library_id=${person.library_id}`)}
-          >
-            <Image className="mr-2 h-4 w-4" />
-            人脸图片管理
-          </DropdownMenuItem>
+
           <DropdownMenuItem
             onClick={() => setOpenDeleteDialog(true)}
             className="text-red-600 focus:text-red-600"

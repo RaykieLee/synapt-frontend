@@ -38,7 +38,7 @@ import { faceLibraryAPI } from "@/api";
 interface CreateEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  libraryId?: number;
+  libraryId?: string;
 }
 
 export function CreateEditDialog({

@@ -133,72 +133,7 @@ export interface FacePersonQuery {
   }
 }
 
-// ========== 人脸图片相关类型 ==========
 
-// 人脸图片基础接口
-export interface FaceImage {
-  id: string
-  person_id: string
-  library_id: string
-  image_id?: string
-  face_feature?: string
-  status: string
-  remark?: string
-  person?: FacePerson
-  library?: FaceLibrary
-  create_time?: string
-  create_by?: string
-  update_time?: string
-  update_by?: string
-  deleted?: string
-}
-
-// 人脸图片创建参数
-export interface FaceImageCreateDto {
-  person_id: string
-  library_id: string
-  image_id?: string
-  face_feature?: string
-  status?: string
-  remark?: string
-}
-
-// 人脸图片更新参数
-export interface FaceImageUpdateDto {
-  image_id?: string
-  face_feature?: string
-  status?: string
-  remark?: string
-}
-
-// 人脸图片查询参数
-export interface FaceImageQuery {
-  page_num?: number
-  page_size?: number
-  sorts?: Array<{
-    field: string
-    order: 'asc' | 'desc'
-  }>
-  params?: {
-    keywords?: {
-      image_id?: string
-    }
-    status?: string
-    person_id?: string
-    library_id?: string
-    time_range?: {
-      create_time?: {
-        start?: string
-        end?: string
-      }
-      update_time?: {
-        start?: string
-        end?: string
-      }
-    }
-    search_mode?: 'and' | 'or'
-  }
-}
 
 // ========== 搜索参数接口 ==========
 
@@ -217,13 +152,7 @@ export interface FacePersonSearchParams {
   library_id?: string
 }
 
-// 人脸图片搜索参数接口
-export interface FaceImageSearchParams {
-  image_id?: string
-  status?: string
-  person_id?: string
-  library_id?: string
-}
+
 
 // ========== 响应类型 ==========
 
@@ -244,10 +173,4 @@ export interface FacePersonListResponse {
   pages: number
 }
 
-export interface FaceImageListResponse {
-  list: FaceImage[]
-  total: number
-  page_num: number
-  page_size: number
-  pages: number
-} 
+ 
