@@ -135,6 +135,24 @@ export interface FacePersonQuery {
 
 
 
+// ========== 人脸图片相关类型 ==========
+
+// 人脸图片简化接口（避免循环引用）
+export interface FaceImageSimple {
+  id: string
+  person_id: string
+  library_id: string
+  image_id?: string
+  face_feature?: string
+  status?: string
+  remark?: string
+  create_time?: string
+  create_by?: string
+  update_time?: string
+  update_by?: string
+  deleted?: string
+}
+
 // ========== 搜索参数接口 ==========
 
 // 人脸库搜索参数接口

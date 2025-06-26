@@ -2,15 +2,9 @@
 
 import { useRouter } from "next/navigation"
 import { Row } from "@tanstack/react-table"
-import { Edit, MoreHorizontal, Trash } from "lucide-react"
+import { Edit, Trash, ChevronDown, ChevronRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { FacePerson } from "@/types/face"
 import { useState } from "react"
 import {
@@ -28,10 +22,14 @@ import { CreateEditDialog } from "./create-edit-dialog"
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>
+  isExpanded?: boolean
+  onToggleExpand?: () => void
 }
 
 export function DataTableRowActions<TData>({
   row,
+  isExpanded = false,
+  onToggleExpand,
 }: DataTableRowActionsProps<TData>) {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -58,30 +56,45 @@ export function DataTableRowActions<TData>({
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">打开菜单</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={() => setOpenEditDialog(true)}
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            编辑
-          </DropdownMenuItem>
+      <div className="flex items-center gap-1">
 
-          <DropdownMenuItem
-            onClick={() => setOpenDeleteDialog(true)}
-            className="text-red-600 focus:text-red-600"
-          >
-            <Trash className="mr-2 h-4 w-4" />
-            删除
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+
+        {/* 编辑按钮 */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={() => setOpenEditDialog(true)}
+          title="编辑人员"
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+
+        {/* 删除按钮 */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 text-red-600 hover:text-red-600 hover:bg-red-50"
+          onClick={() => setOpenDeleteDialog(true)}
+          title="删除人员"
+        >
+          <Trash className="h-4 w-4" />
+        </Button>
+                {/* 展开/折叠按钮 */}
+                <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={onToggleExpand}
+          title={isExpanded ? "折叠人脸图片" : "展开人脸图片"}
+        >
+          {isExpanded ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
 
       {/* 删除确认对话框 */}
       <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>

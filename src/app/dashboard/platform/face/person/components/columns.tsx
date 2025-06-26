@@ -122,6 +122,15 @@ export const columns: ColumnDef<FacePerson>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    cell: (props: any) => {
+      const { row, isExpanded, onToggleExpand } = props;
+      return (
+        <DataTableRowActions 
+          row={row} 
+          isExpanded={isExpanded}
+          onToggleExpand={onToggleExpand}
+        />
+      );
+    },
   },
 ] 

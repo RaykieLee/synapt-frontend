@@ -106,4 +106,15 @@ export const facePersonAPI = {
     apiRequest<BaseResponse<void>>("/api/v1/platform/face/person/batch-delete", "POST", { person_ids }),
 };
 
+// 人脸图片API
+export const faceImageAPI = {
+  // 删除人脸图片
+  delete: (image_id: string) => 
+    apiRequest<BaseResponse<boolean>>(`/api/v1/platform/face/image/${image_id}`, "DELETE"),
+
+  // 批量删除人脸图片
+  batchDelete: (image_ids: string[]) => 
+    apiRequest<BaseResponse<number>>("/api/v1/platform/face/image/batch-delete", "POST", { image_ids }),
+};
+
  
