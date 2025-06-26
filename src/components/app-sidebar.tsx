@@ -26,7 +26,7 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from "@/components/animate-ui/radix/sidebar"
 import { useMenuData } from "@/hooks/use-menu-data"
 import { useEffect, useState } from "react"
 
@@ -91,7 +91,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [])
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar 
+      collapsible="icon" 
+      animateOnHover={true}
+      transition={{ type: "spring", stiffness: 350, damping: 35 }}
+      {...props}
+    >
       <SidebarHeader>
         <TeamSwitcher teams={defaultTeams} />
       </SidebarHeader>

@@ -16,7 +16,7 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from "@/components/animate-ui/radix/sidebar"
 import { usePathname, useRouter } from "next/navigation"
 import { isLoggedIn } from "@/services/auth"
 import Link from "next/link"

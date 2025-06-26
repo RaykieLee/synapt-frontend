@@ -46,8 +46,14 @@ import { faceImageAPI } from "@/api/face"
 import { toast } from "sonner"
 import { getImagePreviewUrl, openImagePreview } from "@/utils/image-utils"
 import { Progress } from "@/components/animate-ui/radix/progress"
-
-
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/animate-ui/radix/dialog"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -79,6 +85,15 @@ function FaceImagesDisplay({ person }: { person: FacePerson }) {
   const [loadingImages, setLoadingImages] = React.useState<Set<string>>(new Set())
   const [errorImages, setErrorImages] = React.useState<Set<string>>(new Set())
   const [uploadProgresses, setUploadProgresses] = React.useState<UploadProgress[]>([])
+  const [deleteImageDialog, setDeleteImageDialog] = React.useState<{
+    open: boolean
+    imageId: string
+    fileName: string
+  }>({
+    open: false,
+    imageId: '',
+    fileName: ''
+  })
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   const { data: images, isLoading } = useQuery({
@@ -88,8 +103,6 @@ function FaceImagesDisplay({ person }: { person: FacePerson }) {
     },
     enabled: !!person.id,
   })
-
-
 
   // 加载图片预览URL
   React.useEffect(() => {
@@ -236,9 +249,16 @@ function FaceImagesDisplay({ person }: { person: FacePerson }) {
   })
 
   const handleDeleteImage = (imageId: string, fileName?: string) => {
-    if (confirm(`确定要删除这张人脸图片吗？${fileName ? `\n文件名: ${fileName}` : ''}`)) {
-      deleteMutation.mutate(imageId)
-    }
+    setDeleteImageDialog({
+      open: true,
+      imageId,
+      fileName: fileName || `ID: ${imageId.slice(-8)}`
+    })
+  }
+
+  const confirmDeleteImage = () => {
+    deleteMutation.mutate(deleteImageDialog.imageId)
+    setDeleteImageDialog({ open: false, imageId: '', fileName: '' })
   }
 
   const handleImageClick = async (image: FaceImageSimple) => {
@@ -391,6 +411,40 @@ function FaceImagesDisplay({ person }: { person: FacePerson }) {
         className="hidden"
         onChange={(e) => handleFileSelect(e.target.files)}
       />
+
+      {/* 删除人脸图片确认对话框 */}
+      <Dialog 
+        open={deleteImageDialog.open} 
+        onOpenChange={(open: boolean) => setDeleteImageDialog(prev => ({ ...prev, open }))}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>确认删除</DialogTitle>
+            <DialogDescription>
+              您确定要删除这张人脸图片吗？
+              <br />
+              文件：{deleteImageDialog.fileName}
+              <br />
+              此操作无法撤销。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteImageDialog({ open: false, imageId: '', fileName: '' })}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteImage}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "删除中..." : "确认删除"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
@@ -470,7 +524,7 @@ export function DataTable<TData extends object, TValue>({
   onSortingChange,
   isLoading = false,
   columnLabels,
-  minHeight = "400px",
+  minHeight = "650px",
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})

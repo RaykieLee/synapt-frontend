@@ -23,7 +23,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/animate-ui/radix/sidebar"
+import {
+  MotionHighlightItem,
+} from "@/components/animate-ui/effects/motion-highlight"
 
 export function NavProjects({
   projects,
@@ -42,12 +45,14 @@ export function NavProjects({
       <SidebarMenu>
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
+            <MotionHighlightItem>
             <SidebarMenuButton asChild>
               <a href={item.url}>
                 <item.icon />
                 <span>{item.name}</span>
               </a>
             </SidebarMenuButton>
+            </MotionHighlightItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction showOnHover>
@@ -78,10 +83,12 @@ export function NavProjects({
           </SidebarMenuItem>
         ))}
         <SidebarMenuItem>
+          <MotionHighlightItem>
           <SidebarMenuButton className="text-sidebar-foreground/70">
             <MoreHorizontal className="text-sidebar-foreground/70" />
             <span>More</span>
           </SidebarMenuButton>
+          </MotionHighlightItem>
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>

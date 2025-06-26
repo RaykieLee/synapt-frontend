@@ -19,7 +19,10 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@/components/ui/sidebar"
+} from "@/components/animate-ui/radix/sidebar"
+import {
+  MotionHighlightItem,
+} from "@/components/animate-ui/effects/motion-highlight"
 
 // 定义菜单类型
 interface SubMenuItemType {
@@ -85,10 +88,12 @@ const SubMenuItem = ({
           className="w-full group/subcollapsible"
         >
           <CollapsibleTrigger asChild>
+            <MotionHighlightItem>
             <SidebarMenuSubButton className={isActive ? "bg-accent" : ""}>
               <span>{item.title}</span>
               <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/subcollapsible:rotate-90" />
             </SidebarMenuSubButton>
+            </MotionHighlightItem>
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="mt-1 space-y-1">
@@ -104,6 +109,7 @@ const SubMenuItem = ({
         </Collapsible>
       ) : (
         // 没有子菜单的项目
+        <MotionHighlightItem>
         <SidebarMenuSubButton 
           asChild
           className={isActive ? "bg-accent" : ""}
@@ -123,6 +129,7 @@ const SubMenuItem = ({
             </Link>
           )}
         </SidebarMenuSubButton>
+        </MotionHighlightItem>
       )}
     </>
   )
@@ -175,11 +182,13 @@ export function NavMain({
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
+                  <MotionHighlightItem>
                   <SidebarMenuButton tooltip={item.title}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                   </SidebarMenuButton>
+                  </MotionHighlightItem>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <SidebarMenuSub>

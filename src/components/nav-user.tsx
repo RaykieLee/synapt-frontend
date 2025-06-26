@@ -31,7 +31,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/animate-ui/radix/sidebar"
+import {
+  MotionHighlightItem,
+} from "@/components/animate-ui/effects/motion-highlight"
 import { useRouter } from "next/navigation"
 
 export function NavUser({
@@ -84,6 +87,7 @@ export function NavUser({
         <SidebarMenuItem>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
+              <MotionHighlightItem>
               <SidebarMenuButton
                 size="lg"
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
@@ -98,6 +102,7 @@ export function NavUser({
                 </div>
                 <ChevronsUpDown className="ml-auto size-4" />
               </SidebarMenuButton>
+              </MotionHighlightItem>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"

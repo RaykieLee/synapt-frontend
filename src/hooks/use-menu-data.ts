@@ -139,7 +139,9 @@ const processMenuData = (menus: any[]) => {
                 ? '#' // 目录类型使用#作为URL
                 : isSubExternal 
                   ? subMenu.path // 外部链接直接使用
-                  : `/dashboard/${currentPath}/${subMenu.path}`, // 菜单类型使用实际路径
+                  :subMenu.component
+                    ?`/${subMenu.component}`
+                    : `/dashboard/${currentPath}/${subMenu.path}`, // 菜单类型使用实际路径
               isActive: false,
               isExternal: isSubExternal, // 标记是否为外部链接
               // 如果是目录类型，并且有子项，递归处理子项

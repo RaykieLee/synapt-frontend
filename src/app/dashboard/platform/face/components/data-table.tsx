@@ -55,7 +55,7 @@ export function DataTable<TData extends object, TValue>({
   onSortingChange,
   isLoading = false,
   columnLabels,
-  minHeight = "400px",
+  minHeight = "650px",
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})

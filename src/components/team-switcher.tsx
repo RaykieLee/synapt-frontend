@@ -17,7 +17,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/animate-ui/radix/sidebar"
+import {
+  MotionHighlightItem,
+} from "@/components/animate-ui/effects/motion-highlight"
 
 export function TeamSwitcher({
   teams,
@@ -40,6 +43,7 @@ export function TeamSwitcher({
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
+            <MotionHighlightItem>
             <SidebarMenuButton
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
@@ -53,6 +57,7 @@ export function TeamSwitcher({
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
+            </MotionHighlightItem>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"

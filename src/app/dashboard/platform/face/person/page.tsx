@@ -115,7 +115,7 @@ export default function FacePersonPage() {
           onSortingChange={handleSortingChange}
           isLoading={isLoading}
           columnLabels={columnLabels}
-          minHeight="400px"
+          minHeight="650px"
         />
       </div>
     </div>
