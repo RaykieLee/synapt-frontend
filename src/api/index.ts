@@ -10,3 +10,4 @@ export * from './alert';
 export * from './app';
 export * from './attachment';
 export * from './face'; 
+export * from './encrypt'; 
