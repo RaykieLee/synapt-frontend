@@ -191,4 +191,40 @@ export interface FacePersonListResponse {
   pages: number
 }
 
+// ========== 人脸识别结果类型 ==========
+
+// 人脸框位置
+export interface FaceBox {
+  left: number
+  top: number
+  right: number
+  bottom: number
+}
+
+// 人脸匹配结果
+export interface FaceMatch {
+  person_id: string
+  person_name: string
+  library_id: string
+  confidence: number
+  face_image_id: string
+}
+
+// 识别到的人脸信息
+export interface RecognizedFace {
+  face_index: number
+  face_box: FaceBox
+  matches: FaceMatch[]
+  error?: string
+}
+
+// 人脸识别结果
+export interface FaceRecognitionResult {
+  success: boolean
+  message: string
+  face_count?: number
+  faces: RecognizedFace[]
+  image_url?: string
+}
+
  
