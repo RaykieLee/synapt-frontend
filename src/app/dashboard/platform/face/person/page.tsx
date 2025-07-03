@@ -30,8 +30,8 @@ export default function FacePersonPage() {
       search_mode: "and",
       library_id: libraryId || undefined
     }
-  });
-
+    });
+  
   // 查询人员列表
   const { data: response, isLoading } = useQuery({
     queryKey: ["face", "person", "list", query],

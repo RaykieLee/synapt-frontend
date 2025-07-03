@@ -3,7 +3,7 @@
 import { Cross2Icon } from "@radix-ui/react-icons"
 import { Table } from "@tanstack/react-table"
 import { useRouter, useSearchParams } from "next/navigation"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, Target } from "lucide-react"
 import { useState, useCallback, useRef } from "react"
 import debounce from "lodash/debounce"
 import { useQuery } from "@tanstack/react-query"
@@ -20,6 +20,7 @@ import { facePersonAPI, faceLibraryAPI } from "@/api"
 import { toast } from "sonner"
 import { FacePerson, FacePersonSearchParams } from "@/types/face"
 import { CreateEditDialog } from "./create-edit-dialog"
+import { FaceRecognitionTest } from "./face-recognition-test"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
@@ -38,6 +39,7 @@ export function DataTableToolbar<TData extends object>({
   const libraryId = searchParams.get("library_id")
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [faceTestOpen, setFaceTestOpen] = useState(false)
   
   // 使用ref存储当前的搜索参数
   const searchParamsRef = useRef<FacePersonSearchParams>({})
@@ -200,6 +202,15 @@ export function DataTableToolbar<TData extends object>({
           columnLabels={facePersonColumnLabels}
         />
         <Button 
+          onClick={() => setFaceTestOpen(true)}
+          size="sm"
+          className="h-8"
+          variant="outline"
+        >
+          <Target className="mr-2 h-4 w-4" />
+          人脸识别测试
+        </Button>
+        <Button 
           onClick={() => setCreateDialogOpen(true)}
           size="sm"
           className="h-8"
@@ -227,6 +238,12 @@ export function DataTableToolbar<TData extends object>({
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         defaultLibraryId={libraryId || undefined}
+      />
+
+      {/* 人脸识别测试弹窗 */}
+      <FaceRecognitionTest
+        open={faceTestOpen}
+        onOpenChange={setFaceTestOpen}
       />
     </div>
   )

@@ -7,7 +7,8 @@ import {
   FacePerson,
   FacePersonCreateDto,
   FacePersonQuery,
-  FacePersonUpdateDto
+  FacePersonUpdateDto,
+  FaceRecognitionResult
 } from "@/types/face";
 import { BaseResponse, PageResult } from "@/types/base";
 
@@ -115,6 +116,10 @@ export const faceImageAPI = {
   // 批量删除人脸图片
   batchDelete: (image_ids: string[]) => 
     apiRequest<BaseResponse<number>>("/api/v1/platform/face/image/batch-delete", "POST", { image_ids }),
+
+  // 识别图片中的人脸
+  recognize: (image_id: string) => 
+    apiRequest<BaseResponse<FaceRecognitionResult>>("/api/v1/platform/face/image/recognize", "POST", { image_id }),
 };
 
  
