@@ -3,7 +3,7 @@
 import { useRef, useCallback, useState } from "react"
 import { Table } from "@tanstack/react-table"
 import debounce from "lodash/debounce"
-import { X, Filter, Plus, ChevronDown } from "lucide-react"
+import { X, Filter, Plus, ChevronDown, Sparkles } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,6 +31,7 @@ interface DataTableToolbarProps {
   selectedCount?: number
   onBatchDelete?: () => void
   onAddNew?: () => void
+  onGenerate?: () => void
 }
 
 export function DataTableToolbar({ 
@@ -38,7 +39,8 @@ export function DataTableToolbar({
   onSearch, 
   selectedCount = 0, 
   onBatchDelete,
-  onAddNew
+  onAddNew,
+  onGenerate
 }: DataTableToolbarProps) {
   const searchParamsRef = useRef<VirtualInfoSearchParams>({})
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
@@ -296,6 +298,14 @@ export function DataTableToolbar({
             create_time: "创建时间"
           }}
         />
+
+        {/* 生成按钮 */}
+        {onGenerate && (
+          <Button onClick={onGenerate} size="sm" className="h-8" variant="outline">
+            <Sparkles className="mr-2 h-4 w-4" />
+            生成虚拟信息
+          </Button>
+        )}
 
         {/* 新增按钮 */}
         {onAddNew && (

@@ -10,6 +10,7 @@ import { DataTable } from "./components/data-table"
 import { getColumns } from "./components/columns"
 import { DataTableToolbar } from "./components/data-table-toolbar"
 import { DeleteConfirmationDialog } from "@/components/shared/data-table"
+import { GenerateDialog } from "./components/generate-dialog"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 
@@ -35,6 +36,7 @@ export default function VirtualInfoPage() {
   
   const [selectedRows, setSelectedRows] = useState<VirtualInfo[]>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
 
   // 获取虚拟信息列表
   const { data: response, isLoading, error } = useQuery({
@@ -158,6 +160,7 @@ export default function VirtualInfoPage() {
             selectedCount={selectedRows.length}
             onBatchDelete={() => setDeleteDialogOpen(true)}
             onAddNew={() => router.push("/dashboard/encrypt/virtual-info/edit")}
+            onGenerate={() => setGenerateDialogOpen(true)}
           />
         )}
       />
@@ -173,6 +176,12 @@ export default function VirtualInfoPage() {
           deleteMutation.mutate(ids)
         }}
         isDeleting={deleteMutation.isPending}
+      />
+
+      {/* 生成虚拟信息对话框 */}
+      <GenerateDialog
+        open={generateDialogOpen}
+        onOpenChange={setGenerateDialogOpen}
       />
     </div>
   )

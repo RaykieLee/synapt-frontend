@@ -81,4 +81,39 @@ export interface PageResult<T> {
   page_num: number
   page_size: number
   pages: number
+}
+
+export interface ProxyBatchImportDto {
+  proxy_text: string
+  default_group?: string
+  auto_check?: boolean
+}
+
+export interface ProxyBatchImportResult {
+  total_lines: number
+  parsed_count: number
+  imported_count: number
+  failed_count: number
+  error_details: string[]
+}
+
+export interface ProxyCheckRequest {
+  proxy_ids: string[]
+  timeout?: number
+}
+
+export interface ProxyCheckResult {
+  proxy_id: string
+  success: boolean
+  response_time?: number
+  error_message?: string
+  ip_info?: any
+  checked_at: string
+}
+
+export interface ProxyBatchCheckResult {
+  total_count: number
+  success_count: number
+  failed_count: number
+  results: ProxyCheckResult[]
 } 

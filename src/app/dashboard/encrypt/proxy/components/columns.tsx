@@ -43,13 +43,17 @@ function RowActions({ proxy }: { proxy: ProxyEntity }) {
 
   // 检测代理
   const checkMutation = useMutation({
-    mutationFn: () => proxyAPI.checkProxy(proxy.id),
-    onSuccess: () => {
-      toast.success("代理检测完成")
+    mutationFn: () => proxyAPI.checkSingleProxy(proxy.id, 10),
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success(`检测成功，响应时间: ${result.response_time}ms`)
+      } else {
+        toast.warning(`检测失败: ${result.error_message}`)
+      }
       queryClient.invalidateQueries({ queryKey: ["encrypt", "proxy", "list"] })
     },
     onError: (error: any) => {
-      toast.error(`检测失败: ${error.message}`)
+      toast.error(`检测异常: ${error.message}`)
     },
   })
 

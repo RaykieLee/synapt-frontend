@@ -9,7 +9,7 @@ import { browserEnvironmentAPI } from "@/api/encrypt/browser-environment"
 import { DataTable } from "./components/data-table"
 import { getColumns } from "./components/columns"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Plus, Zap } from "lucide-react"
 import { toast } from "sonner"
 
 import type {
@@ -132,6 +132,10 @@ export default function BrowserEnvironmentPage() {
           onCreateClick={() => router.push("/dashboard/encrypt/browser-environment/edit")}
           createButtonText="新增环境"
           createButtonIcon={Plus}
+          showCreateWithApiButton={true}
+          onCreateWithApiClick={() => router.push("/dashboard/encrypt/browser-environment/edit?withApi=true")}
+          createWithApiButtonText="通过API创建"
+          createWithApiButtonIcon={Zap}
         />
       </div>
     </div>

@@ -55,6 +55,7 @@ export default function BrowserEnvironmentEditPage() {
   const queryClient = useQueryClient()
   
   const id = searchParams.get("id")
+  const withApi = searchParams.get("withApi") === "true"
   const isEdit = !!id
 
   // 表单初始化
@@ -94,17 +95,26 @@ export default function BrowserEnvironmentEditPage() {
   // 提交Mutation
   const mutation = useMutation({
     mutationFn: (data: BrowserEnvironmentFormData) => {
-      return isEdit
-        ? browserEnvironmentAPI.update(id!, data)
-        : browserEnvironmentAPI.create(data)
+      if (isEdit) {
+        return browserEnvironmentAPI.update(id!, data)
+      } else if (withApi) {
+        return browserEnvironmentAPI.createWithApi(data)
+      } else {
+        return browserEnvironmentAPI.create(data)
+      }
     },
     onSuccess: () => {
-      toast.success(isEdit ? "更新成功" : "创建成功")
+      if (withApi && !isEdit) {
+        toast.success("创建成功并已同步到远程平台")
+      } else {
+        toast.success(isEdit ? "更新成功" : "创建成功")
+      }
       queryClient.invalidateQueries({ queryKey: ["encrypt", "browser-environment", "list"] })
       router.push("/dashboard/encrypt/browser-environment")
     },
     onError: (error: any) => {
-      toast.error(`${isEdit ? "更新" : "创建"}失败: ${error.message || "未知错误"}`)
+      const operation = isEdit ? "更新" : (withApi ? "创建（API模式）" : "创建")
+      toast.error(`${operation}失败: ${error.message || "未知错误"}`)
     },
   })
 
@@ -146,10 +156,16 @@ export default function BrowserEnvironmentEditPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {isEdit ? "编辑浏览器环境" : "新增浏览器环境"}
+            {isEdit ? "编辑浏览器环境" : (withApi ? "通过API创建浏览器环境" : "新增浏览器环境")}
           </h1>
           <p className="text-muted-foreground">
-            {isEdit ? "修改浏览器环境配置信息" : "创建新的浏览器环境实例"}
+            {isEdit 
+              ? "修改浏览器环境配置信息" 
+              : (withApi 
+                  ? "创建浏览器环境并同步到远程平台（MoreLogin/HubStudio）" 
+                  : "创建新的浏览器环境实例"
+                )
+            }
           </p>
         </div>
       </div>

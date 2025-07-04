@@ -46,6 +46,11 @@ interface DataTableProps<TData, TValue> {
   onCreateClick?: () => void
   createButtonText?: string
   createButtonIcon?: React.ComponentType<any>
+  // API创建按钮属性
+  showCreateWithApiButton?: boolean
+  onCreateWithApiClick?: () => void
+  createWithApiButtonText?: string
+  createWithApiButtonIcon?: React.ComponentType<any>
 }
 
 export function DataTable<TData extends object, TValue>({
@@ -64,6 +69,11 @@ export function DataTable<TData extends object, TValue>({
   onCreateClick,
   createButtonText = "新建",
   createButtonIcon,
+  // API创建按钮参数
+  showCreateWithApiButton = false,
+  onCreateWithApiClick,
+  createWithApiButtonText = "通过API创建",
+  createWithApiButtonIcon,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -148,6 +158,10 @@ export function DataTable<TData extends object, TValue>({
         onCreateClick={onCreateClick}
         createButtonText={createButtonText}
         createButtonIcon={createButtonIcon}
+        showCreateWithApiButton={showCreateWithApiButton}
+        onCreateWithApiClick={onCreateWithApiClick}
+        createWithApiButtonText={createWithApiButtonText}
+        createWithApiButtonIcon={createWithApiButtonIcon}
       />
       <div className={`rounded-md ${hasRealData ? 'border' : 'border-t border-l border-r'}`}>
         <div style={{ minHeight }}>

@@ -75,5 +75,29 @@ export const browserEnvironmentAPI = {
    * 更新最后使用时间
    */
   updateLastUsed: (id: string) =>
-    apiRequest(`${API_PREFIX}/${id}/last-used`, 'PATCH')
+    apiRequest(`${API_PREFIX}/${id}/last-used`, 'PATCH'),
+
+  /**
+   * 创建浏览器环境并调用第三方API
+   */
+  createWithApi: (data: BrowserEnvironmentFormData) =>
+    apiRequest<BrowserEnvironment>(`${API_PREFIX}/create-with-api`, 'POST', data),
+
+  /**
+   * 启动浏览器环境
+   */
+  start: (id: string) =>
+    apiRequest(`${API_PREFIX}/${id}/start`, 'POST'),
+
+  /**
+   * 停止浏览器环境
+   */
+  stop: (id: string) =>
+    apiRequest(`${API_PREFIX}/${id}/stop`, 'POST'),
+
+  /**
+   * 删除浏览器环境并调用第三方API
+   */
+  deleteWithApi: (id: string) =>
+    apiRequest(`${API_PREFIX}/${id}/with-api`, 'DELETE')
 } 

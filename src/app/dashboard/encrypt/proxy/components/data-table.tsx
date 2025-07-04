@@ -20,10 +20,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { X, Filter } from "lucide-react"
+import { X, Filter, Upload, TestTube } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
+import { BatchImportDialog } from "./batch-import-dialog"
 
 interface DataTableProps {
   columns: ColumnDef<ProxyEntity>[]
@@ -37,6 +38,7 @@ interface DataTableProps {
   onPaginationChange: (page_num: number, page_size: number) => void
   onSortingChange: (sorting: SortingState) => void
   onBatchDelete: (selectedIds: string[]) => void
+  onBatchCheck?: (selectedIds: string[]) => void
 }
 
 export function DataTable({
@@ -51,10 +53,12 @@ export function DataTable({
   onPaginationChange,
   onSortingChange,
   onBatchDelete,
+  onBatchCheck,
 }: DataTableProps) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
   
   const searchParamsRef = useRef<ProxySearchParams>({})
 
@@ -350,6 +354,33 @@ export function DataTable({
               删除选中 ({selectedCount})
             </Button>
           )}
+
+          {/* 批量检测 */}
+          {selectedCount > 0 && onBatchCheck && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const selectedIds = table.getSelectedRowModel().rows.map(
+                  (row) => (row.original as ProxyEntity).id
+                )
+                onBatchCheck(selectedIds)
+              }}
+            >
+              <TestTube className="mr-2 h-4 w-4" />
+              检测选中 ({selectedCount})
+            </Button>
+          )}
+
+          {/* 批量导入 */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setImportDialogOpen(true)}
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            批量导入
+          </Button>
           
           {/* 显示列选择 */}
           <DataTableViewOptions 
@@ -434,6 +465,12 @@ export function DataTable({
         }}
         title="批量删除代理"
         description={`确定要删除选中的 ${selectedCount} 个代理吗？此操作无法撤销。`}
+      />
+
+      {/* 批量导入对话框 */}
+      <BatchImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
       />
     </div>
   )

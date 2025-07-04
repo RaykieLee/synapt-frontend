@@ -4,7 +4,16 @@ import {
   VirtualInfoCreateDto, 
   VirtualInfoUpdateDto, 
   VirtualInfoQuery, 
-  VirtualInfoList 
+  VirtualInfoList,
+  VirtualInfoGenerateRequest,
+  VirtualInfoBatchGenerateResult,
+  WalletGenerateRequest,
+  WalletGenerateResult,
+  WalletVerifyRequest,
+  WalletVerifyResult,
+  LocationRequest,
+  LocationResult,
+  SupportedNationalities
 } from '@/types/encrypt/virtual-info'
 
 export const virtualInfoAPI = {
@@ -39,4 +48,26 @@ export const virtualInfoAPI = {
   // 验证邮箱唯一性
   validateEmail: (email: string, excludeId?: string) => 
     apiRequest<boolean>(`/api/v1/encrypt/virtual-info/validate/email/${email}${excludeId ? `?exclude_id=${excludeId}` : ''}`, "GET"),
+
+  // ============= 新增：虚拟信息生成相关API =============
+  
+  // 批量生成虚拟信息
+  generate: (request: VirtualInfoGenerateRequest) =>
+    apiRequest<VirtualInfoBatchGenerateResult>('/api/v1/encrypt/virtual-info/generate', 'POST', request),
+
+  // 生成钱包助记词
+  generateWallet: (request: WalletGenerateRequest) =>
+    apiRequest<WalletGenerateResult>('/api/v1/encrypt/virtual-info/wallet/generate', 'POST', request),
+
+  // 验证钱包助记词
+  verifyWallet: (request: WalletVerifyRequest) =>
+    apiRequest<WalletVerifyResult>('/api/v1/encrypt/virtual-info/wallet/verify', 'POST', request),
+
+  // 获取位置信息
+  getLocation: (request: LocationRequest) =>
+    apiRequest<LocationResult>('/api/v1/encrypt/virtual-info/location', 'POST', request),
+
+  // 获取支持的国籍代码
+  getSupportedNationalities: () =>
+    apiRequest<SupportedNationalities>('/api/v1/encrypt/virtual-info/nationalities', 'GET')
 } 

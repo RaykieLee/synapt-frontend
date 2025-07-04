@@ -20,12 +20,40 @@ import { VirtualInfoCreateDto, VirtualInfoUpdateDto } from "@/types/encrypt"
 
 // 表单验证Schema
 const virtualInfoSchema = z.object({
+  // 基本信息
   first: z.string().optional(),
   last: z.string().optional(),
   gender: z.string().optional(),
+  nat: z.string().optional(),
+  
+  // 联系信息
   email: z.string().email("请输入有效的邮箱地址").optional().or(z.literal("")),
+  gmail: z.string().optional(),
   phone: z.string().optional(),
+  x: z.string().optional(),
+  discord: z.string().optional(),
+  
+  // 地址信息
+  street_number: z.string().optional(),
+  street_name: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  postcode: z.string().optional(),
+  coordinates_latitude: z.number().optional(),
+  coordinates_longitude: z.number().optional(),
+  
+  // 账户信息
   username: z.string().optional(),
+  password: z.string().optional(),
+  ssn: z.string().optional(),
+  picture: z.string().optional(),
+  
+  // 安全信息
+  seed: z.string().optional(),
+  wallet_word: z.string().optional(),
+  
+  // 其他设置
   status: z.string().optional(),
   remark: z.string().optional(),
 })
@@ -45,12 +73,40 @@ export default function VirtualInfoEditPage() {
   const form = useForm<VirtualInfoFormData>({
     resolver: zodResolver(virtualInfoSchema),
     defaultValues: {
+      // 基本信息
       first: "",
       last: "",
       gender: "",
+      nat: "",
+      
+      // 联系信息
       email: "",
+      gmail: "",
       phone: "",
+      x: "",
+      discord: "",
+      
+      // 地址信息
+      street_number: "",
+      street_name: "",
+      city: "",
+      state: "",
+      country: "",
+      postcode: "",
+      coordinates_latitude: undefined,
+      coordinates_longitude: undefined,
+      
+      // 账户信息
       username: "",
+      password: "",
+      ssn: "",
+      picture: "",
+      
+      // 安全信息
+      seed: "",
+      wallet_word: "",
+      
+      // 其他设置
       status: "0",
       remark: "",
     },
@@ -67,12 +123,40 @@ export default function VirtualInfoEditPage() {
   useEffect(() => {
     if (isEdit && detail) {
       form.reset({
+        // 基本信息
         first: detail.first || "",
         last: detail.last || "",
         gender: detail.gender || "",
+        nat: detail.nat || "",
+        
+        // 联系信息
         email: detail.email || "",
+        gmail: detail.gmail || "",
         phone: detail.phone || "",
+        x: detail.x || "",
+        discord: detail.discord || "",
+        
+        // 地址信息
+        street_number: detail.street_number || "",
+        street_name: detail.street_name || "",
+        city: detail.city || "",
+        state: detail.state || "",
+        country: detail.country || "",
+        postcode: detail.postcode || "",
+        coordinates_latitude: detail.coordinates_latitude,
+        coordinates_longitude: detail.coordinates_longitude,
+        
+        // 账户信息
         username: detail.username || "",
+        password: detail.password || "",
+        ssn: detail.ssn || "",
+        picture: detail.picture || "",
+        
+        // 安全信息
+        seed: detail.seed || "",
+        wallet_word: detail.wallet_word || "",
+        
+        // 其他设置
         status: detail.status || "0",
         remark: detail.remark || "",
       })

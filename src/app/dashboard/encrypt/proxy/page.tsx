@@ -53,6 +53,18 @@ export default function ProxyPage() {
     },
   })
 
+  // 批量检测
+  const batchCheckMutation = useMutation({
+    mutationFn: (ids: string[]) => proxyAPI.batchCheck({ proxy_ids: ids }),
+    onSuccess: (data) => {
+      toast.success(`检测完成，成功: ${data.success_count}, 失败: ${data.failed_count}`)
+      queryClient.invalidateQueries({ queryKey: ["encrypt", "proxy", "list"] })
+    },
+    onError: (error: any) => {
+      toast.error(`批量检测失败: ${error.message}`)
+    },
+  })
+
   // 搜索处理
   const handleSearch = useCallback((searchParams: ProxySearchParams) => {
     setQuery(prev => ({
@@ -98,6 +110,15 @@ export default function ProxyPage() {
     deleteMutation.mutate(selectedIds)
   }, [deleteMutation])
 
+  // 批量检测处理
+  const handleBatchCheck = useCallback((selectedIds: string[]) => {
+    if (selectedIds.length === 0) {
+      toast.warning("请选择要检测的代理")
+      return
+    }
+    batchCheckMutation.mutate(selectedIds)
+  }, [batchCheckMutation])
+
   // 新增处理
   const handleAdd = useCallback(() => {
     router.push("/dashboard/encrypt/proxy/edit")
@@ -130,6 +151,7 @@ export default function ProxyPage() {
         onPaginationChange={handlePaginationChange}
         onSortingChange={handleSortingChange}
         onBatchDelete={handleBatchDelete}
+        onBatchCheck={handleBatchCheck}
       />
     </div>
   )

@@ -30,6 +30,11 @@ interface DataTableToolbarProps<TData> {
   onCreateClick?: () => void
   createButtonText?: string
   createButtonIcon?: React.ComponentType<any>
+  // 新增API创建按钮支持
+  showCreateWithApiButton?: boolean
+  onCreateWithApiClick?: () => void
+  createWithApiButtonText?: string
+  createWithApiButtonIcon?: React.ComponentType<any>
 }
 
 export function DataTableToolbar<TData extends object>({
@@ -40,6 +45,11 @@ export function DataTableToolbar<TData extends object>({
   onCreateClick,
   createButtonText = "新建",
   createButtonIcon: CreateIcon,
+  // API创建按钮参数
+  showCreateWithApiButton = false,
+  onCreateWithApiClick,
+  createWithApiButtonText = "通过API创建",
+  createWithApiButtonIcon: CreateWithApiIcon,
 }: DataTableToolbarProps<TData>) {
   const searchParamsRef = useRef<BrowserEnvironmentSearchParams>({})
 
@@ -183,6 +193,17 @@ export function DataTableToolbar<TData extends object>({
           >
             {CreateIcon && <CreateIcon className="mr-2 h-4 w-4" />}
             {createButtonText}
+          </Button>
+        )}
+        {showCreateWithApiButton && onCreateWithApiClick && (
+          <Button
+            size="sm"
+            className="h-8"
+            onClick={onCreateWithApiClick}
+            variant="secondary"
+          >
+            {CreateWithApiIcon && <CreateWithApiIcon className="mr-2 h-4 w-4" />}
+            {createWithApiButtonText}
           </Button>
         )}
       </div>

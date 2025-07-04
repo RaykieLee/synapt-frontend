@@ -7,7 +7,12 @@ import {
   ProxyQuery, 
   ProxyCreateDto, 
   ProxyUpdateDto,
-  PageResult 
+  PageResult,
+  ProxyBatchImportDto,
+  ProxyBatchImportResult,
+  ProxyCheckRequest,
+  ProxyBatchCheckResult,
+  ProxyCheckResult
 } from "@/types/encrypt/proxy"
 
 export const proxyAPI = {
@@ -73,4 +78,22 @@ export const proxyAPI = {
       { label: '异常', value: 'error' },
       { label: '未检测', value: 'unknown' },
     ]),
+
+  /**
+   * 批量导入代理
+   */
+  batchImport: (data: ProxyBatchImportDto): Promise<ProxyBatchImportResult> =>
+    apiRequest("/api/v1/encrypt/proxy/batch-import", "POST", data),
+
+  /**
+   * 批量检测代理
+   */
+  batchCheck: (data: ProxyCheckRequest): Promise<ProxyBatchCheckResult> =>
+    apiRequest("/api/v1/encrypt/proxy/batch-check", "POST", data),
+
+  /**
+   * 检测单个代理（新版本，返回详细结果）
+   */
+  checkSingleProxy: (id: string, timeout: number = 10): Promise<ProxyCheckResult> =>
+    apiRequest(`/api/v1/encrypt/proxy/${id}/check-single`, "POST", { timeout }),
 } 

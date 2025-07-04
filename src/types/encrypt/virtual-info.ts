@@ -107,4 +107,89 @@ export interface VirtualInfoList {
   page_num: number
   page_size: number
   pages: number
+}
+
+// ============= 新增：虚拟信息生成相关类型 =============
+
+// 虚拟信息生成请求
+export interface VirtualInfoGenerateRequest {
+  count: number // 生成数量，1-50
+  nationality: string // 国籍代码，如 "US"
+  gender?: 'male' | 'female' // 性别
+  use_proxy: boolean // 是否使用代理获取地理位置
+  proxy_id?: string // 代理ID（use_proxy=true时必填）
+  generate_wallet: boolean // 是否生成钱包助记词
+  wallet_strength: 128 | 256 // 助记词强度（128=12词，256=24词）
+}
+
+// 单个虚拟信息生成结果
+export interface VirtualInfoGenerateResult {
+  success: boolean
+  data?: Record<string, any>
+  error?: string
+}
+
+// 批量虚拟信息生成结果
+export interface VirtualInfoBatchGenerateResult {
+  success_count: number
+  failed_count: number
+  total_count: number
+  results: VirtualInfoGenerateResult[]
+  errors: string[]
+}
+
+// 钱包生成请求
+export interface WalletGenerateRequest {
+  strength: 128 | 256 // 助记词强度（128=12词，256=24词）
+}
+
+// 钱包生成结果
+export interface WalletGenerateResult {
+  success: boolean
+  mnemonic?: string
+  word_count?: number
+  seed?: string
+  error?: string
+}
+
+// 钱包验证请求
+export interface WalletVerifyRequest {
+  mnemonic: string
+}
+
+// 钱包验证结果
+export interface WalletVerifyResult {
+  success: boolean
+  word_count?: number
+  error?: string
+}
+
+// 位置信息请求
+export interface LocationRequest {
+  proxy_id?: string
+  ip?: string
+}
+
+// 位置信息结果
+export interface LocationResult {
+  success: boolean
+  data?: {
+    lat?: number
+    lon?: number
+    country?: string
+    city?: string
+    state?: string
+    zip?: string
+    street?: string
+    isp?: string
+    org?: string
+    as?: string
+    query?: string
+  }
+  error?: string
+}
+
+// 支持的国籍代码
+export interface SupportedNationalities {
+  codes: string[]
 } 
