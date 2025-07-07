@@ -8,8 +8,9 @@ import { SortingState } from "@tanstack/react-table"
 import { browserEnvironmentAPI } from "@/api/encrypt/browser-environment"
 import { DataTable } from "./components/data-table"
 import { getColumns } from "./components/columns"
+import { SyncEnvironmentsDialog } from "./components/sync-environments-dialog"
 import { Button } from "@/components/ui/button"
-import { Plus, Zap } from "lucide-react"
+import { Plus, Zap, Download, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
 import type {
@@ -30,6 +31,9 @@ export default function BrowserEnvironmentPage() {
     sorts: [{ field: "create_time", order: "desc" }],
     params: { keywords: {}, search_mode: "and" }
   })
+  
+  // 同步对话框状态
+  const [syncDialogOpen, setSyncDialogOpen] = useState(false)
   
   // 数据查询
   const { data: response, isLoading, error } = useQuery({
@@ -81,7 +85,29 @@ export default function BrowserEnvironmentPage() {
     }))
   }, [])
 
+  // 批量删除处理
+  const batchDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => browserEnvironmentAPI.batchDelete({ ids }),
+    onSuccess: (data) => {
+      toast.success(`成功删除 ${data.deleted_count} 条记录`)
+      queryClient.invalidateQueries({ queryKey: ["encrypt", "browser-environment", "list"] })
+    },
+    onError: (error) => {
+      toast.error("批量删除失败", {
+        description: error instanceof Error ? error.message : "未知错误"
+      })
+    }
+  })
 
+  const handleBatchDelete = useCallback((selectedRows: BrowserEnvironment[]) => {
+    if (selectedRows.length === 0) return
+    
+    const confirmed = window.confirm(`确定要删除选中的 ${selectedRows.length} 个环境吗？此操作不可撤销。`)
+    if (confirmed) {
+      const ids = selectedRows.map(row => row.id)
+      batchDeleteMutation.mutate(ids)
+    }
+  }, [batchDeleteMutation])
 
   // 自定义列标签
   const columnLabels = {
@@ -136,8 +162,19 @@ export default function BrowserEnvironmentPage() {
           onCreateWithApiClick={() => router.push("/dashboard/encrypt/browser-environment/edit?withApi=true")}
           createWithApiButtonText="通过API创建"
           createWithApiButtonIcon={Zap}
+          showSyncButton={true}
+          onSyncClick={() => setSyncDialogOpen(true)}
+          syncButtonText="同步环境"
+          syncButtonIcon={RefreshCw}
+          onBatchDelete={handleBatchDelete}
         />
       </div>
+      
+      {/* 同步环境对话框 */}
+      <SyncEnvironmentsDialog 
+        open={syncDialogOpen}
+        onOpenChange={setSyncDialogOpen}
+      />
     </div>
   )
 } 

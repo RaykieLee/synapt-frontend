@@ -99,5 +99,31 @@ export const browserEnvironmentAPI = {
    * 删除浏览器环境并调用第三方API
    */
   deleteWithApi: (id: string) =>
-    apiRequest(`${API_PREFIX}/${id}/with-api`, 'DELETE')
+    apiRequest(`${API_PREFIX}/${id}/with-api`, 'DELETE'),
+
+  /**
+   * 获取HubStudio环境列表
+   */
+  getHubStudioEnvironments: () =>
+    apiRequest<Array<{
+      container_code: string
+      container_name: string
+      tag_name: string
+      remark: string
+      create_time: string
+      status: string
+      core_version: number
+    }>>(`${API_PREFIX}/hubstudio/environments`, 'GET'),
+
+  /**
+   * 同步HubStudio环境到数据库
+   */
+  syncHubStudioEnvironments: (data: { container_codes: string[] }) =>
+    apiRequest<{
+      synced_count: number
+      skipped_count: number
+      error_count: number
+      errors: string[]
+      total_requested: number
+    }>(`${API_PREFIX}/hubstudio/sync`, 'POST', data)
 } 

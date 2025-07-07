@@ -80,7 +80,7 @@ export const BROWSER_TYPE_OPTIONS = [
 export const STATUS_OPTIONS = [
   { label: '活跃', value: 'active' },
   { label: '空闲', value: 'idle' },
-  { label: '停止', value: 'stopped' },
+  { label: '未同步', value: 'unsync' },
   { label: '错误', value: 'error' }
 ] as const
 
@@ -88,6 +88,26 @@ export const STATUS_OPTIONS = [
 export const STATUS_COLORS = {
   active: 'green',
   idle: 'blue', 
-  stopped: 'gray',
+  unsync: 'yellow',
   error: 'red'
-} as const 
+} as const
+
+// HubStudio环境接口
+export interface HubStudioEnvironment {
+  container_code: string
+  container_name: string
+  tag_name: string
+  remark: string
+  create_time: string
+  status: string
+  core_version: number
+}
+
+// 同步结果接口
+export interface SyncResult {
+  synced_count: number
+  skipped_count: number
+  error_count: number
+  errors: string[]
+  total_requested: number
+} 

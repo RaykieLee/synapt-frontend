@@ -165,7 +165,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     (environment.browser_type === "MoreLogin" || environment.browser_type === "HubStudio")
 
   // 判断浏览器是否正在运行
-  const isRunning = environment.status === "running"
+  const isRunning = environment.status === "active" || environment.status === "running"
 
   return (
     <>

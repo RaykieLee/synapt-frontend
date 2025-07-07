@@ -35,6 +35,13 @@ interface DataTableToolbarProps<TData> {
   onCreateWithApiClick?: () => void
   createWithApiButtonText?: string
   createWithApiButtonIcon?: React.ComponentType<any>
+  // 新增同步按钮支持
+  showSyncButton?: boolean
+  onSyncClick?: () => void
+  syncButtonText?: string
+  syncButtonIcon?: React.ComponentType<any>
+  // 批量删除支持
+  onBatchDelete?: (selectedRows: any[]) => void
 }
 
 export function DataTableToolbar<TData extends object>({
@@ -50,6 +57,13 @@ export function DataTableToolbar<TData extends object>({
   onCreateWithApiClick,
   createWithApiButtonText = "通过API创建",
   createWithApiButtonIcon: CreateWithApiIcon,
+  // 同步按钮参数
+  showSyncButton = false,
+  onSyncClick,
+  syncButtonText = "同步环境",
+  syncButtonIcon: SyncIcon,
+  // 批量删除参数
+  onBatchDelete,
 }: DataTableToolbarProps<TData>) {
   const searchParamsRef = useRef<BrowserEnvironmentSearchParams>({})
 
@@ -169,8 +183,13 @@ export function DataTableToolbar<TData extends object>({
             variant="destructive"
             size="sm"
             className="h-8"
+            onClick={() => {
+              if (onBatchDelete) {
+                onBatchDelete(table.getSelectedRowModel().rows.map(row => row.original))
+              }
+            }}
           >
-            删除选中
+            删除选中 ({table.getSelectedRowModel().rows.length})
           </Button>
         )}
         <DataTableViewOptions 
@@ -204,6 +223,17 @@ export function DataTableToolbar<TData extends object>({
           >
             {CreateWithApiIcon && <CreateWithApiIcon className="mr-2 h-4 w-4" />}
             {createWithApiButtonText}
+          </Button>
+        )}
+        {showSyncButton && onSyncClick && (
+          <Button
+            size="sm"
+            className="h-8"
+            onClick={onSyncClick}
+            variant="outline"
+          >
+            {SyncIcon && <SyncIcon className="mr-2 h-4 w-4" />}
+            {syncButtonText}
           </Button>
         )}
       </div>

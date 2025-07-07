@@ -51,6 +51,13 @@ interface DataTableProps<TData, TValue> {
   onCreateWithApiClick?: () => void
   createWithApiButtonText?: string
   createWithApiButtonIcon?: React.ComponentType<any>
+  // 同步按钮属性
+  showSyncButton?: boolean
+  onSyncClick?: () => void
+  syncButtonText?: string
+  syncButtonIcon?: React.ComponentType<any>
+  // 批量删除属性
+  onBatchDelete?: (selectedRows: any[]) => void
 }
 
 export function DataTable<TData extends object, TValue>({
@@ -74,6 +81,13 @@ export function DataTable<TData extends object, TValue>({
   onCreateWithApiClick,
   createWithApiButtonText = "通过API创建",
   createWithApiButtonIcon,
+  // 同步按钮参数
+  showSyncButton = false,
+  onSyncClick,
+  syncButtonText = "同步环境",
+  syncButtonIcon,
+  // 批量删除参数
+  onBatchDelete,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -162,6 +176,11 @@ export function DataTable<TData extends object, TValue>({
         onCreateWithApiClick={onCreateWithApiClick}
         createWithApiButtonText={createWithApiButtonText}
         createWithApiButtonIcon={createWithApiButtonIcon}
+        showSyncButton={showSyncButton}
+        onSyncClick={onSyncClick}
+        syncButtonText={syncButtonText}
+        syncButtonIcon={syncButtonIcon}
+        onBatchDelete={onBatchDelete}
       />
       <div className={`rounded-md ${hasRealData ? 'border' : 'border-t border-l border-r'}`}>
         <div style={{ minHeight }}>
