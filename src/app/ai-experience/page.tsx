@@ -3,16 +3,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { configAPI } from '@/api/config';
 import { menuApi } from '@/api/menu';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { ExternalLink, Bot, Sparkles, Zap } from 'lucide-react';
+import { ExternalLink, Bot, Sparkles, Zap, Blocks, BringToFront, GitPullRequest } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Menu } from '@/types/menu';
+import { MotionHighlight } from '@/components/animate-ui/effects/motion-highlight';
 
 interface MenuItem {
   id: string;
@@ -101,41 +101,20 @@ export default function AiExperiencePage() {
     const IconComponent = item.icon ? iconMap[item.icon] || Bot : Bot;
 
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.1 }}
-        key={item.id}
-      >
-        <Card 
-          className={cn(
-            "group p-6 hover:shadow-lg transition-all duration-300 cursor-pointer",
-            "hover:scale-[1.02] hover:bg-accent/50"
-          )}
-          onClick={() => handleNavigation(item)}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <IconComponent className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
-                  {item.name}
-                </h3>
-                {item.path && (
-                  <p className="text-sm text-muted-foreground group-hover:text-primary/80 transition-colors">
-                    {item.isExternal ? '外部链接' : '内部应用'}
-                  </p>
-                )}
-              </div>
-            </div>
-            {item.isExternal && item.path && (
-              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-            )}
+      <div key={item.id} data-value={item.id} onClick={() => handleNavigation(item)}>
+        <div className="p-3 flex flex-col border rounded-xl cursor-pointer">
+          <div className="flex items-center justify-around size-8 rounded-lg bg-primary/10 mb-1">
+            <IconComponent className="size-4 text-primary" />
           </div>
-        </Card>
-      </motion.div>
+          <p className="text-sm font-medium mb-0.5 line-clamp-1">{item.name}</p>
+          <p className="text-xs text-muted-foreground line-clamp-1">
+            {item.isExternal ? '外部链接' : '内部应用'}
+          </p>
+          {item.isExternal && item.path && (
+            <ExternalLink className="h-3 w-3 text-muted-foreground mt-1" />
+          )}
+        </div>
+      </div>
     );
   };
 
@@ -151,14 +130,16 @@ export default function AiExperiencePage() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: index * 0.2 }}
         key={directory.id}
-        className="mb-12"
+        className="mb-8"
       >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-8 w-1 bg-primary rounded-full" />
-          <h2 className="text-2xl font-bold">{directory.name}</h2>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-6 w-1 bg-primary rounded-full" />
+          <h2 className="text-xl font-bold">{directory.name}</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {directory.children?.map((item, idx) => renderMenuItem(item, idx))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <MotionHighlight hover className="rounded-xl">
+            {directory.children?.map((item: MenuItem, idx: number) => renderMenuItem(item, idx))}
+          </MotionHighlight>
         </div>
       </motion.div>
     );
@@ -167,16 +148,16 @@ export default function AiExperiencePage() {
   // 渲染加载状态
   const renderLoading = () => {
     return (
-      <div className="space-y-12">
+      <div className="space-y-8">
         {[1, 2].map((i) => (
-          <div key={i} className="mb-8">
-            <div className="flex items-center gap-3 mb-6">
-              <Skeleton className="h-8 w-1" />
-              <Skeleton className="h-8 w-48" />
+          <div key={i} className="mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Skeleton className="h-6 w-1" />
+              <Skeleton className="h-6 w-36" />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((j) => (
-                <Skeleton key={j} className="h-32" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {[1, 2, 3, 4].map((j) => (
+                <Skeleton key={j} className="h-24" />
               ))}
             </div>
           </div>
@@ -214,7 +195,7 @@ export default function AiExperiencePage() {
           <p className="text-xl text-muted-foreground">暂无可用的AI应用</p>
         </motion.div>
       </div>
-    );
+    ); 
   }
 
   return (
