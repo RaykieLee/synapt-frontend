@@ -98,7 +98,8 @@ export function getColumns(): ColumnDef<BrowserEnvironment>[] {
           active: '活跃',
           idle: '空闲',
           stopped: '停止',
-          error: '错误'
+          error: '错误',
+          unsync: '未同步'
         }
         
         return (

@@ -31,7 +31,8 @@ import {
   Activity,
   Play,
   Square,
-  Power
+  Power,
+  ArrowLeftRight
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -111,6 +112,18 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     },
   })
 
+  // 同步到浏览器
+  const syncToBrowserMutation = useMutation({
+    mutationFn: () => browserEnvironmentAPI.syncToBrowser(environment.id),
+    onSuccess: (data) => {
+      toast.success("同步成功，已在浏览器中创建环境")
+      queryClient.invalidateQueries({ queryKey: ["encrypt", "browser-environment", "list"] })
+    },
+    onError: (error: any) => {
+      toast.error(`同步失败: ${error.message || '未知错误'}`)
+    },
+  })
+
   // 编辑
   const handleEdit = () => {
     router.push(`/dashboard/encrypt/browser-environment/edit?id=${environment.id}`)
@@ -160,12 +173,20 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     deleteWithApiMutation.mutate()
   }
 
+  // 同步到浏览器
+  const handleSyncToBrowser = () => {
+    syncToBrowserMutation.mutate()
+  }
+
   // 判断是否可以执行浏览器操作
   const canOperateBrowser = environment.browser_id && 
     (environment.browser_type === "MoreLogin" || environment.browser_type === "HubStudio")
 
   // 判断浏览器是否正在运行
   const isRunning = environment.status === "active" || environment.status === "running"
+
+  // 判断是否是未同步状态
+  const isUnsync = environment.status === "unsync"
 
   return (
     <>
@@ -184,6 +205,25 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             <Edit className="mr-2 h-4 w-4" />
             编辑
           </DropdownMenuItem>
+
+          {/* 同步到浏览器操作 - 仅对未同步状态显示 */}
+          {isUnsync && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={handleSyncToBrowser}
+                disabled={syncToBrowserMutation.isPending}
+                className="text-blue-600 focus:text-blue-600"
+              >
+                {syncToBrowserMutation.isPending ? (
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowLeftRight className="mr-2 h-4 w-4" />
+                )}
+                同步到浏览器
+              </DropdownMenuItem>
+            </>
+          )}
 
           {/* 浏览器操作区域 */}
           {canOperateBrowser && (

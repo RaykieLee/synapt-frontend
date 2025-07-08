@@ -125,5 +125,11 @@ export const browserEnvironmentAPI = {
       error_count: number
       errors: string[]
       total_requested: number
-    }>(`${API_PREFIX}/hubstudio/sync`, 'POST', data)
+    }>(`${API_PREFIX}/hubstudio/sync`, 'POST', data),
+
+  /**
+   * 同步环境到浏览器（为未同步的环境创建远程实例）
+   */
+  syncToBrowser: (id: string) =>
+    apiRequest<BrowserEnvironment>(`${API_PREFIX}/${id}/sync-to-browser`, 'POST')
 } 

@@ -10,7 +10,7 @@ import { DataTable } from "./components/data-table"
 import { getColumns } from "./components/columns"
 import { SyncEnvironmentsDialog } from "./components/sync-environments-dialog"
 import { Button } from "@/components/ui/button"
-import { Plus, Zap, Download, RefreshCw } from "lucide-react"
+import { Plus, Download, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
 import type {
@@ -158,10 +158,6 @@ export default function BrowserEnvironmentPage() {
           onCreateClick={() => router.push("/dashboard/encrypt/browser-environment/edit")}
           createButtonText="新增环境"
           createButtonIcon={Plus}
-          showCreateWithApiButton={true}
-          onCreateWithApiClick={() => router.push("/dashboard/encrypt/browser-environment/edit?withApi=true")}
-          createWithApiButtonText="通过API创建"
-          createWithApiButtonIcon={Zap}
           showSyncButton={true}
           onSyncClick={() => setSyncDialogOpen(true)}
           syncButtonText="同步环境"
