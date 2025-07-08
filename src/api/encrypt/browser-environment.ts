@@ -12,6 +12,9 @@ import type {
 // API路径常量
 const API_PREFIX = '/api/v1/encrypt/browser-environment'
 
+// 执行任务的超时时间：10分钟
+const EXECUTE_TASK_TIMEOUT = 100 * 60 * 1000
+
 export const browserEnvironmentAPI = {
   /**
    * 获取浏览器环境列表
@@ -131,5 +134,16 @@ export const browserEnvironmentAPI = {
    * 同步环境到浏览器（为未同步的环境创建远程实例）
    */
   syncToBrowser: (id: string) =>
-    apiRequest<BrowserEnvironment>(`${API_PREFIX}/${id}/sync-to-browser`, 'POST')
+    apiRequest<BrowserEnvironment>(`${API_PREFIX}/${id}/sync-to-browser`, 'POST'),
+
+  /**
+   * 执行浏览器任务
+   */
+  executeTask: (id: string, data: { task: string }) =>
+    apiRequest<{ result: string }>(
+      `${API_PREFIX}/${id}/execute-task`,
+      'POST',
+      data,
+      { timeout: EXECUTE_TASK_TIMEOUT }
+    )
 } 

@@ -32,12 +32,14 @@ import {
   Play,
   Square,
   Power,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Bot
 } from "lucide-react"
 import { toast } from "sonner"
 
 import { browserEnvironmentAPI } from "@/api/encrypt/browser-environment"
 import type { BrowserEnvironment } from "@/types/encrypt/browser-environment"
+import { ExecuteTaskDialog } from "./execute-task-dialog"
 
 interface DataTableRowActionsProps {
   row: Row<BrowserEnvironment>
@@ -49,6 +51,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const environment = row.original
 
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [executeTaskOpen, setExecuteTaskOpen] = useState(false)
 
   // 更新最后使用时间
   const updateLastUsedMutation = useMutation({
@@ -243,18 +246,28 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
                   启动浏览器
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem 
-                  onClick={handleStop}
-                  disabled={stopMutation.isPending}
-                  className="text-orange-600 focus:text-orange-600"
-                >
-                  {stopMutation.isPending ? (
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Square className="mr-2 h-4 w-4" />
-                  )}
-                  停止浏览器
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuItem 
+                    onClick={() => setExecuteTaskOpen(true)}
+                    className="text-blue-600 focus:text-blue-600"
+                  >
+                    <Bot className="mr-2 h-4 w-4" />
+                    执行任务
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem 
+                    onClick={handleStop}
+                    disabled={stopMutation.isPending}
+                    className="text-orange-600 focus:text-orange-600"
+                  >
+                    {stopMutation.isPending ? (
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Square className="mr-2 h-4 w-4" />
+                    )}
+                    停止浏览器
+                  </DropdownMenuItem>
+                </>
               )}
             </>
           )}
@@ -335,6 +348,13 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 执行任务对话框 */}
+      <ExecuteTaskDialog 
+        open={executeTaskOpen}
+        onOpenChange={setExecuteTaskOpen}
+        environment={environment}
+      />
     </>
   )
 } 
