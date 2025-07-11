@@ -4,6 +4,7 @@ import { Row } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { MoreHorizontal, Play, Trash2, Power, PowerOff, Eye, Clock } from "lucide-react"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -16,6 +17,7 @@ import {
 import { useToast } from "@/components/ui/use-toast"
 import { Pipeline } from "@/types/scheduler"
 import { schedulerApi } from "@/api/scheduler"
+import { PipelineRunDialog } from "./pipeline-run-dialog"
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>
@@ -27,6 +29,7 @@ export function DataTableRowActions<TData>({
   const router = useRouter()
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const [runDialogOpen, setRunDialogOpen] = useState(false)
 
   const pipeline = row.original as Pipeline
 
@@ -71,25 +74,6 @@ export function DataTableRowActions<TData>({
     },
   })
 
-  // 运行管道
-  const runMutation = useMutation({
-    mutationFn: () => schedulerApi.pipelines.run(pipeline.id, {}),
-    onSuccess: () => {
-      toast({
-        title: "成功",
-        description: "管道已开始运行",
-      })
-      queryClient.invalidateQueries({ queryKey: ["scheduler", "runs"] })
-    },
-    onError: (error: any) => {
-      toast({
-        title: "错误",
-        description: error.message || "运行失败",
-        variant: "destructive",
-      })
-    },
-  })
-
   const handleView = () => {
     router.push(`/dashboard/system/scheduler/pipelines/${pipeline.id}`)
   }
@@ -103,7 +87,7 @@ export function DataTableRowActions<TData>({
   }
 
   const handleRun = () => {
-    runMutation.mutate()
+    setRunDialogOpen(true)
   }
 
   const handleDelete = () => {
@@ -113,52 +97,62 @@ export function DataTableRowActions<TData>({
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
-        >
-          <MoreHorizontal className="h-4 w-4" />
-          <span className="sr-only">打开菜单</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem onClick={handleView}>
-          <Eye className="mr-2 h-4 w-4" />
-          查看详情
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleViewRuns}>
-          <Clock className="mr-2 h-4 w-4" />
-          运行历史
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleRun} disabled={!pipeline.enabled}>
-          <Play className="mr-2 h-4 w-4" />
-          立即运行
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleToggleEnable}>
-          {pipeline.enabled ? (
-            <>
-              <PowerOff className="mr-2 h-4 w-4" />
-              禁用
-            </>
-          ) : (
-            <>
-              <Power className="mr-2 h-4 w-4" />
-              启用
-            </>
-          )}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem 
-          onClick={handleDelete}
-          className="text-red-600 focus:text-red-600"
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          删除
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+            <span className="sr-only">打开菜单</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-[160px]">
+          <DropdownMenuItem onClick={handleView}>
+            <Eye className="mr-2 h-4 w-4" />
+            查看详情
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleViewRuns}>
+            <Clock className="mr-2 h-4 w-4" />
+            运行历史
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleRun} disabled={!pipeline.enabled}>
+            <Play className="mr-2 h-4 w-4" />
+            立即运行
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleToggleEnable}>
+            {pipeline.enabled ? (
+              <>
+                <PowerOff className="mr-2 h-4 w-4" />
+                禁用
+              </>
+            ) : (
+              <>
+                <Power className="mr-2 h-4 w-4" />
+                启用
+              </>
+            )}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem 
+            onClick={handleDelete}
+            className="text-red-600 focus:text-red-600"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            删除
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* 动态参数运行对话框 */}
+      <PipelineRunDialog
+        pipelineId={pipeline.id}
+        pipelineName={pipeline.name}
+        open={runDialogOpen}
+        onOpenChange={setRunDialogOpen}
+      />
+    </>
   )
 } 

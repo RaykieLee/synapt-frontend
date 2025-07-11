@@ -71,6 +71,7 @@ import {
 import { useToast } from "@/components/ui/use-toast"
 import { schedulerApi } from "@/api/scheduler"
 import { PipelineUpdate } from "@/types/scheduler"
+import { PipelineRunDialog } from "../../components/pipeline-run-dialog"
 
 // 表单验证模式
 const formSchema = z.object({
@@ -94,6 +95,7 @@ export default function PipelineDetailPage() {
   const [showTaskDialog, setShowTaskDialog] = useState(false)
   const [showTriggerDialog, setShowTriggerDialog] = useState(false)
   const [showRunDialog, setShowRunDialog] = useState(false)
+  const [runDialogOpen, setRunDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<any>(null)
   const [selectedTrigger, setSelectedTrigger] = useState<any>(null)
   const [selectedRunTrigger, setSelectedRunTrigger] = useState<any>(null)
@@ -370,25 +372,8 @@ export default function PipelineDetailPage() {
   }
 
   const handleRunPipeline = () => {
-    const enabledTriggers = pipeline?.triggers?.filter(t => t.enabled) || []
-    
-    if (enabledTriggers.length === 0) {
-      toast({
-        title: "提示",
-        description: "该管道没有启用的触发器，请先创建并启用一个触发器",
-        variant: "destructive",
-      })
-      return
-    }
-    
-    if (enabledTriggers.length === 1) {
-      // 只有一个触发器，直接运行
-      runMutation.mutate({ trigger_id: String(enabledTriggers[0].trigger_id) })
-    } else {
-      // 多个触发器，显示选择对话框
-      setSelectedRunTrigger(null)
-      setShowRunDialog(true)
-    }
+    // 直接打开动态参数弹窗
+    setRunDialogOpen(true)
   }
 
   const handleSubmitRun = () => {
@@ -1623,6 +1608,17 @@ export default function PipelineDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 运行管道触发器选择对话框 */}
+      <PipelineRunDialog
+        open={runDialogOpen}
+        onOpenChange={setRunDialogOpen}
+        pipelineId={pipelineId}
+        onSuccess={() => {
+          setRunDialogOpen(false)
+          queryClient.invalidateQueries({ queryKey: ["scheduler", "runs"] })
+        }}
+      />
     </div>
   )
 } 
