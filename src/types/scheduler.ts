@@ -226,6 +226,7 @@ export interface Pipeline {
   triggers: PipelineTrigger[];
   tasks: PipelineTask[];
   params?: any;
+  flow_config?: string;
   create_by?: string;
   create_time?: string;
   update_by?: string;
@@ -253,6 +254,7 @@ export interface PipelineUpdate {
   description?: string;
   enabled?: boolean;
   params_schema?: string;
+  flow_config?: string;
 }
 
 /**

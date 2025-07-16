@@ -6,13 +6,13 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { useState } from "react"
-import { 
-  ArrowLeft, 
-  Play, 
-  RefreshCw, 
-  Activity, 
-  Settings, 
-  Clock, 
+import {
+  ArrowLeft,
+  Play,
+  RefreshCw,
+  Activity,
+  Settings,
+  Clock,
   Calendar,
   Edit,
   Save,
@@ -23,7 +23,8 @@ import {
   PowerOff,
   Search,
   Check,
-  ChevronsUpDown
+  ChevronsUpDown,
+  Workflow
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -72,6 +73,17 @@ import { useToast } from "@/components/ui/use-toast"
 import { schedulerApi } from "@/api/scheduler"
 import { PipelineUpdate } from "@/types/scheduler"
 import { PipelineRunDialog } from "../../components/pipeline-run-dialog"
+import dynamic from 'next/dynamic'
+
+const WorkflowEditor = dynamic(
+  () => import('./workflow-editor'),
+  {
+    ssr: false,
+    loading: () => <div className="h-[600px] flex items-center justify-center bg-gray-50 rounded-lg">
+      <div className="text-gray-500">加载流程图编辑器...</div>
+    </div>
+  }
+)
 
 // 表单验证模式
 const formSchema = z.object({
@@ -99,6 +111,7 @@ export default function PipelineDetailPage() {
   const [selectedTask, setSelectedTask] = useState<any>(null)
   const [selectedTrigger, setSelectedTrigger] = useState<any>(null)
   const [selectedRunTrigger, setSelectedRunTrigger] = useState<any>(null)
+  const [activeTab, setActiveTab] = useState<'overview' | 'workflow'>('overview')
   
   // 任务相关状态
   const [taskEnabled, setTaskEnabled] = useState(true)
@@ -1052,6 +1065,81 @@ export default function PipelineDetailPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* 流程图编辑 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Workflow className="h-5 w-5" />
+                流程图编辑
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4">
+              <div className="flex space-x-1">
+                <Button
+                  variant={activeTab === 'overview' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setActiveTab('overview')}
+                >
+                  概览
+                </Button>
+                <Button
+                  variant={activeTab === 'workflow' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setActiveTab('workflow')}
+                >
+                  流程图
+                </Button>
+              </div>
+            </div>
+            
+            {activeTab === 'workflow' && (
+              <div>
+                <div className="mb-4">
+                  <p className="text-sm text-muted-foreground">
+                    使用可视化流程图编辑器来设计和管理管道任务的工作流程。
+                  </p>
+                </div>
+                <WorkflowEditor
+                  pipelineId={pipelineId}
+                  tasks={pipeline.tasks || []}
+                  flowConfig={pipeline.flow_config}
+                  onSave={(flowData) => {
+                    updatePipelineMutation.mutate({ flow_config: JSON.stringify(flowData) })
+                  }}
+                />
+              </div>
+            )}
+            
+            {activeTab === 'overview' && (
+              <div className="text-center py-8 text-muted-foreground">
+                <div className="mb-4">
+                  <h3 className="text-lg font-medium mb-2">管道概览</h3>
+                  <p className="text-sm">
+                    切换到"流程图"标签页查看和编辑任务流程
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-sm">
+                    <span className="font-medium">任务数量:</span> {pipeline.tasks?.length || 0}
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-medium">触发器数量:</span> {pipeline.triggers?.length || 0}
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-medium">状态:</span>
+                    <Badge variant={pipeline.enabled ? "default" : "secondary"} className="ml-2">
+                      {pipeline.enabled ? "启用" : "禁用"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* 任务编辑弹窗 */}
@@ -1614,10 +1702,7 @@ export default function PipelineDetailPage() {
         open={runDialogOpen}
         onOpenChange={setRunDialogOpen}
         pipelineId={pipelineId}
-        onSuccess={() => {
-          setRunDialogOpen(false)
-          queryClient.invalidateQueries({ queryKey: ["scheduler", "runs"] })
-        }}
+        pipelineName={pipeline.name}
       />
     </div>
   )
