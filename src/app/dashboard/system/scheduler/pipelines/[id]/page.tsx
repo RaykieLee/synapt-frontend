@@ -1105,7 +1105,6 @@ export default function PipelineDetailPage() {
                 </div>
                 <WorkflowEditor
                   pipelineId={pipelineId}
-                  tasks={pipeline.tasks || []}
                   flowConfig={pipeline.flow_config}
                   onSave={(flowData) => {
                     updatePipelineMutation.mutate({ flow_config: JSON.stringify(flowData) })
