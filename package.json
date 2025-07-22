@@ -43,7 +43,7 @@
     "framer-motion": "^12.19.1",
     "hls.js": "^1.6.2",
     "lucide-react": "^0.487.0",
-    "motion": "^12.23.0",
+    "motion": "^12.23.6",
     "next": "15.2.5",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.4.2",
