@@ -34,11 +34,13 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { llmConfigAPI } from "@/api/llm-config";
-import { LLMConfig } from "@/types/llm-config";
+import { LLMConfig, ModelType, LLMSubcategory } from "@/types/llm-config";
 import { toast } from "sonner";
 
 const formSchema = z.object({
   config_name: z.string().min(1, "配置名称不能为空"),
+  model_type: z.nativeEnum(ModelType, { required_error: "请选择模型类型" }),
+  llm_subcategories: z.array(z.nativeEnum(LLMSubcategory)).optional(),
   provider: z.string().min(1, "提供商不能为空"),
   model_name: z.string().min(1, "模型名称不能为空"),
   api_key: z.string().min(1, "API密钥不能为空"),
@@ -72,6 +74,8 @@ export function CreateEditDialog({
     resolver: zodResolver(formSchema),
     defaultValues: {
       config_name: "",
+      model_type: ModelType.LLM,
+      llm_subcategories: [],
       provider: "",
       model_name: "",
       api_key: "",
@@ -91,6 +95,8 @@ export function CreateEditDialog({
     if (config) {
       form.reset({
         config_name: config.config_name,
+        model_type: config.model_type || ModelType.LLM,
+        llm_subcategories: config.llm_subcategories || [],
         provider: config.provider,
         model_name: config.model_name,
         api_key: config.api_key,
@@ -106,6 +112,8 @@ export function CreateEditDialog({
     } else {
       form.reset({
         config_name: "",
+        model_type: ModelType.LLM,
+        llm_subcategories: [],
         provider: "",
         model_name: "",
         api_key: "",
@@ -199,30 +207,130 @@ export function CreateEditDialog({
 
             <FormField
               control={form.control}
-              name="provider"
+              name="model_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>提供商</FormLabel>
+                  <FormLabel>模型类型</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="选择提供商" />
+                        <SelectValue placeholder="选择模型类型" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="openai">OpenAI</SelectItem>
-                      <SelectItem value="anthropic">Anthropic</SelectItem>
-                      <SelectItem value="google">Google</SelectItem>
-                      <SelectItem value="azure">Azure</SelectItem>
-                      <SelectItem value="deepseek">DeepSeek</SelectItem>
-                      <SelectItem value="moonshot">Moonshot</SelectItem>
-                      <SelectItem value="other">其他</SelectItem>
+                      <SelectItem value={ModelType.LLM}>LLM (大语言模型)</SelectItem>
+                      <SelectItem value={ModelType.EMBEDDING}>Embedding (嵌入模型)</SelectItem>
+                      <SelectItem value={ModelType.SPEECH2TEXT}>Speech2text (语音转文字)</SelectItem>
+                      <SelectItem value={ModelType.TTS}>TTS (文字转语音)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* LLM子类别选择 - 仅当模型类型为LLM时显示 */}
+            {form.watch("model_type") === ModelType.LLM && (
+              <FormField
+                control={form.control}
+                name="llm_subcategories"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>LLM子类别 (可多选)</FormLabel>
+                    <FormDescription>
+                      选择该LLM模型支持的功能类别
+                    </FormDescription>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.values(LLMSubcategory).map((subcategory) => {
+                        const isSelected = field.value?.includes(subcategory) || false;
+                        const getSubcategoryInfo = (sub: LLMSubcategory) => {
+                          switch (sub) {
+                            case LLMSubcategory.CHAT:
+                              return { label: "对话聊天", description: "支持多轮对话交互" };
+                            case LLMSubcategory.VISION:
+                              return { label: "视觉理解", description: "支持图像识别和理解" };
+                            case LLMSubcategory.TOOLS:
+                              return { label: "工具调用", description: "支持函数调用和工具使用" };
+                            case LLMSubcategory.THINKING:
+                              return { label: "思维链", description: "支持推理思考过程" };
+                            default:
+                              return { label: sub, description: "" };
+                          }
+                        };
+                        const info = getSubcategoryInfo(subcategory);
+
+                        return (
+                          <div
+                            key={subcategory}
+                            className={`
+                              relative cursor-pointer rounded-lg border-2 p-3 transition-all
+                              ${isSelected
+                                ? 'border-primary bg-primary/5 shadow-sm'
+                                : 'border-muted hover:border-primary/50 hover:bg-muted/50'
+                              }
+                            `}
+                            onClick={() => {
+                              const currentValue = field.value || [];
+                              if (isSelected) {
+                                field.onChange(currentValue.filter((item) => item !== subcategory));
+                              } else {
+                                field.onChange([...currentValue, subcategory]);
+                              }
+                            }}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <div className={`
+                                w-4 h-4 rounded-full border-2 flex items-center justify-center
+                                ${isSelected ? 'border-primary bg-primary' : 'border-muted-foreground'}
+                              `}>
+                                {isSelected && (
+                                  <div className="w-2 h-2 rounded-full bg-primary-foreground" />
+                                )}
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium">{info.label}</div>
+                                <div className="text-xs text-muted-foreground">{info.description}</div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* 提供商字段 - 仅LLM类型显示 */}
+            {form.watch("model_type") === ModelType.LLM && (
+              <FormField
+                control={form.control}
+                name="provider"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>提供商</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="选择提供商" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="openai">OpenAI</SelectItem>
+                        <SelectItem value="anthropic">Anthropic</SelectItem>
+                        <SelectItem value="google">Google</SelectItem>
+                        <SelectItem value="azure">Azure</SelectItem>
+                        <SelectItem value="deepseek">DeepSeek</SelectItem>
+                        <SelectItem value="moonshot">Moonshot</SelectItem>
+                        <SelectItem value="other">其他</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -290,62 +398,65 @@ export function CreateEditDialog({
               )}
             />
 
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="max_tokens"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>最大Token数</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={e => field.onChange(parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* LLM特有参数 - 仅LLM类型显示 */}
+            {form.watch("model_type") === ModelType.LLM && (
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="max_tokens"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>最大Token数</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={e => field.onChange(parseInt(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="temperature"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>温度值</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        step="0.1"
-                        {...field} 
-                        onChange={e => field.onChange(parseFloat(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="temperature"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>温度值</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          {...field}
+                          onChange={e => field.onChange(parseFloat(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="timeout"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>超时时间（秒）</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={e => field.onChange(parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                <FormField
+                  control={form.control}
+                  name="timeout"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>超时时间（秒）</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={e => field.onChange(parseInt(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
 
             <FormField
               control={form.control}

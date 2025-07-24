@@ -20,6 +20,7 @@ import {
 import { usePathname, useRouter } from "next/navigation"
 import { isLoggedIn } from "@/services/auth"
 import Link from "next/link"
+import { ChatWidgetWrapper } from "@/components/chat/ChatWidgetWrapper"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -138,6 +139,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </PageTransition>
         </div>
       </SidebarInset>
+      <ChatWidgetWrapper />
     </SidebarProvider>
   )
 } 

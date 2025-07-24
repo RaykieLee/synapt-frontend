@@ -2,12 +2,32 @@
  * LLM配置模块相关类型定义
  */
 
+// ========== 枚举类型定义 ==========
+
+// 模型类型枚举
+export enum ModelType {
+  LLM = 'LLM',
+  EMBEDDING = 'Embedding',
+  SPEECH2TEXT = 'Speech2text',
+  TTS = 'TTS'
+}
+
+// LLM子类别枚举
+export enum LLMSubcategory {
+  CHAT = 'Chat',
+  VISION = 'Vision',
+  TOOLS = 'Tools',
+  THINKING = 'Thinking'
+}
+
 // ========== LLM配置相关类型 ==========
 
 // LLM配置基础接口
 export interface LLMConfig {
   id: string
   config_name: string
+  model_type: ModelType
+  llm_subcategories?: LLMSubcategory[]
   provider: string
   model_name: string
   api_key: string
@@ -29,6 +49,8 @@ export interface LLMConfig {
 // LLM配置创建参数
 export interface LLMConfigCreateDto {
   config_name: string
+  model_type: ModelType
+  llm_subcategories?: LLMSubcategory[]
   provider: string
   model_name: string
   api_key: string
@@ -45,6 +67,8 @@ export interface LLMConfigCreateDto {
 // LLM配置更新参数
 export interface LLMConfigUpdateDto {
   config_name?: string
+  model_type?: ModelType
+  llm_subcategories?: LLMSubcategory[]
   provider?: string
   model_name?: string
   api_key?: string
@@ -71,6 +95,7 @@ export interface LLMConfigQuery {
       config_name?: string
       provider?: string
       model_name?: string
+      model_type?: string
     }
     status?: string
     search_mode?: 'and' | 'or'
@@ -84,6 +109,7 @@ export interface LLMConfigSearchParams {
   config_name?: string
   provider?: string
   model_name?: string
+  model_type?: string
   status?: string
   search_mode?: 'and' | 'or'
 }

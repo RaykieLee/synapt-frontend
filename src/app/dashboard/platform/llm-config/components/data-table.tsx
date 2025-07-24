@@ -13,9 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Plus } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -24,20 +22,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DataTableViewOptions } from "@/components/shared/data-table";
+
 import { DataTableToolbar } from "./data-table-toolbar";
 import { LLMConfig, LLMConfigSearchParams } from "@/types/llm-config";
-import { Pagination } from "@/components/pagination";
+import { DataTablePagination } from "@/components/shared/data-table";
 
 interface DataTableProps {
   columns: ColumnDef<LLMConfig>[];
   data: LLMConfig[];
   loading?: boolean;
-  total: number;
-  pageNum: number;
+  pageCount: number;
+  pageIndex: number;
   pageSize: number;
   onSearch: (searchParams: LLMConfigSearchParams) => void;
-  onPageChange: (page: number, pageSize: number) => void;
+  onPageChange: (page: number) => void;
   onEdit: (config: LLMConfig) => void;
   onBatchDelete: (selectedIds: string[]) => void;
   onAddNew: () => void;
@@ -47,8 +45,8 @@ export function DataTable({
   columns,
   data,
   loading = false,
-  total,
-  pageNum,
+  pageCount,
+  pageIndex,
   pageSize,
   onSearch,
   onPageChange,
@@ -64,11 +62,16 @@ export function DataTable({
   const table = useReactTable({
     data,
     columns,
+    pageCount,
     state: {
       sorting,
       columnVisibility,
       rowSelection,
       columnFilters,
+      pagination: {
+        pageIndex,
+        pageSize,
+      },
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
@@ -77,8 +80,7 @@ export function DataTable({
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    manualPagination: true,
     meta: {
       onEdit,
     },
@@ -166,10 +168,8 @@ export function DataTable({
         </Table>
       </div>
 
-      <Pagination
-        total={total}
-        pageNum={pageNum}
-        pageSize={pageSize}
+      <DataTablePagination
+        table={table}
         onPageChange={onPageChange}
       />
     </div>

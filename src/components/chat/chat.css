@@ -1,0 +1,191 @@
+/* Chat Widget Styles */
+.floating-chat-widget {
+  /* Ensure the widget doesn't interfere with other elements */
+  pointer-events: none;
+}
+
+.floating-chat-widget > * {
+  pointer-events: auto;
+}
+
+/* Floating button animations */
+.floating-chat-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.floating-chat-button:hover {
+  transform: scale(1.05);
+}
+
+.floating-chat-button:active {
+  transform: scale(0.95);
+}
+
+/* Chat popup animations */
+.chat-popup-enter {
+  animation: chatPopupEnter 0.2s ease-out;
+}
+
+.chat-popup-exit {
+  animation: chatPopupExit 0.2s ease-in;
+}
+
+@keyframes chatPopupEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes chatPopupExit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .floating-chat-widget .chat-popup {
+    width: calc(100vw - 2rem) !important;
+    height: calc(100vh - 4rem) !important;
+    left: 1rem !important;
+    bottom: 1rem !important;
+    top: 1rem !important;
+    right: 1rem !important;
+  }
+}
+
+/* Message animations */
+.message-enter {
+  animation: messageEnter 0.3s ease-out;
+}
+
+@keyframes messageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Typing indicator animation */
+.typing-indicator {
+  animation: typingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes typingPulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Unread badge pulse animation */
+.unread-badge {
+  animation: unreadPulse 2s ease-in-out infinite;
+}
+
+@keyframes unreadPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Connection status indicator */
+.connection-status {
+  position: relative;
+}
+
+.connection-status::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.connection-status.connected::before {
+  background-color: #10b981; /* green-500 */
+  animation: connectionPulse 2s ease-in-out infinite;
+}
+
+.connection-status.connecting::before {
+  background-color: #f59e0b; /* amber-500 */
+  animation: connectionPulse 1s ease-in-out infinite;
+}
+
+.connection-status.disconnected::before {
+  background-color: #ef4444; /* red-500 */
+}
+
+@keyframes connectionPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Smooth scrolling for message area */
+.chat-messages {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for chat messages */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 3px;
+  opacity: 0.5;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  opacity: 0.8;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .floating-chat-widget .chat-popup {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .floating-chat-button {
+    border: 2px solid currentColor;
+  }
+  
+  .chat-popup {
+    border: 2px solid currentColor;
+  }
+}

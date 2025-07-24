@@ -147,6 +147,26 @@ export function DataTableToolbar<TData>({
           </SelectContent>
         </Select>
 
+        <Select
+          value={(table.getColumn("model_type")?.getFilterValue() as string) || "all"}
+          onValueChange={(value) => {
+            const filterValue = value === "all" ? "" : value
+            table.getColumn("model_type")?.setFilterValue(filterValue)
+            updateSearchParams("model_type", value === "all" ? undefined : value)
+          }}
+        >
+          <SelectTrigger className="h-8 w-[120px]">
+            <SelectValue placeholder="模型类型" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部类型</SelectItem>
+            <SelectItem value="LLM">LLM</SelectItem>
+            <SelectItem value="Embedding">Embedding</SelectItem>
+            <SelectItem value="Speech2text">Speech2text</SelectItem>
+            <SelectItem value="TTS">TTS</SelectItem>
+          </SelectContent>
+        </Select>
+
         {/* 更多筛选 */}
         <Popover open={moreFiltersOpen} onOpenChange={setMoreFiltersOpen}>
           <PopoverTrigger asChild>
@@ -250,10 +270,11 @@ export function DataTableToolbar<TData>({
         )}
         
         {/* 显示列选择 */}
-        <DataTableViewOptions 
-          table={table} 
+        <DataTableViewOptions
+          table={table}
           columnLabels={{
             config_name: "配置名称",
+            model_type: "模型类型",
             provider: "提供商",
             model_name: "模型名称",
             status: "状态",

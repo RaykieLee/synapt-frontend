@@ -2,11 +2,8 @@
 
 import { useState, useCallback, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
 import debounce from "lodash/debounce";
 import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
 import { DataTable } from "./components/data-table";
 import { getColumns } from "./components/columns";
 import { CreateEditDialog } from "./components/create-edit-dialog";
@@ -48,10 +45,10 @@ export default function LLMConfigPage() {
         page_num: 1,
         params: {
           keywords: {
-            config_code: searchParamsRef.current.config_code,
             config_name: searchParamsRef.current.config_name,
             provider: searchParamsRef.current.provider,
-            model_name: searchParamsRef.current.model_name
+            model_name: searchParamsRef.current.model_name,
+            model_type: searchParamsRef.current.model_type
           },
           status: searchParamsRef.current.status,
           search_mode: searchParamsRef.current.search_mode || "and"
@@ -90,11 +87,10 @@ export default function LLMConfigPage() {
   }, [debouncedSearch]);
 
   // 处理分页
-  const handlePageChange = useCallback((page: number, pageSize: number) => {
+  const handlePageChange = useCallback((page: number) => {
     setQuery(prev => ({
       ...prev,
-      page_num: page,
-      page_size: pageSize
+      page_num: page
     }));
   }, []);
 
@@ -134,12 +130,12 @@ export default function LLMConfigPage() {
           </div>
         </div>
 
-        <DataTable 
+        <DataTable
           columns={getColumns()}
           data={list}
           loading={isLoading}
-          total={total}
-          pageNum={query.page_num || 1}
+          pageCount={Math.ceil(total / (query.page_size || 10))}
+          pageIndex={(query.page_num || 1) - 1}
           pageSize={query.page_size || 10}
           onSearch={handleSearch}
           onPageChange={handlePageChange}
