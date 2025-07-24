@@ -12,7 +12,9 @@ export function ChatPopup({
   onClose,
   position,
   className,
-  children
+  children,
+  title = "AI聊天",
+  connectionStatus
 }: ChatPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -96,7 +98,21 @@ export function ChatPopup({
       <Card className="h-full flex flex-col shadow-2xl border-2">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b bg-muted/50">
-          <h3 className="font-semibold text-lg">聊天</h3>
+          <div className="flex items-center space-x-2">
+            <h3 className="font-semibold text-lg">{title}</h3>
+            {connectionStatus && (
+              <div className="flex items-center space-x-1">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    connectionStatus.isConnected ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                />
+                <span className="text-xs text-muted-foreground">
+                  {connectionStatus.isConnected ? '已连接' : (connectionStatus.error || '未连接')}
+                </span>
+              </div>
+            )}
+          </div>
           <Button
             variant="ghost"
             size="sm"
@@ -121,7 +137,9 @@ export function MobileChatPopup({
   isOpen,
   onClose,
   className,
-  children
+  children,
+  title = "AI聊天",
+  connectionStatus
 }: Omit<ChatPopupProps, 'position'>) {
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -157,7 +175,21 @@ export function MobileChatPopup({
         <Card className="h-full flex flex-col shadow-2xl">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b bg-muted/50">
-            <h3 className="font-semibold text-lg">聊天</h3>
+            <div className="flex items-center space-x-2">
+              <h3 className="font-semibold text-lg">{title}</h3>
+              {connectionStatus && (
+                <div className="flex items-center space-x-1">
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      connectionStatus.isConnected ? 'bg-green-500' : 'bg-red-500'
+                    }`}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {connectionStatus.isConnected ? '已连接' : (connectionStatus.error || '未连接')}
+                  </span>
+                </div>
+              )}
+            </div>
             <Button
               variant="ghost"
               size="sm"

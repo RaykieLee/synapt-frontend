@@ -187,12 +187,19 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     });
   }, []);
 
-  // Auto-connect when user is available
+  // Auto-connect when user is available (only once)
   useEffect(() => {
-    if (user?.userId && !isConnected) {
+    if (user?.userId) {
       connect();
     }
-  }, [user?.userId, isConnected, connect]);
+    
+    // Cleanup on user change
+    return () => {
+      if (!user?.userId) {
+        disconnect();
+      }
+    };
+  }, [user?.userId]); // 移除 isConnected 和 connect 依赖，避免循环连接
 
   return {
     ...chatState,

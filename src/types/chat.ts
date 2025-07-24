@@ -3,11 +3,13 @@
 export interface ChatMessage {
   id: string;
   userId: string;
-  userName: string;
+  userName?: string;
+  username?: string; // 兼容后端返回的字段名
   content: string;
   timestamp: Date;
-  type: 'text' | 'system' | 'error';
-  isOwn: boolean;
+  type: 'text' | 'system' | 'error' | 'user' | 'assistant';
+  isOwn?: boolean;
+  isStreaming?: boolean; // 用于标识流式消息
 }
 
 export interface ChatState {
@@ -43,7 +45,7 @@ export const defaultChatConfig: ChatWidgetConfig = {
   maxMessages: 100,
   reconnectAttempts: 5,
   reconnectInterval: 3000,
-  placeholder: '输入消息...',
+  placeholder: '与AI助手对话...',
   disabled: false
 };
 
@@ -75,6 +77,11 @@ export interface ChatPopupProps {
   position: { x: number; y: number };
   className?: string;
   children?: React.ReactNode;
+  title?: string;
+  connectionStatus?: {
+    isConnected: boolean;
+    error?: string;
+  };
 }
 
 export interface ChatInterfaceProps {

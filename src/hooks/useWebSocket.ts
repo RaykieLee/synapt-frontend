@@ -34,6 +34,7 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectCountRef = useRef(0);
   const isManualDisconnectRef = useRef(false);
+  const isConnectingRef = useRef(false);
 
   const updateConnectionState = useCallback((state: ConnectionState) => {
     setConnectionState(state);
@@ -41,6 +42,10 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
   }, [onConnectionStateChange]);
 
   const scheduleReconnect = useCallback(() => {
+    if (isManualDisconnectRef.current || reconnectCountRef.current >= reconnectAttempts) {
+      return;
+    }
+
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
     }
@@ -48,14 +53,21 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     const delay = Math.min(reconnectInterval * Math.pow(2, reconnectCountRef.current), 30000);
     reconnectCountRef.current++;
 
+    console.log(`Scheduling reconnect attempt ${reconnectCountRef.current} in ${delay}ms`);
+
     reconnectTimeoutRef.current = setTimeout(() => {
-      if (!isManualDisconnectRef.current) {
+      if (!isManualDisconnectRef.current && !isConnectingRef.current) {
         connect();
       }
     }, delay);
-  }, [reconnectInterval]); // We'll define connect after this
+  }, [reconnectAttempts, reconnectInterval]);
 
   const connect = useCallback(() => {
+    // 防止重复连接
+    if (isConnectingRef.current || wsRef.current?.readyState === WebSocket.OPEN) {
+      return;
+    }
+
     if (!userId) {
       onError?.('用户ID未提供');
       return;
@@ -67,21 +79,34 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
       return;
     }
 
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      return; // Already connected
-    }
+    // 调试信息：检查token格式
+    console.log('Token info:', {
+      tokenLength: token.length,
+      tokenPrefix: token.substring(0, 20),
+      userId: userId
+    });
 
+    isConnectingRef.current = true;
     isManualDisconnectRef.current = false;
     updateConnectionState('connecting');
 
     try {
-      const wsUrl = `ws://localhost:8000/api/v1/ws/chat/${userId}?token=${encodeURIComponent(token)}`;
+      const wsUrl = `ws://localhost:8000/api/v1/ws/llm-chat/${userId}?token=${encodeURIComponent(token)}`;
+      console.log('Connecting to WebSocket:', wsUrl.substring(0, 80) + '...');
+
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('WebSocket connected successfully');
+        isConnectingRef.current = false;
         updateConnectionState('connected');
         reconnectCountRef.current = 0;
+
+        // 清除重连定时器
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
+        }
       };
 
       ws.onmessage = (event) => {
@@ -96,44 +121,84 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
       ws.onclose = (event) => {
         console.log('WebSocket disconnected:', event.code, event.reason);
+        isConnectingRef.current = false;
         wsRef.current = null;
 
+        // 根据关闭代码提供更详细的错误信息
+        let errorMessage = '连接已断开';
+        switch (event.code) {
+          case 4001:
+            errorMessage = '认证失败，请重新登录';
+            break;
+          case 4003:
+            errorMessage = '用户ID不匹配';
+            break;
+          case 1006:
+            errorMessage = '连接异常断开，可能是网络问题';
+            break;
+          case 1011:
+            errorMessage = '服务器内部错误';
+            break;
+          default:
+            if (event.reason) {
+              errorMessage = `连接断开: ${event.reason}`;
+            }
+        }
+
+        // 只有在非手动断开且未达到重连次数限制时才重连
         if (!isManualDisconnectRef.current && reconnectCountRef.current < reconnectAttempts) {
-          updateConnectionState('reconnecting');
-          scheduleReconnect();
+          // 对于认证错误，不要重连
+          if (event.code === 4001 || event.code === 4003) {
+            updateConnectionState('disconnected');
+            onError?.(errorMessage);
+          } else {
+            updateConnectionState('reconnecting');
+            scheduleReconnect();
+          }
         } else {
           updateConnectionState('disconnected');
+          if (reconnectCountRef.current >= reconnectAttempts) {
+            onError?.('重连次数已达上限');
+          } else {
+            onError?.(errorMessage);
+          }
         }
       };
 
       ws.onerror = (error) => {
         console.error('WebSocket error:', error);
+        isConnectingRef.current = false;
         onError?.('WebSocket连接错误');
       };
 
       wsRef.current = ws;
     } catch (error) {
       console.error('Failed to create WebSocket connection:', error);
+      isConnectingRef.current = false;
       updateConnectionState('disconnected');
       onError?.('创建WebSocket连接失败');
     }
   }, [userId, reconnectAttempts, onMessage, onError, updateConnectionState, scheduleReconnect]);
 
-
-
   const disconnect = useCallback(() => {
+    console.log('Manually disconnecting WebSocket');
     isManualDisconnectRef.current = true;
-    
+    isConnectingRef.current = false;
+
+    // 清除重连定时器
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
 
+    // 关闭WebSocket连接
     if (wsRef.current) {
-      wsRef.current.close();
+      wsRef.current.close(1000, 'Manual disconnect');
       wsRef.current = null;
     }
 
+    // 重置重连计数
+    reconnectCountRef.current = 0;
     updateConnectionState('disconnected');
   }, [updateConnectionState]);
 
@@ -145,12 +210,21 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     }
   }, [onError]);
 
-  // Cleanup on unmount
+  // 组件卸载时清理
   useEffect(() => {
     return () => {
-      disconnect();
+      console.log('Cleaning up WebSocket on unmount');
+      isManualDisconnectRef.current = true;
+
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
     };
-  }, [disconnect]);
+  }, []);
 
   return {
     connectionState,

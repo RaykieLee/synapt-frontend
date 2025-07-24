@@ -96,11 +96,14 @@ export function ChatInterface({
         >
           {!isOwn && (
             <div className="text-xs font-medium mb-1 opacity-70">
-              {message.userName}
+              {message.userName || message.username}
             </div>
           )}
           <div className="text-sm break-words whitespace-pre-wrap">
             {message.content}
+            {message.isStreaming && (
+              <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1" />
+            )}
           </div>
           <div
             className={cn(

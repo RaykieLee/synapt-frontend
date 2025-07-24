@@ -4,8 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FloatingChatButton } from './FloatingChatButton';
 import { ChatPopup, MobileChatPopup } from './ChatPopup';
 import { ChatInterface } from './ChatInterface';
-import { useChat } from '@/hooks/useChat';
-import { useAuth } from '@/contexts/auth-context';
+import { useLLMChatForWidget } from '@/hooks/useLLMChatForWidget';
 import { FloatingChatWidgetProps, defaultChatConfig } from '@/types/chat';
 import { cn } from '@/lib/utils';
 
@@ -16,12 +15,11 @@ export function FloatingChatWidget({
 }: FloatingChatWidgetProps) {
   const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
-  const { user, isLoading: authLoading } = useAuth();
 
   // Merge config with defaults using useMemo to prevent unnecessary re-renders
   const finalConfig = useMemo(() => ({ ...defaultChatConfig, ...config }), [config]);
 
-  // Initialize chat hook
+  // Initialize LLM chat hook
   const {
     isOpen,
     isConnected,
@@ -29,12 +27,13 @@ export function FloatingChatWidget({
     unreadCount,
     isTyping,
     connectionError,
+    user,
     sendMessage,
     toggleOpen,
     markAsRead,
     connect,
     disconnect
-  } = useChat({
+  } = useLLMChatForWidget({
     maxMessages: finalConfig.maxMessages,
     events
   });
@@ -133,6 +132,11 @@ export function FloatingChatWidget({
         <MobileChatPopup
           isOpen={isOpen}
           onClose={handlePopupClose}
+          title="AI聊天"
+          connectionStatus={{
+            isConnected,
+            error: connectionError
+          }}
         >
           <div className="flex flex-col h-full">
             {/* Connection Status */}
@@ -169,6 +173,11 @@ export function FloatingChatWidget({
           isOpen={isOpen}
           onClose={handlePopupClose}
           position={buttonPosition}
+          title="AI聊天"
+          connectionStatus={{
+            isConnected,
+            error: connectionError
+          }}
         >
           <div className="flex flex-col h-full">
             {/* Connection Status */}
