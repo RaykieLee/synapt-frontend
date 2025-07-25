@@ -55,6 +55,7 @@ export type ConnectionState = 'connecting' | 'connected' | 'disconnected' | 'rec
 // Chat event types
 export interface ChatEvents {
   onMessageReceived?: (message: ChatMessage) => void;
+  onMessage?: (message: ChatMessage) => void; // 添加 onMessage 支持
   onUserJoined?: (userName: string) => void;
   onUserLeft?: (userName: string) => void;
   onConnectionStateChange?: (state: ConnectionState) => void;
@@ -97,4 +98,12 @@ export interface FloatingChatWidgetProps {
   config?: Partial<ChatWidgetConfig>;
   events?: ChatEvents;
   className?: string;
+}
+
+export interface ModernChatInterfaceProps {
+  className?: string;
+  suggestions?: string[];
+  onRateResponse?: (messageId: string, rating: 'thumbs-up' | 'thumbs-down') => void;
+  maxMessages?: number;
+  events?: ChatEvents;
 }

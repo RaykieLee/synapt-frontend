@@ -1,19 +1,45 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ChatPopupProps } from '@/types/chat';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { X, Wifi, WifiOff } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
+export interface ChatPopupProps {
+  isOpen: boolean;
+  onClose: () => void;
+  position: { x: number; y: number };
+  className?: string;
+  children?: React.ReactNode;
+  title?: string;
+  connectionStatus?: {
+    isConnected: boolean;
+    error?: string;
+  };
+}
+
+export interface MobileChatPopupProps {
+  isOpen: boolean;
+  onClose: () => void;
+  className?: string;
+  children?: React.ReactNode;
+  title?: string;
+  connectionStatus?: {
+    isConnected: boolean;
+    error?: string;
+  };
+}
+
+// Desktop Chat Popup
 export function ChatPopup({
   isOpen,
   onClose,
   position,
   className,
   children,
-  title = "AI聊天",
+  title = "聊天",
   connectionStatus
 }: ChatPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
@@ -35,176 +61,167 @@ export function ChatPopup({
     };
   }, [isOpen, onClose]);
 
-  // Handle escape key to close
+  // Handle escape key
   useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
+    const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onClose();
       }
     };
 
     if (isOpen) {
-      document.addEventListener('keydown', handleEscapeKey);
+      document.addEventListener('keydown', handleEscape);
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
+      document.removeEventListener('keydown', handleEscape);
     };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-  // Calculate popup position to avoid viewport overflow
-  const getPopupStyle = () => {
-    const popupWidth = 380;
-    const popupHeight = 500;
-    const margin = 10;
+  // Calculate popup position to avoid going off screen
+  const popupWidth = 580;
+  const popupHeight = 600;
+  const padding = 20;
 
-    let left = position.x;
-    let bottom = window.innerHeight - position.y + 70; // 70px offset from button
+  let adjustedX = position.x;
+  let adjustedY = position.y;
 
-    // Adjust horizontal position if popup would overflow
-    if (left + popupWidth > window.innerWidth - margin) {
-      left = window.innerWidth - popupWidth - margin;
-    }
-    if (left < margin) {
-      left = margin;
-    }
+  // Adjust horizontal position
+  if (adjustedX + popupWidth > window.innerWidth - padding) {
+    adjustedX = window.innerWidth - popupWidth - padding;
+  }
+  if (adjustedX < padding) {
+    adjustedX = padding;
+  }
 
-    // Adjust vertical position if popup would overflow
-    if (bottom + popupHeight > window.innerHeight - margin) {
-      bottom = window.innerHeight - popupHeight - margin;
-    }
-
-    return {
-      position: 'fixed' as const,
-      left: `${left}px`,
-      bottom: `${bottom}px`,
-      width: `${popupWidth}px`,
-      height: `${popupHeight}px`,
-      zIndex: 1000,
-    };
-  };
+  // Adjust vertical position
+  if (adjustedY + popupHeight > window.innerHeight - padding) {
+    adjustedY = window.innerHeight - popupHeight - padding;
+  }
+  if (adjustedY < padding) {
+    adjustedY = padding;
+  }
 
   return (
     <div
       ref={popupRef}
-      style={getPopupStyle()}
       className={cn(
-        "chat-popup chat-popup-enter animate-in slide-in-from-bottom-2 fade-in-0 duration-200",
+        "fixed z-50 w-[550px] h-[600px] shadow-2xl",
         className
       )}
+      style={{
+        left: `${adjustedX}px`,
+        top: `${adjustedY}px`,
+      }}
     >
-      <Card className="h-full flex flex-col shadow-2xl border-2">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-muted/50">
-          <div className="flex items-center space-x-2">
-            <h3 className="font-semibold text-lg">{title}</h3>
+      <Card className="h-full flex flex-col overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b shrink-0">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            {title}
             {connectionStatus && (
-              <div className="flex items-center space-x-1">
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    connectionStatus.isConnected ? 'bg-green-500' : 'bg-red-500'
-                  }`}
-                />
-                <span className="text-xs text-muted-foreground">
-                  {connectionStatus.isConnected ? '已连接' : (connectionStatus.error || '未连接')}
-                </span>
-              </div>
+              <Badge variant={connectionStatus.isConnected ? "default" : "destructive"} className="text-xs">
+                {connectionStatus.isConnected ? (
+                  <><Wifi className="h-3 w-3 mr-1" />已连接</>
+                ) : (
+                  <><WifiOff className="h-3 w-3 mr-1" />未连接</>
+                )}
+              </Badge>
+            )}
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </CardHeader>
+        <CardContent className="flex-1 p-0 min-h-0 overflow-hidden">
+          {children}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Mobile Chat Popup (Full Screen)
+export function MobileChatPopup({
+  isOpen,
+  onClose,
+  className,
+  children,
+  title = "聊天",
+  connectionStatus
+}: MobileChatPopupProps) {
+  // Handle escape key
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen, onClose]);
+
+  // Prevent body scroll when popup is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className={cn(
+      "fixed inset-0 z-50 bg-background",
+      className
+    )}>
+      <div className="h-full flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">{title}</h2>
+            {connectionStatus && (
+              <Badge variant={connectionStatus.isConnected ? "default" : "destructive"} className="text-xs">
+                {connectionStatus.isConnected ? (
+                  <><Wifi className="h-3 w-3 mr-1" />已连接</>
+                ) : (
+                  <><WifiOff className="h-3 w-3 mr-1" />未连接</>
+                )}
+              </Badge>
             )}
           </div>
           <Button
             variant="ghost"
             size="sm"
+            className="h-8 w-8 p-0"
             onClick={onClose}
-            className="h-8 w-8 p-0 hover:bg-muted"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden">
           {children}
         </div>
-      </Card>
-    </div>
-  );
-}
-
-// Mobile responsive version
-export function MobileChatPopup({
-  isOpen,
-  onClose,
-  className,
-  children,
-  title = "AI聊天",
-  connectionStatus
-}: Omit<ChatPopupProps, 'position'>) {
-  const popupRef = useRef<HTMLDivElement>(null);
-
-  // Handle escape key to close
-  useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscapeKey);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
-      <div
-        ref={popupRef}
-        className={cn(
-          "fixed inset-x-4 top-4 bottom-4 md:inset-x-8 md:top-8 md:bottom-8",
-          "animate-in slide-in-from-bottom-4 fade-in-0 duration-300",
-          className
-        )}
-      >
-        <Card className="h-full flex flex-col shadow-2xl">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-muted/50">
-            <div className="flex items-center space-x-2">
-              <h3 className="font-semibold text-lg">{title}</h3>
-              {connectionStatus && (
-                <div className="flex items-center space-x-1">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      connectionStatus.isConnected ? 'bg-green-500' : 'bg-red-500'
-                    }`}
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    {connectionStatus.isConnected ? '已连接' : (connectionStatus.error || '未连接')}
-                  </span>
-                </div>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-8 w-8 p-0 hover:bg-muted"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 overflow-hidden">
-            {children}
-          </div>
-        </Card>
       </div>
     </div>
   );

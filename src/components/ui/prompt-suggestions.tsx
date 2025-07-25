@@ -1,28 +1,53 @@
-interface PromptSuggestionsProps {
-  label: string
-  append: (message: { role: "user"; content: string }) => void
-  suggestions: string[]
+"use client";
+
+import React from 'react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Lightbulb } from 'lucide-react';
+import { ModernMessage } from './modern-chat';
+
+export interface PromptSuggestionsProps {
+  append?: (message: ModernMessage) => void;
+  suggestions: string[];
+  className?: string;
 }
 
-export function PromptSuggestions({
-  label,
-  append,
-  suggestions,
-}: PromptSuggestionsProps) {
+export function PromptSuggestions({ append, suggestions, className }: PromptSuggestionsProps) {
+  const handleSuggestionClick = (suggestion: string) => {
+    if (append) {
+      const message: ModernMessage = {
+        id: `suggestion-${Date.now()}`,
+        role: 'user',
+        content: suggestion,
+        timestamp: new Date(),
+      };
+      append(message);
+    }
+  };
+
+  if (!suggestions.length) {
+    return null;
+  }
+
   return (
-    <div className="space-y-6">
-      <h2 className="text-center text-2xl font-bold">{label}</h2>
-      <div className="flex gap-6 text-sm">
-        {suggestions.map((suggestion) => (
-          <button
-            key={suggestion}
-            onClick={() => append({ role: "user", content: suggestion })}
-            className="h-max flex-1 rounded-xl border bg-background p-4 hover:bg-muted"
+    <div className={cn("flex flex-col items-center gap-4 max-w-2xl mx-auto", className)}>
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Lightbulb className="h-5 w-5" />
+        <span className="text-sm font-medium">建议问题</span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
+        {suggestions.map((suggestion, index) => (
+          <Button
+            key={index}
+            variant="outline"
+            className="h-auto p-4 text-left justify-start whitespace-normal"
+            onClick={() => handleSuggestionClick(suggestion)}
           >
-            <p>{suggestion}</p>
-          </button>
+            <span className="text-sm">{suggestion}</span>
+          </Button>
         ))}
       </div>
     </div>
-  )
+  );
 }

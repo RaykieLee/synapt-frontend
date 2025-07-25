@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { FloatingChatButton } from './FloatingChatButton';
 import { ChatPopup, MobileChatPopup } from './ChatPopup';
-import { ChatInterface } from './ChatInterface';
+import { ModernChatInterface } from './ModernChatInterface';
 import { useLLMChatForWidget } from '@/hooks/useLLMChatForWidget';
 import { FloatingChatWidgetProps, defaultChatConfig } from '@/types/chat';
 import { cn } from '@/lib/utils';
@@ -138,35 +138,11 @@ export function FloatingChatWidget({
             error: connectionError
           }}
         >
-          <div className="flex flex-col h-full">
-            {/* Connection Status */}
-            {connectionStatus && (
-              <div className="px-4 py-2 bg-muted/50 border-b">
-                <div className="text-xs text-muted-foreground text-center">
-                  {connectionStatus}
-                </div>
-              </div>
-            )}
-
-            {/* Chat Interface */}
-            <ChatInterface
-              messages={messages}
-              onSendMessage={sendMessage}
-              isLoading={!isConnected}
-              placeholder={finalConfig.placeholder}
-              currentUserId={user?.userId?.toString()}
-              className="flex-1"
-            />
-
-            {/* Typing Indicator */}
-            {isTyping && (
-              <div className="px-4 py-2 border-t bg-muted/30">
-                <div className="text-xs text-muted-foreground">
-                  有人正在输入...
-                </div>
-              </div>
-            )}
-          </div>
+          <ModernChatInterface
+            className="h-full"
+            maxMessages={finalConfig.maxMessages}
+            events={events}
+          />
         </MobileChatPopup>
       ) : (
         <ChatPopup
@@ -179,35 +155,11 @@ export function FloatingChatWidget({
             error: connectionError
           }}
         >
-          <div className="flex flex-col h-full">
-            {/* Connection Status */}
-            {connectionStatus && (
-              <div className="px-4 py-2 bg-muted/50 border-b">
-                <div className="text-xs text-muted-foreground text-center">
-                  {connectionStatus}
-                </div>
-              </div>
-            )}
-
-            {/* Chat Interface */}
-            <ChatInterface
-              messages={messages}
-              onSendMessage={sendMessage}
-              isLoading={!isConnected}
-              placeholder={finalConfig.placeholder}
-              currentUserId={user?.userId?.toString()}
-              className="flex-1"
-            />
-
-            {/* Typing Indicator */}
-            {isTyping && (
-              <div className="px-4 py-2 border-t bg-muted/30">
-                <div className="text-xs text-muted-foreground">
-                  有人正在输入...
-                </div>
-              </div>
-            )}
-          </div>
+          <ModernChatInterface
+            className="h-full"
+            maxMessages={finalConfig.maxMessages}
+            events={events}
+          />
         </ChatPopup>
       )}
     </div>

@@ -66,9 +66,6 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
       case 'reconnecting':
         setConnectionError('重新连接中...');
         break;
-      case 'error':
-        setConnectionError('连接错误');
-        break;
       default:
         setConnectionError(undefined);
     }
@@ -289,7 +286,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
 
       ws.onerror = (error) => {
         console.error('LLM WebSocket error:', error);
-        updateConnectionState('error');
+        updateConnectionState('disconnected');
         setConnectionError('WebSocket连接错误');
       };
 
