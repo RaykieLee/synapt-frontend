@@ -131,4 +131,52 @@ export async function apiRequest<T>(
     });
     throw error;
   }
-} 
+}
+
+// 语音转录API
+export interface TranscribeResponse {
+  text: string;
+  confidence?: number;
+  duration?: number;
+  model?: string;
+  language?: string;
+}
+
+export async function transcribeAudio(
+  audioBlob: Blob,
+  options?: {
+    model?: string;
+    sampleRate?: number;
+    language?: string;
+  }
+): Promise<string> {
+  try {
+    const formData = new FormData();
+
+    // 添加音频文件
+    formData.append('audio_file', audioBlob, 'audio.webm');
+
+    // 添加可选参数
+    if (options?.model) {
+      formData.append('model', options.model);
+    }
+    if (options?.sampleRate) {
+      formData.append('sample_rate', options.sampleRate.toString());
+    }
+    if (options?.language) {
+      formData.append('language', options.language);
+    }
+
+    const result = await apiRequest<TranscribeResponse>(
+      '/api/v1/asr/transcribe',
+      'POST',
+      formData,
+      { timeout: 60000 } // 60秒超时，因为语音转录可能需要较长时间
+    );
+
+    return result.text || '';
+  } catch (error) {
+    console.error('语音转录失败:', error);
+    throw new Error('语音转录失败，请重试');
+  }
+}

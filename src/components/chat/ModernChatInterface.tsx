@@ -53,11 +53,25 @@ export function ModernChatInterface({
     setInput('');
   }, [input, sendMessage, isConnected]);
 
-  // 语音转录功能（可选）
+  // 语音转录功能
   const transcribeAudio = useCallback(async (blob: Blob): Promise<string> => {
-    // 这里可以实现语音转录功能
-    // 暂时返回占位符
-    return "语音转录功能待实现";
+    try {
+      // 动态导入API函数以避免SSR问题
+      const { transcribeAudio: apiTranscribeAudio } = await import('@/lib/api');
+
+      // 调用后端API进行语音转录
+      const result = await apiTranscribeAudio(blob, {
+        model: 'sensevoice',
+        sampleRate: 16000,
+        language: 'zh'
+      });
+
+      return result;
+    } catch (error) {
+      console.error('语音转录失败:', error);
+      // 返回错误提示而不是抛出异常，这样用户界面不会崩溃
+      return '语音转录失败，请重试';
+    }
   }, []);
 
   return (
