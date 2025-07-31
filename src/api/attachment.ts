@@ -210,8 +210,8 @@ export const downloadFile = async (attachmentId: string, fileName: string) => {
 // 获取附件预览URL
 export const getAttachmentPreviewUrl = async (attachmentId: string) => {
   try {
-    const urlResult = await apiRequest<DownloadUrlResponse>(`/api/v1/system/attachments/${attachmentId}/preview-url`, 'GET')
-    return urlResult.download_url
+    const response = await apiRequest<DownloadUrlResponse>(`/api/v1/system/attachments/${attachmentId}/preview-url`, 'GET')
+    return response.download_url
   } catch (error) {
     console.error('Get preview URL failed:', error)
     throw error

@@ -17,6 +17,7 @@ import { CopyButton } from "@/components/ui/copy-button"
 import { MessageInput } from "@/components/ui/message-input"
 import { MessageList } from "@/components/ui/message-list"
 import { PromptSuggestions } from "@/components/ui/prompt-suggestions"
+import { useAuthStore } from "@/stores/auth-store"
 
 interface ChatPropsBase {
   handleSubmit: (
@@ -154,6 +155,9 @@ export function Chat({
     }
   }, [stop, setMessages, messagesRef])
 
+  // 获取当前用户信息
+  const { user } = useAuthStore();
+
   const messageOptions = useCallback(
     (message: Message) => ({
       actions: onRateResponse ? (
@@ -207,6 +211,10 @@ export function Chat({
             messages={messages}
             isTyping={isTyping}
             messageOptions={messageOptions}
+            currentUser={{
+              avatar: user?.avatar,
+              name: user?.nick_name || user?.user_name
+            }}
           />
         </ChatMessages>
       ) : null}

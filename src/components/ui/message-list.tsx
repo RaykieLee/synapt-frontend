@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThumbsUp, ThumbsDown, Copy, User, Bot } from 'lucide-react';
+import DynamicAvatarImage from '@/components/ui/avatar-image';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -19,9 +20,13 @@ export interface MessageListProps {
   messages: ModernMessage[];
   onRateResponse?: (messageId: string, rating: 'thumbs-up' | 'thumbs-down') => void;
   className?: string;
+  currentUser?: {
+    avatar?: string;
+    name?: string;
+  };
 }
 
-export function MessageList({ messages, onRateResponse, className }: MessageListProps) {
+export function MessageList({ messages, onRateResponse, className, currentUser }: MessageListProps) {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -185,6 +190,14 @@ export function MessageList({ messages, onRateResponse, className }: MessageList
 
             {message.role === 'user' && (
               <Avatar className="h-8 w-8 shrink-0">
+                {currentUser?.avatar ? (
+                  <DynamicAvatarImage
+                    avatarPath={currentUser.avatar}
+                    alt={currentUser.name || "用户"}
+                    className="aspect-square size-full rounded-full"
+                    fallbackClassName="h-4 w-4"
+                  />
+                ) : null}
                 <AvatarFallback>
                   <User className="h-4 w-4" />
                 </AvatarFallback>

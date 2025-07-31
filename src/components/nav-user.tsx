@@ -17,6 +17,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar"
+import DynamicAvatarImage from "@/components/ui/avatar-image"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -93,7 +94,12 @@ export function NavUser({
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <DynamicAvatarImage
+                    avatarPath={user.avatar}
+                    alt={user.name}
+                    className="aspect-square size-full rounded-lg"
+                    fallbackClassName="h-4 w-4"
+                  />
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -113,7 +119,12 @@ export function NavUser({
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <DynamicAvatarImage
+                      avatarPath={user.avatar}
+                      alt={user.name}
+                      className="aspect-square size-full rounded-lg"
+                      fallbackClassName="h-4 w-4"
+                    />
                     <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
@@ -131,7 +142,7 @@ export function NavUser({
               </DropdownMenuGroup> */}
               {/* <DropdownMenuSeparator /> */}
               <DropdownMenuGroup>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.location.href = '/dashboard/profile'}>
                   <BadgeCheck />
                   个人中心
                 </DropdownMenuItem>
