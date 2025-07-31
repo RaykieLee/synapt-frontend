@@ -131,7 +131,7 @@ export default function LLMConfigPage() {
         </div>
 
         <DataTable
-          columns={getColumns()}
+          columns={getColumns(handleEdit)}
           data={list}
           loading={isLoading}
           pageCount={Math.ceil(total / (query.page_size || 10))}

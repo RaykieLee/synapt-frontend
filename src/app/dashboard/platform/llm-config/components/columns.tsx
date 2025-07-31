@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/animate-ui/base/checkbox"
 import { DataTableRowActions } from "./data-table-row-actions"
 
-export function getColumns(): ColumnDef<LLMConfig>[] {
+export function getColumns(onEdit?: (config: LLMConfig) => void): ColumnDef<LLMConfig>[] {
   return [
     // 选择列（必须，支持批量操作）
     {
@@ -108,7 +108,7 @@ export function getColumns(): ColumnDef<LLMConfig>[] {
     {
       id: "actions",
       header: "操作",
-      cell: ({ row }) => <DataTableRowActions row={row} />,
+      cell: ({ row }) => <DataTableRowActions row={row} onEdit={onEdit} />,
       enableSorting: false,
       enableHiding: false,
     },

@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/collapsible"
 import { FilePreview } from "@/components/ui/file-preview"
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer"
+import { ThinkingBlock } from "@/components/ui/thinking-block"
+import { parseThinkContent } from "@/lib/think-parser"
 
 const chatBubbleVariants = cva(
   "group/message relative break-words rounded-lg p-3 text-sm sm:max-w-[70%]",
@@ -201,6 +203,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   if (parts && parts.length > 0) {
     return parts.map((part, index) => {
       if (part.type === "text") {
+        // 解析思维链内容
+        const parsedPartContent = parseThinkContent(part.text)
+        const hasPartThinking = parsedPartContent.thinkingContent !== null
+
         return (
           <div
             className={cn(
@@ -209,8 +215,21 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             )}
             key={`text-${index}`}
           >
+            {/* 思维链部分 - 只在非用户消息且有思考内容时显示 */}
+            {!isUser && hasPartThinking && (
+              <div className="w-full max-w-[80%] mb-2">
+                <ThinkingBlock
+                  content={parsedPartContent.thinkingContent!}
+                  isThinkingComplete={parsedPartContent.isThinkingComplete}
+                />
+              </div>
+            )}
+
+            {/* 主要消息内容 */}
             <div className={cn(chatBubbleVariants({ isUser, animation }))}>
-              <MarkdownRenderer>{part.text}</MarkdownRenderer>
+              <MarkdownRenderer>
+                {hasPartThinking ? parsedPartContent.responseContent : part.text}
+              </MarkdownRenderer>
               {actions ? (
                 <div className="absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground opacity-0 transition-opacity group-hover/message:opacity-100">
                   {actions}
@@ -249,10 +268,27 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     return <ToolCall toolInvocations={toolInvocations} />
   }
 
+  // 解析思维链内容
+  const parsedContent = parseThinkContent(content)
+  const hasThinking = parsedContent.thinkingContent !== null
+
   return (
     <div className={cn("flex flex-col", isUser ? "items-end" : "items-start")}>
+      {/* 思维链部分 - 只在非用户消息且有思考内容时显示 */}
+      {!isUser && hasThinking && (
+        <div className="w-full max-w-[80%] mb-2">
+          <ThinkingBlock
+            content={parsedContent.thinkingContent!}
+            isThinkingComplete={parsedContent.isThinkingComplete}
+          />
+        </div>
+      )}
+
+      {/* 主要消息内容 */}
       <div className={cn(chatBubbleVariants({ isUser, animation }))}>
-        <MarkdownRenderer>{content}</MarkdownRenderer>
+        <MarkdownRenderer>
+          {hasThinking ? parsedContent.responseContent : content}
+        </MarkdownRenderer>
         {actions ? (
           <div className="absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground opacity-0 transition-opacity group-hover/message:opacity-100">
             {actions}

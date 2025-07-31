@@ -18,6 +18,7 @@ export interface ChatPopupProps {
     isConnected: boolean;
     error?: string;
   };
+  showConnectionStatus?: boolean;
 }
 
 export interface MobileChatPopupProps {
@@ -30,6 +31,7 @@ export interface MobileChatPopupProps {
     isConnected: boolean;
     error?: string;
   };
+  showConnectionStatus?: boolean;
 }
 
 // Desktop Chat Popup
@@ -40,7 +42,8 @@ export function ChatPopup({
   className,
   children,
   title = "聊天",
-  connectionStatus
+  connectionStatus,
+  showConnectionStatus = true
 }: ChatPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -120,7 +123,7 @@ export function ChatPopup({
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b shrink-0">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             {title}
-            {connectionStatus && (
+            {connectionStatus && showConnectionStatus && (
               <Badge variant={connectionStatus.isConnected ? "default" : "destructive"} className="text-xs">
                 {connectionStatus.isConnected ? (
                   <><Wifi className="h-3 w-3 mr-1" />已连接</>
@@ -154,7 +157,8 @@ export function MobileChatPopup({
   className,
   children,
   title = "聊天",
-  connectionStatus
+  connectionStatus,
+  showConnectionStatus = true
 }: MobileChatPopupProps) {
   // Handle escape key
   useEffect(() => {
@@ -198,7 +202,7 @@ export function MobileChatPopup({
         <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold">{title}</h2>
-            {connectionStatus && (
+            {connectionStatus && showConnectionStatus && (
               <Badge variant={connectionStatus.isConnected ? "default" : "destructive"} className="text-xs">
                 {connectionStatus.isConnected ? (
                   <><Wifi className="h-3 w-3 mr-1" />已连接</>

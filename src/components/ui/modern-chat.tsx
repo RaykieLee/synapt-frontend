@@ -140,7 +140,7 @@ export function ModernChat({
           <MessageInput
             value={input}
             onChange={handleInputChange}
-            allowAttachments={true}
+            allowAttachments={false}
             files={files}
             setFiles={setFiles}
             stop={stop}

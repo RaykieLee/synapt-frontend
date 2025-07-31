@@ -81,9 +81,6 @@ export function DataTable({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     manualPagination: true,
-    meta: {
-      onEdit,
-    },
   });
 
   const selectedCount = table.getSelectedRowModel().rows.length;

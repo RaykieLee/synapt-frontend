@@ -380,7 +380,7 @@ function TranscribingOverlay() {
         />
       </div>
       <p className="mt-4 text-sm font-medium text-muted-foreground">
-        Transcribing audio...
+        识别中...
       </p>
     </motion.div>
   )

@@ -12,6 +12,8 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
 import { ModernMessage } from './modern-chat';
+import { ThinkingBlock } from "@/components/ui/thinking-block";
+import { parseThinkContent } from "@/lib/think-parser";
 
 export interface MessageListProps {
   messages: ModernMessage[];
@@ -61,6 +63,19 @@ export function MessageList({ messages, onRateResponse, className }: MessageList
                 message.role === 'user' ? 'items-end' : 'items-start'
               )}
             >
+              {/* 思维链部分 - 只在非用户消息时显示 */}
+              {message.role === 'assistant' && (() => {
+                const parsedContent = parseThinkContent(message.content);
+                return parsedContent.thinkingContent ? (
+                  <div className="w-full mb-2">
+                    <ThinkingBlock
+                      content={parsedContent.thinkingContent}
+                      isThinkingComplete={parsedContent.isThinkingComplete}
+                    />
+                  </div>
+                ) : null;
+              })()}
+
               <div
                 className={cn(
                   "rounded-lg px-4 py-2 text-sm relative break-words overflow-wrap-anywhere",
@@ -96,7 +111,14 @@ export function MessageList({ messages, onRateResponse, className }: MessageList
                         },
                       }}
                     >
-                      {message.content}
+                      {(() => {
+                        // 对于助手消息，显示解析后的响应内容（移除思维链）
+                        if (message.role === 'assistant') {
+                          const parsedContent = parseThinkContent(message.content);
+                          return parsedContent.responseContent;
+                        }
+                        return message.content;
+                      })()}
                     </ReactMarkdown>
                   </div>
                 )}

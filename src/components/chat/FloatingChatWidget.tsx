@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { FloatingChatButton } from './FloatingChatButton';
 import { ChatPopup, MobileChatPopup } from './ChatPopup';
 import { ModernChatInterface } from './ModernChatInterface';
@@ -15,6 +15,8 @@ export function FloatingChatWidget({
 }: FloatingChatWidgetProps) {
   const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
+  const [showConnectionStatus, setShowConnectionStatus] = useState(false);
+  const isInitialOpen = useRef(true);
 
   // Merge config with defaults using useMemo to prevent unnecessary re-renders
   const finalConfig = useMemo(() => ({ ...defaultChatConfig, ...config }), [config]);
@@ -83,6 +85,27 @@ export function FloatingChatWidget({
     return () => window.removeEventListener('resize', updateButtonPosition);
   }, [finalConfig]);
 
+  // 管理连接状态显示
+  useEffect(() => {
+    if (isOpen && isInitialOpen.current) {
+      // 聊天框刚打开时，延迟显示连接状态
+      isInitialOpen.current = false;
+
+      const timer = setTimeout(() => {
+        setShowConnectionStatus(true);
+      }, 1000); // 1秒后才显示连接状态
+
+      return () => clearTimeout(timer);
+    } else if (isOpen && !isInitialOpen.current) {
+      // 如果不是初次打开，立即显示连接状态
+      setShowConnectionStatus(true);
+    } else if (!isOpen) {
+      // 聊天框关闭时重置状态
+      setShowConnectionStatus(false);
+      isInitialOpen.current = true;
+    }
+  }, [isOpen]);
+
   // Handle button click
   const handleButtonClick = () => {
     toggleOpen();
@@ -137,6 +160,7 @@ export function FloatingChatWidget({
             isConnected,
             error: connectionError
           }}
+          showConnectionStatus={showConnectionStatus}
         >
           <ModernChatInterface
             className="h-full"
@@ -154,6 +178,7 @@ export function FloatingChatWidget({
             isConnected,
             error: connectionError
           }}
+          showConnectionStatus={showConnectionStatus}
         >
           <ModernChatInterface
             className="h-full"

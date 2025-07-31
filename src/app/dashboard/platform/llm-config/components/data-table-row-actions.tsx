@@ -24,10 +24,12 @@ import { llmConfigAPI } from "@/api/llm-config"
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>
+  onEdit?: (config: LLMConfig) => void
 }
 
 export function DataTableRowActions<TData>({
   row,
+  onEdit,
 }: DataTableRowActionsProps<TData>) {
   const queryClient = useQueryClient()
   const [openDelete, setOpenDelete] = useState(false)
@@ -47,10 +49,10 @@ export function DataTableRowActions<TData>({
   })
 
   const handleEdit = () => {
-    // 通过表格的meta传递编辑函数
-    const onEdit = (row.table.options.meta as any)?.onEdit
     if (onEdit) {
       onEdit(config)
+    } else {
+      console.warn('编辑函数未提供')
     }
   }
 

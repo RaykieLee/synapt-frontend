@@ -42,13 +42,16 @@ export function ModernChatInterface({
     setInput(e.target.value);
   }, []);
 
-  const handleSubmit = useCallback((e?: React.FormEvent) => {
+  const handleSubmit = useCallback((
+    e?: React.FormEvent,
+    options?: { experimental_attachments?: FileList }
+  ) => {
     e?.preventDefault();
-    if (!input.trim() || !isConnected) return;
-    
-    // 发送消息
-    sendMessage(input.trim());
-    
+    if ((!input.trim() && !options?.experimental_attachments) || !isConnected) return;
+
+    // 发送消息（包含文本和附件）
+    sendMessage(input.trim(), options?.experimental_attachments);
+
     // 清空输入框
     setInput('');
   }, [input, sendMessage, isConnected]);
