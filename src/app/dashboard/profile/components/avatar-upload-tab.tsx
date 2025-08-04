@@ -35,7 +35,7 @@ export default function AvatarUploadTab({ profileInfo, onUpdate, isLoading }: Av
       );
 
       // 2. 更新用户头像
-      const avatarUrl = attachment.file_url || attachment.preview_url;
+      const avatarUrl = attachment.storage_path;
       if (!avatarUrl) {
         throw new Error("上传失败：无法获取头像URL");
       }

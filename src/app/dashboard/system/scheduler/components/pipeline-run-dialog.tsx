@@ -331,7 +331,7 @@ export function PipelineRunDialog({
 }: PipelineRunDialogProps) {
   const { toast } = useToast()
   const queryClient = useQueryClient()
-  const [formSchema, setFormSchema] = useState<z.ZodSchema | null>(null)
+  const [formSchema, setFormSchema] = useState<z.ZodType<any, any, any> | null>(null)
 
   // 获取管道输入schema
   const { data: schemaData, isLoading: schemaLoading } = useQuery({

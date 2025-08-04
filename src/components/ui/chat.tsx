@@ -17,7 +17,8 @@ import { CopyButton } from "@/components/ui/copy-button"
 import { MessageInput } from "@/components/ui/message-input"
 import { MessageList } from "@/components/ui/message-list"
 import { PromptSuggestions } from "@/components/ui/prompt-suggestions"
-import { useAuthStore } from "@/stores/auth-store"
+import { useAuth } from "@/contexts/auth-context"
+import { ModernMessage } from "@/components/ui/modern-chat"
 
 interface ChatPropsBase {
   handleSubmit: (
@@ -44,7 +45,7 @@ interface ChatPropsWithoutSuggestions extends ChatPropsBase {
 }
 
 interface ChatPropsWithSuggestions extends ChatPropsBase {
-  append: (message: { role: "user"; content: string }) => void
+  append: (message: { role: "user"; content: string; id?: string; timestamp?: Date }) => void
   suggestions: string[]
 }
 
@@ -64,8 +65,19 @@ export function Chat({
   setMessages,
   transcribeAudio,
 }: ChatProps) {
-  const lastMessage = messages.at(-1)
-  const isEmpty = messages.length === 0
+  // 转换消息格式从 Message 到 ModernMessage
+  const convertedMessages: ModernMessage[] = messages.map(msg => ({
+    id: msg.id,
+    role: msg.role === 'user' ? 'user' as const :
+          msg.role === 'assistant' ? 'assistant' as const :
+          'system' as const,
+    content: msg.content,
+    timestamp: msg.createdAt,
+    isStreaming: false
+  }));
+
+  const lastMessage = convertedMessages.at(-1)
+  const isEmpty = convertedMessages.length === 0
   const isTyping = lastMessage?.role === "user"
 
   const messagesRef = useRef(messages)
@@ -156,7 +168,19 @@ export function Chat({
   }, [stop, setMessages, messagesRef])
 
   // 获取当前用户信息
-  const { user } = useAuthStore();
+  const { user } = useAuth();
+
+  // 创建适配器函数来处理 PromptSuggestions 的 append 调用
+  const adaptedAppend = useCallback((modernMessage: any) => {
+    if (append) {
+      append({
+        role: modernMessage.role,
+        content: modernMessage.content,
+        id: modernMessage.id,
+        timestamp: modernMessage.timestamp
+      });
+    }
+  }, [append]);
 
   const messageOptions = useCallback(
     (message: Message) => ({
@@ -199,21 +223,19 @@ export function Chat({
     <ChatContainer className={className}>
       {isEmpty && append && suggestions ? (
         <PromptSuggestions
-          label="Try these prompts ✨"
-          append={append}
+          append={adaptedAppend}
           suggestions={suggestions}
         />
       ) : null}
 
-      {messages.length > 0 ? (
-        <ChatMessages messages={messages}>
+      {convertedMessages.length > 0 ? (
+        <ChatMessages messages={convertedMessages}>
           <MessageList
-            messages={messages}
-            isTyping={isTyping}
-            messageOptions={messageOptions}
+            messages={convertedMessages}
+            onRateResponse={onRateResponse}
             currentUser={{
               avatar: user?.avatar,
-              name: user?.nick_name || user?.user_name
+              name: user?.nickName || user?.userName
             }}
           />
         </ChatMessages>
@@ -229,8 +251,6 @@ export function Chat({
             value={input}
             onChange={handleInputChange}
             allowAttachments={false}
-            files={files}
-            setFiles={setFiles}
             stop={handleStop}
             isGenerating={isGenerating}
             transcribeAudio={transcribeAudio}

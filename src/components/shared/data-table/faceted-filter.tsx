@@ -48,7 +48,7 @@ export function DataTableFacetedFilter<TData, TValue>({
   React.useEffect(() => {
     const filterValue = column?.getFilterValue() as string[];
     setSelectedValues(new Set(filterValue));
-  }, [column?.getFilterValue()]);
+  }, [column]);
 
   return (
     <Popover>

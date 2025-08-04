@@ -370,7 +370,7 @@ function WorkflowEditorContent({ pipelineId, flowConfig, onSave }: WorkflowEdito
   // 添加新任务节点 - 已移除，使用拖拽功能替代
   const addNewTaskNode = useCallback(() => {
     // 此函数已废弃，使用拖拽功能添加节点
-  }, [setNodes])
+  }, [])
 
   // 保存流程图
   const handleSaveFlow = useCallback(() => {

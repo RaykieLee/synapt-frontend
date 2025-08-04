@@ -50,7 +50,7 @@ export function ModernChatInterface({
     if ((!input.trim() && !options?.experimental_attachments) || !isConnected) return;
 
     // 发送消息（包含文本和附件）
-    sendMessage(input.trim(), options?.experimental_attachments);
+    sendMessage(input.trim());
 
     // 清空输入框
     setInput('');

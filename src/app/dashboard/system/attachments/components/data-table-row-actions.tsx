@@ -14,6 +14,7 @@ import { Attachment, isImageType } from "@/types/attachment"
 import { attachmentApi } from "@/api/attachment"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { string } from "zod"
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>
@@ -43,18 +44,20 @@ export function DataTableRowActions<TData>({
     }
   };
 
-  const handleCopyUrl = () => {
-    const url = attachmentApi.getPreviewUrl(attachment.id);
-    navigator.clipboard.writeText(url).then(() => {
+  const handleCopyUrl = async () => {
+    try {
+      const url = await attachmentApi.getPreviewUrl(attachment.id);
+      await navigator.clipboard.writeText(url);
       toast.success("链接已复制到剪贴板");
-    }).catch(() => {
+    } catch (error) {
       toast.error("复制失败");
-    });
+    }
   };
 
-  const handlePreview = () => {
+  const handlePreview = async () => {
     if (isImageType(attachment.mime_type)) {
-      window.open(attachmentApi.getPreviewUrl(attachment.id), '_blank');
+      const url = await attachmentApi.getPreviewUrl(attachment.id);
+      window.open(url, '_blank');
     } else {
       toast.info("该文件类型不支持预览");
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -58,8 +58,8 @@ export function FaceRecognitionTest({
   const canvasRefs = useRef<{ [key: string]: HTMLCanvasElement }>({});
 
   const maxFiles = 5;
-  const maxSize = 10 * 1024 * 1024; // 10MB
-  const acceptedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+  const maxSize = useMemo(() => 10 * 1024 * 1024, []); // 10MB
+  const acceptedTypes = useMemo(() => ['image/jpeg', 'image/png', 'image/jpg'], []);
 
   // 验证文件
   const validateFile = useCallback((file: File): string | null => {
@@ -72,7 +72,7 @@ export function FaceRecognitionTest({
     }
 
     return null;
-  }, []);
+  }, [acceptedTypes, maxSize]);
 
   // 更新文件状态
   const updateFileStatus = useCallback((id: string, updates: Partial<UploadedFile>) => {
@@ -164,7 +164,7 @@ export function FaceRecognitionTest({
         updateFileStatus(uploadedFile.id, { status: 'recognizing', progress: 70 });
         
         const recognitionResponse = await recognizeFace.mutateAsync(uploadResult.id);
-        const recognitionResult = recognitionResponse;
+        const recognitionResult = recognitionResponse.data;
         updateFileStatus(uploadedFile.id, { 
           status: 'success', 
           progress: 100, 

@@ -300,7 +300,7 @@ export function useLLMChat({
     return () => {
       disconnect();
     };
-  }, [userId, configId]); // 当userId或configId变化时重新连接
+  }, [userId, configId, connect, disconnect]);
 
   // 清理定时器
   useEffect(() => {

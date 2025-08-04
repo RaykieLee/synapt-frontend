@@ -133,7 +133,7 @@ export default function RunDetailPage() {
     return () => {
       socket.disconnect()
     }
-  }, [runId, run?.status])
+  }, [runId, run?.status, run])
 
   // 获取历史日志
   useEffect(() => {

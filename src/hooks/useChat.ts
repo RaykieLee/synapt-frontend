@@ -199,7 +199,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
         disconnect();
       }
     };
-  }, [user?.userId]); // 移除 isConnected 和 connect 依赖，避免循环连接
+  }, [user?.userId, connect, disconnect]);
 
   return {
     ...chatState,

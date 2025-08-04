@@ -123,7 +123,7 @@ function childrenTakeAllStringContents(element: any): string {
   }
 
   if (element?.props?.children) {
-    let children = element.props.children
+    const children = element.props.children
 
     if (Array.isArray(children)) {
       return children
@@ -184,12 +184,13 @@ const COMPONENTS = {
   hr: withClass("hr", "border-foreground/20"),
 }
 
-function withClass(Tag: keyof JSX.IntrinsicElements, classes: string) {
-  const Component = ({ node, ...props }: any) => (
-    <Tag className={classes} {...props} />
-  )
-  Component.displayName = Tag
-  return Component
+function withClass(Tag: keyof React.JSX.IntrinsicElements, classes: string) {
+  const Component = ({ node, ...props }: any) => {
+    const ElementTag = Tag as any;
+    return <ElementTag className={classes} {...props} />;
+  };
+  Component.displayName = String(Tag);
+  return Component;
 }
 
 export default MarkdownRenderer

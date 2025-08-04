@@ -296,7 +296,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
       updateConnectionState('disconnected');
       setConnectionError('创建WebSocket连接失败');
     }
-  }, [updateConnectionState, addMessage, updateLastMessage]);
+  }, [updateConnectionState, addMessage, updateLastMessage, user?.userId]);
 
   const connect = useCallback(() => {
     if (user?.userId) {
@@ -393,7 +393,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
         disconnect();
       }
     };
-  }, [user?.userId]); // 只依赖用户ID，避免循环连接
+  }, [user?.userId, connectToWebSocket, disconnect, user]);
 
   // 清理定时器
   useEffect(() => {

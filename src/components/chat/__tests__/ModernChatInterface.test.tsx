@@ -34,7 +34,7 @@ describe('ModernChatInterface', () => {
   });
 
   it('should show connection error immediately', () => {
-    const mockUseChatAdapter = require('@/hooks/useChatAdapter').useChatAdapter;
+    const { useChatAdapter: mockUseChatAdapter } = await import('@/hooks/useChatAdapter');
     mockUseChatAdapter.mockReturnValue({
       messages: [],
       isLoading: false,

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Switch as SwitchPrimitives } from 'radix-ui';
 import { motion, type HTMLMotionProps } from 'motion/react';
 
-import { cn } from '/lib/utils';
+import { cn } from '@/lib/utils';
 
 type SwitchProps = React.ComponentProps<typeof SwitchPrimitives.Root> &
   HTMLMotionProps<'button'> & {

@@ -64,7 +64,10 @@ export interface VirtualInfoCreateDto {
   remark?: string
 }
 
-export interface VirtualInfoUpdateDto extends VirtualInfoCreateDto {}
+export interface VirtualInfoUpdateDto extends VirtualInfoCreateDto {
+  // 继承所有创建字段，可以在这里添加更新特有的字段
+  id?: string; // 更新时可能需要的ID字段
+}
 
 export interface VirtualInfoSearchParams {
   first?: string

@@ -57,12 +57,13 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
     reconnectTimeoutRef.current = setTimeout(() => {
       if (!isManualDisconnectRef.current && !isConnectingRef.current) {
-        connect();
+        // 直接调用连接逻辑，避免循环依赖
+        connectWebSocket();
       }
     }, delay);
   }, [reconnectAttempts, reconnectInterval]);
 
-  const connect = useCallback(() => {
+  const connectWebSocket = useCallback(() => {
     // 防止重复连接
     if (isConnectingRef.current || wsRef.current?.readyState === WebSocket.OPEN) {
       return;
@@ -179,6 +180,10 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
       onError?.('创建WebSocket连接失败');
     }
   }, [userId, reconnectAttempts, onMessage, onError, updateConnectionState, scheduleReconnect]);
+
+  const connect = useCallback(() => {
+    connectWebSocket();
+  }, [connectWebSocket]);
 
   const disconnect = useCallback(() => {
     console.log('Manually disconnecting WebSocket');
