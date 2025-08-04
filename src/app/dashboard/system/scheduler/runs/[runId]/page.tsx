@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query"
 import { ArrowLeft, Play, RefreshCw, Download, Square, Trash2 } from "lucide-react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { io, Socket } from "socket.io-client"
+import { getWebSocketBaseUrl } from "@/utils/websocket-config"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -92,7 +93,7 @@ export default function RunDetailPage() {
     }
 
     // 连接 WebSocket - 使用与 plombery 相同的配置
-    const socket = io(process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8000/ws', {
+    const socket = io(getWebSocketBaseUrl(), {
       path: '/socket.io',
       transports: ['websocket', 'polling']
     })

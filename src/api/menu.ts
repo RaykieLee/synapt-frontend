@@ -18,9 +18,9 @@ export const menuApi = {
   // 删除菜单
   delete: (menuId: number) => apiRequest<any>(`/api/v1/system/menus/${menuId}`, "DELETE"),
   
-  // 获取菜单树
+  // 获取菜单树（根据用户权限过滤）
   getTree: () => apiRequest<Menu[]>("/api/v1/system/menus/tree"),
-  
+
   // 获取用于分配的菜单树
   getTreeSelect: () => apiRequest<any[]>("/api/v1/system/menus/treeselect"),
   

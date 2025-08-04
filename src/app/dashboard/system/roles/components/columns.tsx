@@ -12,10 +12,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Checkbox } from "@/components/animate-ui/base/checkbox" 
-import { 
-  Copy, 
-  Edit, 
-  MoreHorizontal, 
+import {
+  Copy,
+  Edit,
+  MoreHorizontal,
+  Shield,
   Trash
 } from "lucide-react"
 import { DataTableColumnHeader } from "@/components/shared/data-table"
@@ -26,12 +27,14 @@ interface ColumnsProps {
   onEdit: (role: Role) => void
   onDelete: (roleId: number) => void
   onBatchDelete: (roleIds: number[]) => void
+  onPermission: (role: Role) => void
 }
 
 export const columns = ({
   onEdit,
   onDelete,
-  onBatchDelete
+  onBatchDelete,
+  onPermission
 }: ColumnsProps): ColumnDef<Role>[] => {
 
   const handleCopy = (value: string, label: string) => {
@@ -144,6 +147,10 @@ export const columns = ({
               <DropdownMenuItem onClick={() => onEdit(role)}>
                 <Edit className="mr-2 h-4 w-4" />
                 编辑
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onPermission(role)}>
+                <Shield className="mr-2 h-4 w-4" />
+                权限控制
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => handleCopy(role.role_id.toString(), "角色ID")}

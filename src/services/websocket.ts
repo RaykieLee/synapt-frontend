@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client';
+import { getWebSocketBaseUrl } from '@/utils/websocket-config';
 
 export interface QualificationRecognitionUpdate {
   type: 'progress' | 'content' | 'success' | 'error';
@@ -23,7 +24,7 @@ class WebSocketService {
 
   constructor() {
     // 获取WebSocket基础URL
-    this.baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8000/ws';
+    this.baseUrl = getWebSocketBaseUrl();
   }
 
   connect(): Promise<void> {

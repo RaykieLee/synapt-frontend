@@ -13,6 +13,7 @@ import { columns } from "./components/columns"
 import { DataTable } from "./components/data-table"
 import { CreateRoleDialog } from "./components/create-role-dialog"
 import { EditRoleDialog } from "./components/edit-role-dialog"
+import { RolePermissionDialog } from "./components/role-permission-dialog"
 
 export default function RolesPage() {
   const router = useRouter()
@@ -35,6 +36,7 @@ export default function RolesPage() {
 
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showPermissionDialog, setShowPermissionDialog] = useState(false)
   const [currentRole, setCurrentRole] = useState<Role | null>(null)
 
   // 查询角色列表
@@ -107,6 +109,12 @@ export default function RolesPage() {
     setShowEditDialog(true)
   }, [])
 
+  // 处理权限控制
+  const handlePermissionRole = useCallback((role: Role) => {
+    setCurrentRole(role)
+    setShowPermissionDialog(true)
+  }, [])
+
   // 处理删除角色
   const handleDeleteRole = useCallback((roleId: number) => {
     deleteRoleMutation.mutate(roleId)
@@ -142,7 +150,8 @@ export default function RolesPage() {
           columns={columns({
             onEdit: handleEditRole,
             onDelete: handleDeleteRole,
-            onBatchDelete: handleBatchDelete
+            onBatchDelete: handleBatchDelete,
+            onPermission: handlePermissionRole
           })}
           data={list}
           pageCount={pages}
@@ -179,6 +188,17 @@ export default function RolesPage() {
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["roles"] })
           setShowEditDialog(false)
+          setCurrentRole(null)
+        }}
+      />
+
+      {/* 权限控制对话框 */}
+      <RolePermissionDialog
+        open={showPermissionDialog}
+        onOpenChange={setShowPermissionDialog}
+        role={currentRole}
+        onSuccess={() => {
+          setShowPermissionDialog(false)
           setCurrentRole(null)
         }}
       />

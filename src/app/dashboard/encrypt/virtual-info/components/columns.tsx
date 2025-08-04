@@ -127,7 +127,7 @@ export function getColumns(): ColumnDef<VirtualInfo>[] {
         const city = row.getValue("city") as string
         const state = row.original.state
         const country = row.original.country
-        
+
         const address = [city, state, country].filter(Boolean).join(", ")
         return (
           <div className="max-w-[200px] truncate">
@@ -135,6 +135,7 @@ export function getColumns(): ColumnDef<VirtualInfo>[] {
           </div>
         )
       },
+      enableHiding: true,
     },
     // 国籍
     {
