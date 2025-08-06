@@ -8,7 +8,6 @@ import { AlertCircle, Image as ImageIcon, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { alertLogAPI } from "@/api/alert";
 import { AlertLog } from "@/types/alert";
-import { BaseResponse } from "@/types/base";
 import { 
   Dialog, 
   DialogContent, 

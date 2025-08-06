@@ -53,15 +53,15 @@ export function PersonnelCertificateManager({
     enabled: open,
   })
 
-  const allCertificates = certificatesResponse?.data?.list || [];
-  
+  const allCertificates = certificatesResponse?.list || [];
+
   // 当前人员已有的证书ID列表
   const currentCertificateIds = personnel.certificates?.map(cert => cert.id) || []
-  
+
   // 过滤可分配的证书（排除已有的）
-  const availableCertificates = allCertificates.filter(cert => 
+  const availableCertificates = allCertificates.filter(cert =>
     !currentCertificateIds.includes(cert.id) &&
-    (searchTerm === "" || 
+    (searchTerm === "" ||
      cert.certificate_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
      cert.certificate_category.toLowerCase().includes(searchTerm.toLowerCase()) ||
      cert.certificate_level.toString().includes(searchTerm.toLowerCase())

@@ -1,4 +1,4 @@
-import { BaseResponse, BaseQuery, PageResult } from "./base";
+import { BaseQuery, PageResult } from "./base";
 
 // 应用接入基础类型
 export interface AppAccess {

@@ -107,7 +107,7 @@ export const dictApi = {
       }
     };
     
-    return apiRequest<DictResponse>('/api/v1/system/dict', 'POST', requestBody);
+    return apiRequest<Dict>('/api/v1/system/dict', 'POST', requestBody);
   },
   
   create: (data: DictCreateDto) =>

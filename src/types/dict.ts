@@ -1,4 +1,4 @@
-import { BaseQuery, BaseResponse } from './base'
+import { BaseQuery } from './base'
 
 /**
  * 字典类型查询参数
@@ -156,4 +156,3 @@ export interface DictUpdateDto extends DictCreateDto {
   id: number
 }
 
-export type DictResponse = BaseResponse<Dict> 
