@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { LLMConfig, ModelType } from "@/types/llm-config"
+import { LLMConfig, ModelType } from "@/types/llm"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/animate-ui/base/checkbox"
 import { DataTableRowActions } from "./data-table-row-actions"

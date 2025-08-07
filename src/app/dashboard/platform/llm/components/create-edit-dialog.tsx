@@ -33,8 +33,8 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { llmConfigAPI } from "@/api/llm-config";
-import { LLMConfig, ModelType, LLMSubcategory } from "@/types/llm-config";
+import { llmConfigAPI } from "@/api/llm";
+import { LLMConfig, ModelType, LLMSubcategory } from "@/types/llm";
 import { toast } from "sonner";
 
 const formSchema = z.object({
@@ -133,7 +133,7 @@ export function CreateEditDialog({
     mutationFn: llmConfigAPI.create,
     onSuccess: () => {
       toast.success("创建成功");
-      queryClient.invalidateQueries({ queryKey: ["llm-configs"] });
+      queryClient.invalidateQueries({ queryKey: ["llm"] });
       onSuccess?.();
       onOpenChange(false);
     },
@@ -147,7 +147,7 @@ export function CreateEditDialog({
       llmConfigAPI.update(id, data),
     onSuccess: () => {
       toast.success("更新成功");
-      queryClient.invalidateQueries({ queryKey: ["llm-configs"] });
+      queryClient.invalidateQueries({ queryKey: ["llm"] });
       onSuccess?.();
       onOpenChange(false);
     },

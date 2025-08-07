@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { DataTableViewOptions } from "@/components/shared/data-table"
-import { LLMConfigSearchParams } from "@/types/llm-config"
+import { LLMConfigSearchParams } from "@/types/llm"
 import { mcpAPI, MCPServerStatus } from "@/api/mcp"
 
 interface DataTableToolbarProps<TData> {
@@ -365,7 +365,7 @@ export function DataTableToolbar<TData>({
               </Badge>
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-96">
+          <PopoverContent className="w-[600px]">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">MCP服务器状态</h4>

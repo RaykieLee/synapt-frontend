@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Edit, Trash, MoreHorizontal } from "lucide-react"
 import { toast } from "sonner"
 
-import { LLMConfig } from "@/types/llm-config"
+import { LLMConfig } from "@/types/llm"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/animate-ui/radix/dialog"
-import { llmConfigAPI } from "@/api/llm-config"
+import { llmConfigAPI } from "@/api/llm"
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>
@@ -40,7 +40,7 @@ export function DataTableRowActions<TData>({
     mutationFn: (id: string) => llmConfigAPI.delete(id),
     onSuccess: () => {
       toast.success("删除成功")
-      queryClient.invalidateQueries({ queryKey: ["llm-config", "list"] })
+      queryClient.invalidateQueries({ queryKey: ["llm", "list"] })
       setOpenDelete(false)
     },
     onError: (error: any) => {

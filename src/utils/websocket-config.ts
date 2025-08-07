@@ -64,7 +64,7 @@ export function buildLLMChatWebSocketUrl(
   token: string,
   configId?: string | number
 ): string {
-  const path = `/api/v1/ws/llm-chat/${userId}`;
+  const path = `/api/v1/platform/llm/websocket/ws/llm-chat/${userId}`;
 
   // 处理 token，避免双重编码
   // 如果 token 包含 "Bearer " 前缀，直接使用，否则添加前缀
