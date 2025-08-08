@@ -49,7 +49,7 @@ export default function LoginPage() {
 
     try {
       // 使用相对路径，通过 Next.js 的 rewrites 代理到后端
-      const loginUrl = '/api/v1/login';
+      const loginUrl = '/api/v1/system/auth/login';
       console.log('Attempting to login with URL:', loginUrl);
       const response = await fetch(loginUrl, {
         method: "POST",
