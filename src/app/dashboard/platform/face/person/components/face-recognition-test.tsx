@@ -164,7 +164,7 @@ export function FaceRecognitionTest({
         updateFileStatus(uploadedFile.id, { status: 'recognizing', progress: 70 });
         
         const recognitionResponse = await recognizeFace.mutateAsync(uploadResult.id);
-        const recognitionResult = recognitionResponse.data;
+        const recognitionResult = recognitionResponse;
         updateFileStatus(uploadedFile.id, { 
           status: 'success', 
           progress: 100, 
