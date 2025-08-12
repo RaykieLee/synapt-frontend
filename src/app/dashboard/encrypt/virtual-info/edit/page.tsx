@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -11,7 +11,7 @@ import { ArrowLeft, Save } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+// Tabs are used in child form component
 import { Form } from "@/components/ui/form"
 
 import { VirtualInfoForm } from "./virtual-info-form"
@@ -26,12 +26,9 @@ const virtualInfoSchema = z.object({
   gender: z.string().optional(),
   nat: z.string().optional(),
   
-  // 联系信息
+  // 联系方式
   email: z.string().email("请输入有效的邮箱地址").optional().or(z.literal("")),
-  gmail: z.string().optional(),
-  phone: z.string().optional(),
-  x: z.string().optional(),
-  discord: z.string().optional(),
+  // 联系方式类字段精简：移除 gmail/x/discord，保留 email（如后续不需要可再移除）
   
   // 地址信息
   street_number: z.string().optional(),
@@ -48,6 +45,8 @@ const virtualInfoSchema = z.object({
   password: z.string().optional(),
   ssn: z.string().optional(),
   picture: z.string().optional(),
+  // UI-only field for toggling password visibility
+  show_password: z.boolean().optional(),
   
   // 安全信息
   seed: z.string().optional(),
@@ -66,8 +65,9 @@ export default function VirtualInfoEditPage() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   
-  const id = searchParams.get('id')
-  const isEdit = !!id
+  const idParam = searchParams.get('id')
+  const editId: string = idParam ?? ""
+  const isEdit = !!idParam
 
   // 表单初始化
   const form = useForm<VirtualInfoFormData>({
@@ -79,12 +79,8 @@ export default function VirtualInfoEditPage() {
       gender: "",
       nat: "",
       
-      // 联系信息
-      email: "",
-      gmail: "",
-      phone: "",
-      x: "",
-      discord: "",
+  // 联系信息（已精简，仅保留 email，如无需要可删除）
+  email: "",
       
       // 地址信息
       street_number: "",
@@ -114,8 +110,8 @@ export default function VirtualInfoEditPage() {
 
   // 获取详情（编辑模式）
   const { data: detail, isLoading: detailLoading } = useQuery({
-    queryKey: ["encrypt", "virtual-info", "detail", id],
-    queryFn: () => virtualInfoAPI.getDetail(id!),
+    queryKey: ["encrypt", "virtual-info", "detail", editId],
+    queryFn: () => virtualInfoAPI.getDetail(editId),
     enabled: isEdit,
   })
 
@@ -129,12 +125,8 @@ export default function VirtualInfoEditPage() {
         gender: detail.gender || "",
         nat: detail.nat || "",
         
-        // 联系信息
-        email: detail.email || "",
-        gmail: detail.gmail || "",
-        phone: detail.phone || "",
-        x: detail.x || "",
-        discord: detail.discord || "",
+  // 联系信息（已精简，仅保留 email，如无需要可删除）
+  email: detail.email || "",
         
         // 地址信息
         street_number: detail.street_number || "",
@@ -167,8 +159,8 @@ export default function VirtualInfoEditPage() {
   const mutation = useMutation({
     mutationFn: (data: VirtualInfoCreateDto | VirtualInfoUpdateDto) =>
       isEdit 
-        ? virtualInfoAPI.update(id!, data as VirtualInfoUpdateDto)
-        : virtualInfoAPI.create(data as VirtualInfoCreateDto),
+        ? virtualInfoAPI.update(editId, data)
+        : virtualInfoAPI.create(data),
     onSuccess: () => {
       toast({
         title: "成功",
@@ -187,7 +179,9 @@ export default function VirtualInfoEditPage() {
   })
 
   const onSubmit = (data: VirtualInfoFormData) => {
-    mutation.mutate(data)
+  // 移除仅用于前端显示控制的字段
+  const { show_password, ...payload } = data as any
+  mutation.mutate(payload)
   }
 
   const handleCancel = () => {
@@ -241,13 +235,17 @@ export default function VirtualInfoEditPage() {
             >
               取消
             </Button>
-            <Button
-              type="submit"
-              disabled={mutation.isPending}
-            >
-              <Save className="mr-2 h-4 w-4" />
-              {mutation.isPending ? "保存中..." : isEdit ? "更新" : "创建"}
-            </Button>
+            {(() => {
+              let submitLabel = "创建"
+              if (isEdit) submitLabel = "更新"
+              if (mutation.isPending) submitLabel = "保存中..."
+              return (
+                <Button type="submit" disabled={mutation.isPending}>
+                  <Save className="mr-2 h-4 w-4" />
+                  {submitLabel}
+                </Button>
+              )
+            })()}
           </div>
         </form>
       </Form>

@@ -1,6 +1,12 @@
 "use client"
 
 import { UseFormReturn } from "react-hook-form"
+import { useSearchParams } from "next/navigation"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { virtualAccountAPI } from "@/api/encrypt/virtual-account"
+import { dictAPI } from "@/api/dict"
+import type { DictOption } from "@/types/dict"
+import type { VirtualAccount, VirtualAccountCreateDto, VirtualAccountUpdateDto } from "@/types/encrypt/virtual-account"
 import { 
   FormControl, 
   FormField, 
@@ -18,12 +24,118 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useMemo, useState } from "react"
+import { z } from "zod"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 
-interface VirtualInfoFormProps {
+type VirtualInfoFormProps = Readonly<{
   form: UseFormReturn<any>
-}
+}>
 
 export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
+  const searchParams = useSearchParams()
+  const editId = searchParams.get('id') || ''
+  const isEdit = !!editId
+  const qc = useQueryClient()
+  const { data: accounts } = useQuery({
+    queryKey: ["encrypt", "virtual-accounts", "list", editId],
+    queryFn: () => virtualAccountAPI.getList({ params: { virtual_info_id: editId }, page_num: 1, page_size: 50 }),
+    enabled: isEdit,
+  })
+
+  // 动态加载账户类型字典
+  const { data: accountTypeOptions } = useQuery({
+    queryKey: ["dict", "ACCOUNT_TYPE"],
+    queryFn: () => dictAPI.getDictOptions("ACCOUNT_TYPE"),
+  })
+
+  // 账户创建/编辑对话框状态
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false)
+  const [editingAccount, setEditingAccount] = useState<VirtualAccount | null>(null)
+
+  const accountSchema = useMemo(() => z.object({
+    account: z.string().min(1, "账号不能为空"),
+    account_type: z.string().min(1, "请选择账户类型"),
+    password: z.string().optional(),
+    phone: z.string().optional(),
+    primary_email: z.string().optional(),
+    secondary_email: z.string().optional(),
+    two_fa: z.string().optional(),
+    status: z.string().optional(),
+    remark: z.string().optional(),
+  }), [])
+
+  type AccountFormValues = z.infer<typeof accountSchema>
+  const accountForm = useForm<AccountFormValues>({
+    resolver: zodResolver(accountSchema),
+    defaultValues: {
+      account: "",
+      account_type: "",
+      password: "",
+      phone: "",
+      primary_email: "",
+      secondary_email: "",
+      two_fa: "",
+      status: "0",
+      remark: "",
+    }
+  })
+
+  const openCreateAccount = () => {
+    setEditingAccount(null)
+    accountForm.reset()
+    setAccountDialogOpen(true)
+  }
+  const openEditAccount = (acc: VirtualAccount) => {
+    setEditingAccount(acc)
+    accountForm.reset({
+      account: acc.account || "",
+      account_type: acc.account_type || "",
+      password: acc.password || "",
+      phone: acc.phone || "",
+      primary_email: acc.primary_email || "",
+      secondary_email: acc.secondary_email || "",
+      two_fa: acc.two_fa || "",
+      status: acc.status || "0",
+      remark: acc.remark || "",
+    })
+    setAccountDialogOpen(true)
+  }
+
+  const createMutation = useMutation({
+    mutationFn: async (values: AccountFormValues) => {
+      if (!editId) throw new Error("缺少虚拟信息ID")
+      const payload: VirtualAccountCreateDto = { ...values, virtual_info_id: editId }
+      return virtualAccountAPI.create(payload)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["encrypt", "virtual-accounts", "list", editId] })
+      setAccountDialogOpen(false)
+    }
+  })
+  const updateMutation = useMutation({
+    mutationFn: async (values: AccountFormValues) => {
+      if (!editingAccount?.id) throw new Error("缺少账户ID")
+      const payload: VirtualAccountUpdateDto = { ...values, id: editingAccount.id }
+      return virtualAccountAPI.update(editingAccount.id, payload)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["encrypt", "virtual-accounts", "list", editId] })
+      setAccountDialogOpen(false)
+    }
+  })
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => virtualAccountAPI.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["encrypt", "virtual-accounts", "list", editId] })
+  })
+
+  const submitAccount = (values: AccountFormValues) => {
+    if (editingAccount) updateMutation.mutate(values)
+    else createMutation.mutate(values)
+  }
   return (
     <Tabs defaultValue="basic" className="w-full">
       <TabsList className="grid w-full grid-cols-6">
@@ -111,85 +223,178 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
         </div>
       </TabsContent>
 
-      {/* 联系信息 */}
+      {/* 联系信息：改为展示关联账户的表格（账号/类型/邮箱/电话/2FA 等） */}
       <TabsContent value="contact" className="space-y-6 mt-6">
         <div className="space-y-4">
           <div>
             <h4 className="text-md font-medium">联系信息</h4>
-            <p className="text-sm text-muted-foreground">各种联系方式和社交账户</p>
+            <p className="text-sm text-muted-foreground">展示所有与该虚拟信息关联的账户</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">管理与该虚拟信息关联的账户。</p>
+              <Button size="sm" onClick={openCreateAccount} disabled={!isEdit}>新增账户</Button>
+            </div>
+            <div className="rounded-md border overflow-hidden">
+              <div className="grid grid-cols-7 gap-2 px-4 py-2 text-sm font-medium bg-muted/50">
+                <div>账户</div>
+                <div>类型</div>
+                <div>主邮箱</div>
+                <div>辅助邮箱</div>
+                <div>电话</div>
+                <div>2FA</div>
+                <div className="text-right">操作</div>
+              </div>
+              {(!isEdit || !accounts || accounts.list.length === 0) ? (
+                <div className="p-4 text-sm text-muted-foreground">{isEdit ? '暂无关联账户' : '保存后可为该虚拟信息添加关联账户'}</div>
+              ) : (
+                <div className="divide-y">
+                  {accounts.list.map(acc => (
+                    <div key={acc.id} className="grid grid-cols-7 gap-2 px-4 py-2 text-sm items-center">
+                      <div className="truncate" title={acc.account}>{acc.account}</div>
+                      <div>{(accountTypeOptions || []).find(o => o.value === acc.account_type)?.label || acc.account_type}</div>
+                      <div className="truncate" title={acc.primary_email || ''}>{acc.primary_email || '-'}</div>
+                      <div className="truncate" title={acc.secondary_email || ''}>{acc.secondary_email || '-'}</div>
+                      <div>{acc.phone || '-'}</div>
+                      <div className="truncate" title={acc.two_fa || ''}>{acc.two_fa ? '已设置' : '-'}</div>
+                      <div className="text-right space-x-2">
+                        <Button size="sm" variant="outline" onClick={() => openEditAccount(acc)}>编辑</Button>
+                        <Button size="sm" variant="destructive" onClick={() => { if (confirm('确认删除该账户？')) deleteMutation.mutate(acc.id) }}>删除</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* 账户编辑对话框 */}
+        <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editingAccount ? '编辑账户' : '新增账户'}</DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={accountForm.handleSubmit(submitAccount)}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
+              <FormField control={accountForm.control} name="account" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>账号</FormLabel>
+                  <FormControl>
+                    <Input placeholder="请输入账号" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <FormField control={accountForm.control} name="account_type" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>账户类型</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="请选择账户类型" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(accountTypeOptions || []).map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <FormField control={accountForm.control} name="password" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>密码</FormLabel>
+                  <FormControl>
+                    <Input type="text" placeholder="可选" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <FormField control={accountForm.control} name="phone" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>电话</FormLabel>
+                  <FormControl>
+                    <Input placeholder="可选" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
+              <FormField control={accountForm.control} name="primary_email" render={({ field }) => (
                 <FormItem>
                   <FormLabel>主邮箱</FormLabel>
                   <FormControl>
-                    <Input placeholder="请输入邮箱地址" {...field} />
+                    <Input placeholder="可选" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
+              )} />
 
-            <FormField
-              control={form.control}
-              name="gmail"
-              render={({ field }) => (
+              <FormField control={accountForm.control} name="secondary_email" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Gmail邮箱</FormLabel>
+                  <FormLabel>辅助邮箱</FormLabel>
                   <FormControl>
-                    <Input placeholder="请输入Gmail地址" {...field} />
+                    <Input placeholder="可选" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
+              )} />
 
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>电话号码</FormLabel>
+              <FormField control={accountForm.control} name="two_fa" render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>2FA 信息</FormLabel>
                   <FormControl>
-                    <Input placeholder="请输入电话号码" {...field} />
+                    <Textarea placeholder="密钥/备份码/备注（可选）" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
+              )} />
 
-            <FormField
-              control={form.control}
-              name="x"
-              render={({ field }) => (
+              <FormField control={accountForm.control} name="status" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>X账号</FormLabel>
-                  <FormControl>
-                    <Input placeholder="请输入X账号" {...field} />
-                  </FormControl>
+                  <FormLabel>状态</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="请选择状态" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="0">启用</SelectItem>
+                      <SelectItem value="1">停用</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
+              )} />
 
-            <FormField
-              control={form.control}
-              name="discord"
-              render={({ field }) => (
+              <FormField control={accountForm.control} name="remark" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Discord账号</FormLabel>
+                  <FormLabel>备注</FormLabel>
                   <FormControl>
-                    <Input placeholder="请输入Discord账号" {...field} />
+                    <Input placeholder="可选" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
-          </div>
-        </div>
+              )} />
+
+              <div className="md:col-span-2" />
+              <DialogFooter className="md:col-span-2">
+                <Button type="button" variant="outline" onClick={() => setAccountDialogOpen(false)}>取消</Button>
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  {editingAccount ? '保存' : '创建'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </TabsContent>
 
       {/* 地址信息 */}
@@ -344,7 +549,12 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
                 <FormItem>
                   <FormLabel>密码</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="请输入密码" {...field} />
+                    <div className="flex items-center gap-2">
+                      <Input type={form.watch('show_password') ? 'text' : 'password'} placeholder="请输入密码" {...field} />
+                      <label className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <input type="checkbox" onChange={(e) => form.setValue('show_password', e.target.checked)} /> 显示
+                      </label>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

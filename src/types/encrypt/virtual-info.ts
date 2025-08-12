@@ -6,9 +6,6 @@ export interface VirtualInfo {
   gender?: string
   first?: string
   last?: string
-  gmail?: string
-  x?: string
-  discord?: string
   email?: string
   phone?: string
   street_number?: string
@@ -40,9 +37,6 @@ export interface VirtualInfoCreateDto {
   gender?: string
   first?: string
   last?: string
-  gmail?: string
-  x?: string
-  discord?: string
   email?: string
   phone?: string
   street_number?: string
