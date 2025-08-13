@@ -1,12 +1,13 @@
 "use client"
 
-import { UseFormReturn } from "react-hook-form"
+import { UseFormReturn, useForm } from "react-hook-form"
 import { useSearchParams } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { virtualAccountAPI } from "@/api/encrypt/virtual-account"
+import { virtualWalletAPI } from "@/api/encrypt/virtual-wallet"
 import { dictAPI } from "@/api/dict"
-import type { DictOption } from "@/types/dict"
 import type { VirtualAccount, VirtualAccountCreateDto, VirtualAccountUpdateDto } from "@/types/encrypt/virtual-account"
+import type { VirtualWallet, VirtualWalletCreateDto, VirtualWalletUpdateDto } from "@/types/encrypt/virtual-wallet"
 import { 
   FormControl, 
   FormField, 
@@ -25,11 +26,13 @@ import {
 } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useMemo, useState } from "react"
+import { Eye, EyeOff, MoreHorizontal } from "lucide-react"
 import { z } from "zod"
-import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 type VirtualInfoFormProps = Readonly<{
   form: UseFormReturn<any>
@@ -46,6 +49,13 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
     enabled: isEdit,
   })
 
+  // 钱包列表
+  const { data: wallets } = useQuery({
+    queryKey: ["encrypt", "virtual-wallets", "list", editId],
+    queryFn: () => virtualWalletAPI.getList({ params: { virtual_info_id: editId }, page_num: 1, page_size: 50 }),
+    enabled: isEdit,
+  })
+
   // 动态加载账户类型字典
   const { data: accountTypeOptions } = useQuery({
     queryKey: ["dict", "ACCOUNT_TYPE"],
@@ -55,6 +65,10 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
   // 账户创建/编辑对话框状态
   const [accountDialogOpen, setAccountDialogOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState<VirtualAccount | null>(null)
+  const [showAccountPassword, setShowAccountPassword] = useState(false)
+  // 钱包对话框
+  const [walletDialogOpen, setWalletDialogOpen] = useState(false)
+  const [editingWallet, setEditingWallet] = useState<VirtualWallet | null>(null)
 
   const accountSchema = useMemo(() => z.object({
     account: z.string().min(1, "账号不能为空"),
@@ -87,6 +101,7 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
   const openCreateAccount = () => {
     setEditingAccount(null)
     accountForm.reset()
+  setShowAccountPassword(false)
     setAccountDialogOpen(true)
   }
   const openEditAccount = (acc: VirtualAccount) => {
@@ -102,7 +117,8 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
       status: acc.status || "0",
       remark: acc.remark || "",
     })
-    setAccountDialogOpen(true)
+  setAccountDialogOpen(true)
+  setShowAccountPassword(false)
   }
 
   const createMutation = useMutation({
@@ -132,6 +148,36 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["encrypt", "virtual-accounts", "list", editId] })
   })
 
+  // 钱包 CRUD
+  const walletCreateMutation = useMutation({
+    mutationFn: async (values: Partial<VirtualWalletCreateDto>) => {
+      if (!editId) throw new Error("缺少虚拟信息ID")
+      const payload: VirtualWalletCreateDto = { virtual_info_id: editId, ...values }
+      return virtualWalletAPI.create(payload)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["encrypt", "virtual-wallets", "list", editId] })
+      setWalletDialogOpen(false)
+    }
+  })
+  const walletUpdateMutation = useMutation({
+    mutationFn: async (values: Partial<VirtualWalletUpdateDto>) => {
+      if (!editingWallet?.id) throw new Error("缺少钱包ID")
+      return virtualWalletAPI.update(editingWallet.id, { id: editingWallet.id, ...values })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["encrypt", "virtual-wallets", "list", editId] })
+      setWalletDialogOpen(false)
+    }
+  })
+  const walletDeleteMutation = useMutation({
+    mutationFn: async (id: string) => virtualWalletAPI.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["encrypt", "virtual-wallets", "list", editId] })
+  })
+
+  const openCreateWallet = () => { setEditingWallet(null); setWalletDialogOpen(true) }
+  const openEditWallet = (w: VirtualWallet) => { setEditingWallet(w); setWalletDialogOpen(true) }
+
   const submitAccount = (values: AccountFormValues) => {
     if (editingAccount) updateMutation.mutate(values)
     else createMutation.mutate(values)
@@ -149,12 +195,13 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
 
       {/* 基本信息 */}
       <TabsContent value="basic" className="space-y-6 mt-6">
-        <div className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium">基本信息</h4>
-            <p className="text-sm text-muted-foreground">虚拟身份的基础个人信息</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>基本信息</CardTitle>
+            <CardDescription>虚拟身份的基础个人信息</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="first"
@@ -168,7 +215,7 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="last"
@@ -219,22 +266,27 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
                 </FormItem>
               )}
             />
-          </div>
-        </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <p className="text-sm text-muted-foreground">
+              {isEdit ? `关联账户：${accounts?.list?.length ?? 0} 个` : '保存后可管理关联账户'}
+            </p>
+          </CardFooter>
+        </Card>
       </TabsContent>
 
       {/* 联系信息：改为展示关联账户的表格（账号/类型/邮箱/电话/2FA 等） */}
       <TabsContent value="contact" className="space-y-6 mt-6">
-        <div className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium">联系信息</h4>
-            <p className="text-sm text-muted-foreground">展示所有与该虚拟信息关联的账户</p>
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">管理与该虚拟信息关联的账户。</p>
-              <Button size="sm" onClick={openCreateAccount} disabled={!isEdit}>新增账户</Button>
-            </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>联系信息</CardTitle>
+            <CardDescription>管理与该虚拟信息关联的账户</CardDescription>
+            <CardAction>
+              <Button type="button" size="sm" onClick={openCreateAccount} disabled={!isEdit}>新增账户</Button>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
             <div className="rounded-md border overflow-hidden">
               <div className="grid grid-cols-7 gap-2 px-4 py-2 text-sm font-medium bg-muted/50">
                 <div>账户</div>
@@ -257,17 +309,27 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
                       <div className="truncate" title={acc.secondary_email || ''}>{acc.secondary_email || '-'}</div>
                       <div>{acc.phone || '-'}</div>
                       <div className="truncate" title={acc.two_fa || ''}>{acc.two_fa ? '已设置' : '-'}</div>
-                      <div className="text-right space-x-2">
-                        <Button size="sm" variant="outline" onClick={() => openEditAccount(acc)}>编辑</Button>
-                        <Button size="sm" variant="destructive" onClick={() => { if (confirm('确认删除该账户？')) deleteMutation.mutate(acc.id) }}>删除</Button>
+                      <div className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">更多操作</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditAccount(acc)}>编辑</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { if (confirm('确认删除该账户？')) deleteMutation.mutate(acc.id) }}>删除</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
         {/* 账户编辑对话框 */}
         <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
           <DialogContent>
@@ -276,13 +338,14 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
             </DialogHeader>
             <form
               onSubmit={accountForm.handleSubmit(submitAccount)}
+              autoComplete="off"
               className="grid grid-cols-1 md:grid-cols-2 gap-4"
             >
-              <FormField control={accountForm.control} name="account" render={({ field }) => (
+      <FormField control={accountForm.control} name="account" render={({ field }) => (
                 <FormItem>
                   <FormLabel>账号</FormLabel>
                   <FormControl>
-                    <Input placeholder="请输入账号" {...field} />
+        <Input placeholder="请输入账号" autoComplete="off" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -311,7 +374,25 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
                 <FormItem>
                   <FormLabel>密码</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="可选" {...field} />
+                    <div className="relative">
+                      <Input
+                        type={showAccountPassword ? 'text' : 'password'}
+                        placeholder="可选"
+                        autoComplete="new-password"
+                        className="pr-10"
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setShowAccountPassword(v => !v)}
+                        aria-label={showAccountPassword ? '隐藏密码' : '显示密码'}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6"
+                      >
+                        {showAccountPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -399,12 +480,13 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
 
       {/* 地址信息 */}
       <TabsContent value="address" className="space-y-6 mt-6">
-        <div className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium">地址信息</h4>
-            <p className="text-sm text-muted-foreground">详细的地址和位置信息</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>地址信息</CardTitle>
+            <CardDescription>详细的地址和位置信息</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="street_number"
@@ -516,18 +598,20 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
                 </FormItem>
               )}
             />
-          </div>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </TabsContent>
 
       {/* 账户信息 */}
       <TabsContent value="account" className="space-y-6 mt-6">
-        <div className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium">账户信息</h4>
-            <p className="text-sm text-muted-foreground">用户账户和身份相关信息</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>账户信息</CardTitle>
+            <CardDescription>用户账户和身份相关信息</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="username"
@@ -549,11 +633,24 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
                 <FormItem>
                   <FormLabel>密码</FormLabel>
                   <FormControl>
-                    <div className="flex items-center gap-2">
-                      <Input type={form.watch('show_password') ? 'text' : 'password'} placeholder="请输入密码" {...field} />
-                      <label className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <input type="checkbox" onChange={(e) => form.setValue('show_password', e.target.checked)} /> 显示
-                      </label>
+                    <div className="relative">
+                      <Input
+                        type={form.watch('show_password') ? 'text' : 'password'}
+                        placeholder="请输入密码"
+                        autoComplete="new-password"
+                        className="pr-10"
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => form.setValue('show_password', !form.watch('show_password'))}
+                        aria-label={form.watch('show_password') ? '隐藏密码' : '显示密码'}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6"
+                      >
+                        {form.watch('show_password') ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -588,57 +685,120 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
                 </FormItem>
               )}
             />
-          </div>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </TabsContent>
 
       {/* 安全信息 */}
       <TabsContent value="security" className="space-y-6 mt-6">
-        <div className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium">安全信息</h4>
-            <p className="text-sm text-muted-foreground">安全相关的敏感信息</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="seed"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>种子</FormLabel>
-                  <FormControl>
-                    <Input placeholder="请输入种子" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+        <Card>
+          <CardHeader>
+            <CardTitle>安全信息</CardTitle>
+            <CardDescription>钱包等敏感信息（现已独立表管理）</CardDescription>
+            <CardAction>
+              <Button type="button" size="sm" onClick={openCreateWallet} disabled={!isEdit}>新增钱包</Button>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border overflow-hidden">
+              <div className="grid grid-cols-6 gap-2 px-4 py-2 text-sm font-medium bg-muted/50">
+                <div>助记词</div>
+                <div>ETH 地址</div>
+                <div>SOL 地址</div>
+                <div>状态</div>
+                <div>备注</div>
+                <div className="text-right">操作</div>
+              </div>
+              {(!isEdit || !wallets || wallets.list.length === 0) ? (
+                <div className="p-4 text-sm text-muted-foreground">{isEdit ? '暂无钱包' : '保存后可为该虚拟信息添加钱包'}</div>
+              ) : (
+                <div className="divide-y">
+                  {wallets.list.map((w: VirtualWallet) => (
+                    <div key={w.id} className="grid grid-cols-6 gap-2 px-4 py-2 text-sm items-center">
+                      <div className="truncate" title={w.mnemonic || ''}>{w.mnemonic ? '••••••' : '-'}</div>
+                      <div className="truncate" title={w.eth_address || ''}>{w.eth_address || '-'}</div>
+                      <div className="truncate" title={w.sol_address || ''}>{w.sol_address || '-'}</div>
+                      <div>{w.status === '1' ? '停用' : '启用'}</div>
+                      <div className="truncate" title={w.remark || ''}>{w.remark || '-'}</div>
+                      <div className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">更多操作</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditWallet(w)}>编辑</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { if (confirm('确认删除该钱包？')) walletDeleteMutation.mutate(w.id) }}>删除</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
-            />
+            </div>
+          </CardContent>
+        </Card>
 
-            <FormField
-              control={form.control}
-              name="wallet_word"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>钱包助记词</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="请输入钱包助记词" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
+        {/* 钱包编辑对话框（简版：助记词/备注/状态；如需更多字段可扩展） */}
+        <Dialog open={walletDialogOpen} onOpenChange={setWalletDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editingWallet ? '编辑钱包' : '新增钱包'}</DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={(e) => { e.preventDefault(); const formData = new FormData(e.currentTarget as HTMLFormElement);
+                const values: any = { mnemonic: formData.get('mnemonic') as string || undefined, remark: formData.get('remark') as string || undefined, status: formData.get('status') as string || '0' };
+                editingWallet ? walletUpdateMutation.mutate(values) : walletCreateMutation.mutate(values);
+              }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
+              <FormItem className="md:col-span-2">
+                <FormLabel>助记词</FormLabel>
+                <FormControl>
+                  <Textarea name="mnemonic" defaultValue={editingWallet?.mnemonic || ''} placeholder="可选" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+              <FormItem>
+                <FormLabel htmlFor="wallet-status">状态</FormLabel>
+                <FormControl>
+                  <select id="wallet-status" name="status" aria-label="状态" defaultValue={editingWallet?.status || '0'} className="border rounded h-9 px-3 text-sm">
+                    <option value="0">启用</option>
+                    <option value="1">停用</option>
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+              <FormItem>
+                <FormLabel>备注</FormLabel>
+                <FormControl>
+                  <Input name="remark" defaultValue={editingWallet?.remark || ''} placeholder="可选" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+              <div className="md:col-span-2" />
+              <DialogFooter className="md:col-span-2">
+                <Button type="button" variant="outline" onClick={() => setWalletDialogOpen(false)}>取消</Button>
+                <Button type="submit" disabled={walletCreateMutation.isPending || walletUpdateMutation.isPending}>{editingWallet ? '保存' : '创建'}</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </TabsContent>
 
       {/* 其他设置 */}
       <TabsContent value="other" className="space-y-6 mt-6">
-        <div className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium">其他设置</h4>
-            <p className="text-sm text-muted-foreground">状态和备注信息</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>其他设置</CardTitle>
+            <CardDescription>状态和备注信息</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="status"
@@ -674,8 +834,9 @@ export function VirtualInfoForm({ form }: VirtualInfoFormProps) {
                 </FormItem>
               )}
             />
-          </div>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </TabsContent>
     </Tabs>
   )

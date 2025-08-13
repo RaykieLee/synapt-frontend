@@ -217,35 +217,34 @@ export default function VirtualInfoEditPage() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium">虚拟信息详细设置</h3>
-              <p className="text-sm text-muted-foreground">
-                请填写虚拟身份的相关信息
-              </p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-medium">虚拟信息详细设置</h3>
+                <p className="text-sm text-muted-foreground">请填写虚拟身份的相关信息</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={mutation.isPending}
+                >
+                  取消
+                </Button>
+                {(() => {
+                  let submitLabel = "创建"
+                  if (isEdit) submitLabel = "更新"
+                  if (mutation.isPending) submitLabel = "保存中..."
+                  return (
+                    <Button type="submit" disabled={mutation.isPending}>
+                      <Save className="mr-2 h-4 w-4" />
+                      {submitLabel}
+                    </Button>
+                  )
+                })()}
+              </div>
             </div>
             <VirtualInfoForm form={form} />
-          </div>
-
-          <div className="flex items-center justify-end space-x-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={mutation.isPending}
-            >
-              取消
-            </Button>
-            {(() => {
-              let submitLabel = "创建"
-              if (isEdit) submitLabel = "更新"
-              if (mutation.isPending) submitLabel = "保存中..."
-              return (
-                <Button type="submit" disabled={mutation.isPending}>
-                  <Save className="mr-2 h-4 w-4" />
-                  {submitLabel}
-                </Button>
-              )
-            })()}
           </div>
         </form>
       </Form>
