@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table"
 
 import { Skeleton } from "@/components/ui/skeleton"
+import { DataTablePagination } from "@/components/shared/data-table"
 
 import { VirtualInfo } from "@/types/encrypt"
 
@@ -186,62 +187,10 @@ export function DataTable({
 
       {/* 分页 */}
       {pagination && (
-        <div className="flex items-center justify-between px-2">
-          <div className="flex-1 text-sm text-muted-foreground">
-            已选择 {table.getFilteredSelectedRowModel().rows.length} / {table.getFilteredRowModel().rows.length} 行
-          </div>
-          <div className="flex items-center space-x-6 lg:space-x-8">
-            <div className="flex items-center space-x-2">
-              <p className="text-sm font-medium">每页显示</p>
-              <select
-                value={pagination.pageSize}
-                onChange={(e) => {
-                  pagination.onPageChange(1, Number(e.target.value))
-                }}
-                className="h-8 w-[70px] rounded border px-3 py-1 text-sm"
-              >
-                {[10, 20, 30, 40, 50].map((pageSize) => (
-                  <option key={pageSize} value={pageSize}>
-                    {pageSize}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              第 {pagination.pageIndex + 1} 页，共 {Math.ceil(pagination.total / pagination.pageSize)} 页
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => pagination.onPageChange(1, pagination.pageSize)}
-                disabled={pagination.pageIndex === 0}
-                className="h-8 w-8 rounded border p-0 disabled:opacity-50"
-              >
-                {'<<'}
-              </button>
-              <button
-                onClick={() => pagination.onPageChange(pagination.pageIndex, pagination.pageSize)}
-                disabled={pagination.pageIndex === 0}
-                className="h-8 w-8 rounded border p-0 disabled:opacity-50"
-              >
-                {'<'}
-              </button>
-              <button
-                onClick={() => pagination.onPageChange(pagination.pageIndex + 2, pagination.pageSize)}
-                disabled={pagination.pageIndex >= Math.ceil(pagination.total / pagination.pageSize) - 1}
-                className="h-8 w-8 rounded border p-0 disabled:opacity-50"
-              >
-                {'>'}
-              </button>
-              <button
-                onClick={() => pagination.onPageChange(Math.ceil(pagination.total / pagination.pageSize), pagination.pageSize)}
-                disabled={pagination.pageIndex >= Math.ceil(pagination.total / pagination.pageSize) - 1}
-                className="h-8 w-8 rounded border p-0 disabled:opacity-50"
-              >
-                {'>>'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <DataTablePagination
+          table={table}
+          onPageChange={(page) => pagination.onPageChange(page, pagination.pageSize)}
+        />
       )}
     </div>
   )

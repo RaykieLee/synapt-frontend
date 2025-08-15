@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from '@/components/animate-ui/radix/dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { Pagination } from '@/components/pagination';
+import { DataTablePagination } from '@/components/shared/data-table';
 import { 
   Plus, 
   Search,
@@ -116,6 +116,44 @@ export default function StreamsPage() {
   const streams = streamResponse?.list || [];
   const total = streamResponse?.total || 0;
   const totalPages = streamResponse?.pages || 1;
+  
+  // 创建模拟的table对象用于分页组件
+  const mockTable = {
+    getState: () => ({
+      pagination: {
+        pageIndex: query.page_num - 1,
+        pageSize: query.page_size,
+      },
+    }),
+    getPageCount: () => totalPages,
+    getFilteredSelectedRowModel: () => ({
+      rows: [],
+    }),
+    getFilteredRowModel: () => ({
+      rows: [],
+    }),
+    setPageIndex: (index: number) => {
+      const newPage = index + 1;
+      if (newPage >= 1 && newPage <= totalPages) {
+        setQuery(prev => ({ ...prev, page_num: newPage }));
+      }
+    },
+    getCanPreviousPage: () => query.page_num > 1,
+    getCanNextPage: () => query.page_num < totalPages,
+    previousPage: () => {
+      if (query.page_num > 1) {
+        setQuery(prev => ({ ...prev, page_num: prev.page_num - 1 }));
+      }
+    },
+    nextPage: () => {
+      if (query.page_num < totalPages) {
+        setQuery(prev => ({ ...prev, page_num: prev.page_num + 1 }));
+      }
+    },
+    setPageSize: (size: number) => {
+      setQuery(prev => ({ ...prev, page_size: size, page_num: 1 }));
+    },
+  };
 
   // 创建视频流
   const createMutation = useMutation({
@@ -448,10 +486,8 @@ export default function StreamsPage() {
           </div>
           
           <div className="mt-6">
-            <Pagination
-              currentPage={query.page_num}
-              pageSize={query.page_size}
-              total={total}
+            <DataTablePagination
+              table={mockTable as any}
               onPageChange={(page) => setQuery(prev => ({ ...prev, page_num: page }))}
             />
           </div>
