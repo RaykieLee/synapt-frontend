@@ -1,7 +1,9 @@
 import { useState, useCallback, useRef, useMemo } from "react"
 import { Table } from "@tanstack/react-table"
-import { X, Filter, ChevronDown, Plus } from "lucide-react"
+import { X, Filter, ChevronDown, Plus, Settings, Zap, CheckCircle, XCircle, AlertCircle, RefreshCw } from "lucide-react"
 import debounce from "lodash/debounce"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,17 +18,19 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/animate-ui/radix/popover"
+} from "@/components/animate-ui/base/popover"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { DataTableViewOptions } from "@/components/shared/data-table"
 import { LLMConfigSearchParams } from "@/types/llm-config"
+import { mcpAPI, MCPServerStatus } from "@/api/mcp"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
   onSearch: (searchParams: LLMConfigSearchParams) => void
   onAddNew?: () => void
   onBatchDelete?: (selectedIds: string[]) => void
+  onMCPConfig?: () => void
 }
 
 export function DataTableToolbar<TData>({
@@ -34,9 +38,43 @@ export function DataTableToolbar<TData>({
   onSearch,
   onAddNew,
   onBatchDelete,
+  onMCPConfig,
 }: DataTableToolbarProps<TData>) {
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false)
+  const [mcpPopoverOpen, setMcpPopoverOpen] = useState(false)
   const searchParamsRef = useRef<LLMConfigSearchParams>({})
+  const queryClient = useQueryClient()
+
+  // 获取MCP状态
+  const { data: mcpStatus, refetch: refetchMCPStatus, isFetching: isFetchingMCPStatus } = useQuery({
+    queryKey: ["mcp-status"],
+    queryFn: mcpAPI.getStatus,
+    refetchInterval: 10000, // 10秒刷新一次
+  })
+
+  // 重新加载MCP配置
+  const reloadConfigMutation = useMutation({
+    mutationFn: mcpAPI.reloadConfig,
+    onSuccess: () => {
+      toast.success("MCP配置重新加载成功")
+      refetchMCPStatus() // 重新获取状态
+    },
+    onError: (error: any) => {
+      toast.error(`重新加载失败: ${error.message || '未知错误'}`)
+    },
+  })
+
+  // 测试连接
+  const testConnectionMutation = useMutation({
+    mutationFn: mcpAPI.testConnection,
+    onSuccess: () => {
+      toast.success("连接测试完成")
+      refetchMCPStatus() // 重新获取状态
+    },
+    onError: (error: any) => {
+      toast.error(`测试连接失败: ${error.message || '未知错误'}`)
+    },
+  })
 
   // 防抖搜索
   const debouncedSearch = useMemo(() => debounce(() => {
@@ -50,6 +88,39 @@ export function DataTableToolbar<TData>({
     }
     debouncedSearch()
   }, [debouncedSearch])
+
+  // 获取MCP状态图标和颜色
+  const getMCPStatusInfo = () => {
+    if (!mcpStatus) {
+      return { icon: AlertCircle, color: "text-gray-500", label: "未知" }
+    }
+
+    const { configured, config_valid, servers } = mcpStatus
+    
+    if (!configured) {
+      return { icon: XCircle, color: "text-gray-500", label: "未配置" }
+    }
+
+    if (!config_valid) {
+      return { icon: XCircle, color: "text-red-500", label: "配置无效" }
+    }
+
+    const connectedCount = servers.filter((s: MCPServerStatus) => s.status === 'connected').length
+    const configuredCount = servers.filter((s: MCPServerStatus) => s.status === 'configured').length
+    const errorCount = servers.filter((s: MCPServerStatus) => s.status === 'error').length
+
+    if (connectedCount > 0) {
+      return { icon: CheckCircle, color: "text-green-500", label: `${connectedCount}个已连接` }
+    } else if (configuredCount > 0) {
+      return { icon: AlertCircle, color: "text-yellow-500", label: `${configuredCount}个已配置` }
+    } else if (errorCount > 0) {
+      return { icon: XCircle, color: "text-red-500", label: `${errorCount}个错误` }
+    } else {
+      return { icon: AlertCircle, color: "text-gray-500", label: "无服务器" }
+    }
+  }
+
+  const statusInfo = getMCPStatusInfo()
 
   // 计算活跃筛选器数量（排除主要搜索字段）
   const getActiveFiltersCount = () => {
@@ -282,6 +353,109 @@ export function DataTableToolbar<TData>({
             create_time: "创建时间"
           }}
         />
+        
+        {/* MCP状态按钮 */}
+        <Popover open={mcpPopoverOpen} onOpenChange={setMcpPopoverOpen}>
+          <PopoverTrigger>
+            <Button variant="outline" size="sm" className="h-8">
+              <statusInfo.icon className={`mr-2 h-4 w-4 ${statusInfo.color}`} />
+              MCP
+              <Badge variant="secondary" className="ml-2 h-5 px-1 text-xs">
+                {statusInfo.label}
+              </Badge>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-96">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">MCP服务器状态</h4>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => refetchMCPStatus()}
+                  disabled={isFetchingMCPStatus}
+                  className="h-6 px-2"
+                >
+                  <RefreshCw className={`h-3 w-3 mr-1 ${isFetchingMCPStatus ? 'animate-spin' : ''}`} />
+                  刷新
+                </Button>
+              </div>
+              
+              {mcpStatus?.servers && mcpStatus.servers.length > 0 ? (
+                <div className="space-y-2">
+                  {mcpStatus.servers.map((server: MCPServerStatus) => (
+                    <div key={server.name} className="flex items-center justify-between p-2 border rounded">
+                      <div className="flex items-center space-x-2">
+                        {server.status === 'connected' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                        {server.status === 'configured' && <AlertCircle className="h-4 w-4 text-yellow-500" />}
+                        {server.status === 'error' && <XCircle className="h-4 w-4 text-red-500" />}
+                        {server.status === 'unknown' && <AlertCircle className="h-4 w-4 text-gray-500" />}
+                        <span className="font-medium">{server.name}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {server.tools.length > 0 && (
+                          <Badge variant="outline" className="text-xs">
+                            {server.tools.length} 工具
+                          </Badge>
+                        )}
+                        <Badge 
+                          variant={server.status === 'connected' ? 'default' : 
+                                  server.status === 'error' ? 'destructive' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {server.status === 'connected' ? '已连接' :
+                           server.status === 'configured' ? '已配置' :
+                           server.status === 'error' ? '错误' : '未知'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  {mcpStatus?.configured ? '暂无可用的MCP服务器' : '尚未配置MCP服务器'}
+                </div>
+              )}
+              
+              <Separator />
+              
+              <div className="flex justify-between space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setMcpPopoverOpen(false)
+                    onMCPConfig?.()
+                  }}
+                  className="flex-1"
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  配置MCP
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => reloadConfigMutation.mutate()}
+                  disabled={reloadConfigMutation.isPending}
+                  className="flex-1"
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${reloadConfigMutation.isPending ? 'animate-spin' : ''}`} />
+                  重新加载
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => testConnectionMutation.mutate()}
+                  disabled={testConnectionMutation.isPending}
+                  className="flex-1"
+                >
+                  <Zap className="mr-2 h-4 w-4" />
+                  测试连接
+                </Button>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
         
         {/* 新增配置按钮 */}
         {onAddNew && (

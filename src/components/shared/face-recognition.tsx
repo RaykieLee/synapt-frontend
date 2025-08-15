@@ -106,6 +106,29 @@ export default function FaceRecognition({
     setRecognitionStatus('idle');
   }, []);
 
+  // 执行人脸识别处理
+  const simulateFaceRecognition = useCallback(async (imageData: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        // 模拟人脸检测和特征提取过程
+        const success = Math.random() > 0.25; // 75%成功率用于演示
+
+        if (success) {
+          setRecognitionStatus('success');
+          onSuccess?.(imageData);
+          toast({
+            title: "识别成功",
+            description: "人脸验证通过，正在登录...",
+          });
+          resolve();
+        } else {
+          setRecognitionStatus('failed');
+          reject(new Error('未能识别出有效的人脸特征，请调整位置后重试'));
+        }
+      }, 1500); // 模拟1.5秒识别时间
+    });
+  }, [onSuccess, toast]);
+
   // 拍照并识别
   const captureAndRecognize = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -146,30 +169,9 @@ export default function FaceRecognition({
     } finally {
       setIsProcessing(false);
     }
-  }, [onError, toast]);
+  }, [onError, toast, simulateFaceRecognition]);
 
-  // 执行人脸识别处理
-  const simulateFaceRecognition = async (imageData: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // 模拟人脸检测和特征提取过程
-        const success = Math.random() > 0.25; // 75%成功率用于演示
-        
-        if (success) {
-          setRecognitionStatus('success');
-          onSuccess?.(imageData);
-          toast({
-            title: "识别成功",
-            description: "人脸验证通过，正在登录...",
-          });
-          resolve();
-        } else {
-          setRecognitionStatus('failed');
-          reject(new Error('未能识别出有效的人脸特征，请调整位置后重试'));
-        }
-      }, 1500); // 模拟1.5秒识别时间
-    });
-  };
+
 
   // 重新尝试识别
   const retryRecognition = useCallback(() => {

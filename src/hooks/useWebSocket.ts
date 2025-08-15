@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { ConnectionState, WebSocketMessage } from '@/types/chat';
 import { getAuthToken } from '@/services/auth';
+import { buildLLMChatWebSocketUrl } from '@/utils/websocket-config';
 
 interface UseWebSocketOptions {
   userId?: string;
@@ -57,12 +58,13 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
 
     reconnectTimeoutRef.current = setTimeout(() => {
       if (!isManualDisconnectRef.current && !isConnectingRef.current) {
-        connect();
+        // 直接调用连接逻辑，避免循环依赖
+        connectWebSocket();
       }
     }, delay);
   }, [reconnectAttempts, reconnectInterval]);
 
-  const connect = useCallback(() => {
+  const connectWebSocket = useCallback(() => {
     // 防止重复连接
     if (isConnectingRef.current || wsRef.current?.readyState === WebSocket.OPEN) {
       return;
@@ -91,7 +93,7 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     updateConnectionState('connecting');
 
     try {
-      const wsUrl = `ws://localhost:8000/api/v1/ws/llm-chat/${userId}?token=${encodeURIComponent(token)}`;
+      const wsUrl = buildLLMChatWebSocketUrl(userId, token);
       console.log('Connecting to WebSocket:', wsUrl.substring(0, 80) + '...');
 
       const ws = new WebSocket(wsUrl);
@@ -179,6 +181,10 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
       onError?.('创建WebSocket连接失败');
     }
   }, [userId, reconnectAttempts, onMessage, onError, updateConnectionState, scheduleReconnect]);
+
+  const connect = useCallback(() => {
+    connectWebSocket();
+  }, [connectWebSocket]);
 
   const disconnect = useCallback(() => {
     console.log('Manually disconnecting WebSocket');

@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@base-ui-components/react':
-        specifier: ^1.0.0-beta.0
+        specifier: 1.0.0-beta.0
         version: 1.0.0-beta.0(@types/react@19.1.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@chatscope/chat-ui-kit-react':
         specifier: ^2.1.1

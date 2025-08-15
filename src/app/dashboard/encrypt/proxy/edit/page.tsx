@@ -30,7 +30,7 @@ const proxySchema = z.object({
   password: z.string().max(100, "密码不能超过100个字符").optional(),
   status: z.string().optional(),
   group: z.string().max(100, "分组名不能超过100个字符").optional(),
-  is_active: z.boolean().default(true),
+  is_active: z.boolean(),
   remark: z.string().max(500, "备注不能超过500个字符").optional(),
 })
 

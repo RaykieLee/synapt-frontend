@@ -28,7 +28,7 @@ import {
   X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import VideoPlayer from '../components/VideoPlayer';
 
@@ -41,7 +41,7 @@ export default function DataReliabilityVerificationPage() {
   const videoUrl = `http://${videoHost}:${videoPort}/record/%E6%95%B0%E6%8D%AE%E5%8F%AF%E9%9D%A0%E6%80%A7%E6%A0%A1%E9%AA%8C%E7%B3%BB%E7%BB%9F%E6%BC%94%E7%A4%BA.mp4`;
 
   // 功能模块数据
-  const modules = [
+  const modules = useMemo(() => [
     {
       id: 'login',
       title: '登录模块',
@@ -111,7 +111,7 @@ export default function DataReliabilityVerificationPage() {
       color: 'indigo',
       image: '/images/data-reliability-verification/反向计量校对.png'
     }
-  ];
+  ], []);
 
   // 预加载图片
   useEffect(() => {
@@ -121,7 +121,7 @@ export default function DataReliabilityVerificationPage() {
         img.src = module.image;
       }
     });
-  }, []);
+  }, [modules]);
 
   const getColorClasses = (color: string) => {
     const colorMap = {

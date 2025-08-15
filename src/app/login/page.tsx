@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { saveLoginInfo } from "@/services/auth";
+import { secureLogin } from "@/utils/secure-auth";
 import { useToast } from "@/components/ui/use-toast";
 import FaceRecognition from "@/components/shared/face-recognition";
 import FaceRecognitionSimple from "@/components/shared/face-recognition-simple";
@@ -48,28 +49,8 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // 使用相对路径，通过 Next.js 的 rewrites 代理到后端
-      const loginUrl = '/api/v1/login';
-      console.log('Attempting to login with URL:', loginUrl);
-      const response = await fetch(loginUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          username: formData.username,
-          password: formData.password,
-        }).toString(),
-        credentials: 'same-origin',
-      });
-
-      console.log('Response status:', response.status);
-      const data = await response.json();
-      console.log('Response data:', data);
-
-      if (!response.ok) {
-        throw new Error(data.detail || "登录失败");
-      }
+      // 使用安全登录（RSA加密）
+      const data = await secureLogin(formData.username, formData.password);
 
       // 使用auth服务保存登录信息（包括token和用户数据）
       saveLoginInfo(data);

@@ -6,9 +6,6 @@ export interface VirtualInfo {
   gender?: string
   first?: string
   last?: string
-  gmail?: string
-  x?: string
-  discord?: string
   email?: string
   phone?: string
   street_number?: string
@@ -40,9 +37,6 @@ export interface VirtualInfoCreateDto {
   gender?: string
   first?: string
   last?: string
-  gmail?: string
-  x?: string
-  discord?: string
   email?: string
   phone?: string
   street_number?: string
@@ -64,7 +58,10 @@ export interface VirtualInfoCreateDto {
   remark?: string
 }
 
-export interface VirtualInfoUpdateDto extends VirtualInfoCreateDto {}
+export interface VirtualInfoUpdateDto extends VirtualInfoCreateDto {
+  // 继承所有创建字段，可以在这里添加更新特有的字段
+  id?: string; // 更新时可能需要的ID字段
+}
 
 export interface VirtualInfoSearchParams {
   first?: string

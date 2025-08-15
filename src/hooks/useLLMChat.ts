@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { getAuthToken } from '@/services/auth';
+import { buildLLMChatWebSocketUrl } from '@/utils/websocket-config';
 
 export interface LLMMessage {
   id: string;
@@ -111,10 +112,7 @@ export function useLLMChat({
 
     try {
       // 构建WebSocket URL
-      let wsUrl = `ws://localhost:8000/api/v1/ws/llm-chat/${userId}?token=${encodeURIComponent(token)}`;
-      if (configId) {
-        wsUrl += `&config_id=${configId}`;
-      }
+      const wsUrl = buildLLMChatWebSocketUrl(userId, token, configId);
       
       const ws = new WebSocket(wsUrl);
 
@@ -300,7 +298,7 @@ export function useLLMChat({
     return () => {
       disconnect();
     };
-  }, [userId, configId]); // 当userId或configId变化时重新连接
+  }, [userId, configId, connect, disconnect]);
 
   // 清理定时器
   useEffect(() => {

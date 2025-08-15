@@ -141,8 +141,6 @@ export function ModernChat({
             value={input}
             onChange={handleInputChange}
             allowAttachments={false}
-            files={files}
-            setFiles={setFiles}
             stop={stop}
             isGenerating={isGenerating}
             transcribeAudio={transcribeAudio}

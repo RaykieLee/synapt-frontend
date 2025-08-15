@@ -63,7 +63,7 @@ export function StreamingJsonDisplay({
     if (currentIndex < accumulatedContent.length) {
       typeNextChar();
     }
-  }, [accumulatedContent, isStreaming]);
+  }, [accumulatedContent, isStreaming, displayedContent.length]);
 
   // 滚动到底部
   useEffect(() => {

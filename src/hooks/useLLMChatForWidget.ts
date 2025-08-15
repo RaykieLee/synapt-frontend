@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { getAuthToken } from '@/services/auth';
 import { ChatMessage, ConnectionState, ChatEvents } from '@/types/chat';
+import { buildLLMChatWebSocketUrl } from '@/utils/websocket-config';
 
 interface UserInfo {
   userId: number;
@@ -144,7 +145,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
 
     try {
       // 使用LLM聊天WebSocket接口
-      const wsUrl = `ws://localhost:8000/api/v1/ws/llm-chat/${userId}?token=${encodeURIComponent(token)}`;
+      const wsUrl = buildLLMChatWebSocketUrl(userId, token);
       console.log('连接WebSocket URL:', wsUrl);
       const ws = new WebSocket(wsUrl);
 
@@ -296,7 +297,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
       updateConnectionState('disconnected');
       setConnectionError('创建WebSocket连接失败');
     }
-  }, [updateConnectionState, addMessage, updateLastMessage]);
+  }, [updateConnectionState, addMessage, updateLastMessage, user?.userId]);
 
   const connect = useCallback(() => {
     if (user?.userId) {
@@ -393,7 +394,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
         disconnect();
       }
     };
-  }, [user?.userId]); // 只依赖用户ID，避免循环连接
+  }, [user?.userId, connectToWebSocket, disconnect, user]);
 
   // 清理定时器
   useEffect(() => {

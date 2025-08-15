@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { getAuthToken } from "@/services/auth";
+import { buildChatWebSocketUrl } from "@/utils/websocket-config";
 
 interface Message {
   user_id: number;
@@ -49,7 +50,7 @@ export default function ChatPage() {
     if (!token) return;
 
     // 创建WebSocket连接，使用正确的API前缀路径
-    const wsUrl = `ws://localhost:8000/api/v1/ws/chat/${user.userId}?token=${encodeURIComponent(token)}`;
+    const wsUrl = buildChatWebSocketUrl(user.userId, token);
     console.log("Connecting to WebSocket:", wsUrl);
     const ws = new WebSocket(wsUrl);
 

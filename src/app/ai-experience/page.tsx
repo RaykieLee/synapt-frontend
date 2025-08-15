@@ -61,7 +61,7 @@ export default function AiExperiencePage() {
     }
   });
 
-  // 获取完整的菜单树
+  // 获取菜单树（现在已根据用户权限过滤）
   const { data: menuTree, isLoading: isLoadingMenuTree } = useQuery({
     queryKey: ['menuTree', menuId],
     enabled: !!menuId,

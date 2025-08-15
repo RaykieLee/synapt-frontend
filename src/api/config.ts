@@ -65,5 +65,27 @@ export const configAPI = {
   /**
    * 获取AI体验中心菜单配置
    */
-  getAiExperienceMenu: () => apiRequest<string>('/api/v1/system/configs/key/ai_experience_center_menu')
+  getAiExperienceMenu: () => apiRequest<string>('/api/v1/system/configs/key/ai_experience_center_menu'),
+
+  /**
+   * 根据key获取配置值
+   */
+  getConfigByKey: (key: string) => apiRequest<string>(`/api/v1/system/configs/key/${key}`, 'GET'),
+
+  /**
+   * 根据key更新配置
+   */
+  updateConfigByKey: (key: string, data: Partial<ConfigUpdateDto>) => {
+    const requestBody = {
+      config_name: data.config_name,
+      config_key: data.config_key,
+      config_value: data.config_value,
+      status: data.status,
+      remark: data.remark,
+      group_name: data.group_name,
+      is_frontend: data.is_frontend
+    };
+
+    return apiRequest<Config>(`/api/v1/system/configs/key/${key}`, 'PUT', requestBody);
+  },
 }; 

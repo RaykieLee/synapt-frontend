@@ -230,7 +230,7 @@ export function RunDataTable<TData extends object, TValue>({
         </div>
       </div>
       
-      <DataTablePagination 
+      <DataTablePagination
         table={table}
         onPageChange={(page) => {
           // 手动分页时需要手动设置table状态
@@ -239,9 +239,6 @@ export function RunDataTable<TData extends object, TValue>({
             onPageChange(page);
           }
         }}
-        pageCount={pageCount || 1}
-        pageIndex={pageIndex}
-        pageSize={pageSize}
       />
     </div>
   )

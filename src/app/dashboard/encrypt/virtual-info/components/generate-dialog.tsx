@@ -20,10 +20,10 @@ import { Loader2, Wand2, CheckCircle, XCircle, AlertCircle } from "lucide-react"
 
 import { virtualInfoAPI } from "@/api/encrypt"
 import { proxyAPI } from "@/api/encrypt"
-import type { 
-  VirtualInfoGenerateRequest, 
+import type {
+  VirtualInfoGenerateRequest,
   VirtualInfoBatchGenerateResult,
-  Proxy
+  ProxyEntity
 } from "@/types/encrypt"
 
 interface GenerateDialogProps {
@@ -257,10 +257,10 @@ export function GenerateDialog({ open, onOpenChange }: GenerateDialogProps) {
                         <SelectValue placeholder="选择代理服务器" />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableProxies.map((proxy: Proxy) => (
+                        {availableProxies.map((proxy: ProxyEntity) => (
                           <SelectItem key={proxy.id} value={proxy.id}>
                             {proxy.host}:{proxy.port} ({proxy.proxy_type})
-                            {proxy.location && ` - ${proxy.location}`}
+                            {proxy.group && ` - ${proxy.group}`}
                           </SelectItem>
                         ))}
                       </SelectContent>

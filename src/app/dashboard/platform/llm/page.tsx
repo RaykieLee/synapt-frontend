@@ -7,18 +7,20 @@ import { toast } from "sonner";
 import { DataTable } from "./components/data-table";
 import { getColumns } from "./components/columns";
 import { CreateEditDialog } from "./components/create-edit-dialog";
-import { llmConfigAPI } from "@/api/llm-config";
+import { MCPConfigDialog } from "./components/mcp-config-dialog";
+import { llmConfigAPI } from "@/api/llm";
 import { 
   LLMConfig, 
   LLMConfigQuery, 
   LLMConfigSearchParams,
   LLMConfigListResponse 
-} from "@/types/llm-config";
+} from "@/types/llm";
 
 export default function LLMConfigPage() {
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingConfig, setEditingConfig] = useState<LLMConfig | null>(null);
+  const [isMCPConfigOpen, setIsMCPConfigOpen] = useState(false);
   
   // 查询参数状态
   const [query, setQuery] = useState<LLMConfigQuery>({
@@ -59,7 +61,7 @@ export default function LLMConfigPage() {
 
   // 获取配置列表
   const { data: response, isLoading } = useQuery({
-    queryKey: ["llm-config", "list", query],
+    queryKey: ["llm", "list", query],
     queryFn: () => llmConfigAPI.getList(query),
   });
 
@@ -73,7 +75,7 @@ export default function LLMConfigPage() {
     mutationFn: (data: { ids: string[] }) => llmConfigAPI.batchDelete(data),
     onSuccess: () => {
       toast.success("删除成功");
-      queryClient.invalidateQueries({ queryKey: ["llm-config", "list"] });
+      queryClient.invalidateQueries({ queryKey: ["llm", "list"] });
     },
     onError: (error: any) => {
       toast.error(`删除失败: ${error.message}`);
@@ -108,7 +110,7 @@ export default function LLMConfigPage() {
 
   // 处理成功
   const handleSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ["llm-config", "list"] });
+    queryClient.invalidateQueries({ queryKey: ["llm", "list"] });
     setIsCreateDialogOpen(false);
     setEditingConfig(null);
   };
@@ -142,6 +144,7 @@ export default function LLMConfigPage() {
           onEdit={handleEdit}
           onBatchDelete={handleBatchDelete}
           onAddNew={handleCreate}
+          onMCPConfig={() => setIsMCPConfigOpen(true)}
         />
 
         <CreateEditDialog
@@ -149,6 +152,11 @@ export default function LLMConfigPage() {
           onOpenChange={setIsCreateDialogOpen}
           config={editingConfig}
           onSuccess={handleSuccess}
+        />
+        
+        <MCPConfigDialog
+          open={isMCPConfigOpen}
+          onOpenChange={setIsMCPConfigOpen}
         />
       </div>
     </div>

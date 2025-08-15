@@ -24,10 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { TreeCheckbox } from "@/components/ui/tree-checkbox"
-
 import { roleApi } from "@/api/role"
-import { Role, RoleUpdateDto, MenuNode } from "@/types/role"
+import { Role, RoleUpdateDto } from "@/types/role"
 
 interface EditRoleDialogProps {
   open: boolean
@@ -46,16 +44,8 @@ export function EditRoleDialog({
 
   // 表单状态
   const [formData, setFormData] = useState<Partial<RoleUpdateDto>>({})
-  const [selectedMenuIds, setSelectedMenuIds] = useState<number[]>([])
 
-  // 获取菜单树
-  const { data: menuTree = [] } = useQuery<MenuNode[]>({
-    queryKey: ['menuTree'],
-    queryFn: () => roleApi.getMenuTree(),
-    staleTime: 5 * 60 * 1000,
-  })
-
-  // 获取角色详情（包含菜单权限）
+  // 获取角色详情
   const { data: roleDetail, isLoading: isLoadingDetail } = useQuery({
     queryKey: ['role', 'detail', role?.role_id],
     queryFn: () => roleApi.getDetail(role!.role_id),
@@ -92,10 +82,8 @@ export function EditRoleDialog({
         role_key: roleDetail.role_key,
         role_sort: roleDetail.role_sort,
         status: roleDetail.status,
-        remark: roleDetail.remark || "",
-        menu_ids: roleDetail.menu_ids || []
+        remark: roleDetail.remark || ""
       })
-      setSelectedMenuIds(roleDetail.menu_ids || [])
     }
   }, [roleDetail, open])
 
@@ -103,7 +91,6 @@ export function EditRoleDialog({
   useEffect(() => {
     if (!open) {
       setFormData({})
-      setSelectedMenuIds([])
     }
   }, [open])
 
@@ -122,8 +109,7 @@ export function EditRoleDialog({
     }
 
     const updateData: RoleUpdateDto = {
-      ...formData as RoleUpdateDto,
-      menu_ids: selectedMenuIds
+      ...formData as RoleUpdateDto
     }
 
     updateMutation.mutate({
@@ -237,24 +223,7 @@ export function EditRoleDialog({
               />
             </div>
 
-            {/* 菜单权限 */}
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label className="text-right pt-2">菜单权限</Label>
-              <div className="col-span-3 max-h-[300px] overflow-auto border rounded-md p-3">
-                {menuTree.length > 0 ? (
-                  menuTree.map(node => (
-                    <TreeCheckbox
-                      key={node.id}
-                      node={node}
-                      selectedIds={selectedMenuIds}
-                      onSelectedChange={setSelectedMenuIds}
-                    />
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-sm">加载菜单权限中...</p>
-                )}
-              </div>
-            </div>
+
           </div>
         )}
 

@@ -1,6 +1,6 @@
 import { apiRequest } from "@/lib/api";
 import { Stream, StreamCreateDto, StreamQuery, StreamUpdateDto } from "@/types/stream";
-import { BaseResponse, PageResult } from "@/types/base";
+import { PageResult } from "@/types/base";
 
 export const streamAPI = {
   // 获取视频流列表

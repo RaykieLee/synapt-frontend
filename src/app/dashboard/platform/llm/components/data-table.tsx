@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table";
 
 import { DataTableToolbar } from "./data-table-toolbar";
-import { LLMConfig, LLMConfigSearchParams } from "@/types/llm-config";
+import { LLMConfig, LLMConfigSearchParams } from "@/types/llm";
 import { DataTablePagination } from "@/components/shared/data-table";
 
 interface DataTableProps {
@@ -39,6 +39,7 @@ interface DataTableProps {
   onEdit: (config: LLMConfig) => void;
   onBatchDelete: (selectedIds: string[]) => void;
   onAddNew: () => void;
+  onMCPConfig?: () => void;
 }
 
 export function DataTable({
@@ -53,6 +54,7 @@ export function DataTable({
   onEdit,
   onBatchDelete,
   onAddNew,
+  onMCPConfig,
 }: DataTableProps) {
   const [rowSelection, setRowSelection] = useState({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -100,6 +102,7 @@ export function DataTable({
         onSearch={onSearch} 
         onAddNew={onAddNew}
         onBatchDelete={handleBatchDelete}
+        onMCPConfig={onMCPConfig}
       />
 
       <div className="rounded-md border min-h-[520px]">
