@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, Sun, Moon, Laptop } from "lucide-react"
+import { Check, Sun, Moon, Laptop, Monitor, Square, Columns, Move } from "lucide-react"
 import { useTheme } from "next-themes"
 
 import { cn } from "@/lib/utils"
@@ -51,6 +51,14 @@ export function ThemeConfig({ open, onOpenChange }: { open?: boolean, onOpenChan
     }
     return "#0ea5e9"
   })
+  
+  // 本地存储页面留白比例设置
+  const [containerStyle, setContainerStyle] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("ui-container-style") || "container"
+    }
+    return "container"
+  })
 
   // 确保在客户端渲染后再显示UI
   useEffect(() => {
@@ -60,6 +68,7 @@ export function ThemeConfig({ open, onOpenChange }: { open?: boolean, onOpenChan
     if (typeof window !== "undefined") {
       const savedColor = localStorage.getItem("ui-primary-color")
       const savedRadius = localStorage.getItem("ui-radius")
+      const savedContainerStyle = localStorage.getItem("ui-container-style")
       
       if (savedRadius) {
         const radiusValue = parseFloat(savedRadius)
@@ -166,6 +175,11 @@ export function ThemeConfig({ open, onOpenChange }: { open?: boolean, onOpenChan
           applyColorStyles(savedColor)
           setPrimaryColor(savedColor)
         })
+      }
+      
+      // 应用保存的容器样式
+      if (savedContainerStyle) {
+        setContainerStyle(savedContainerStyle)
       }
     }
   }, [])
@@ -280,6 +294,55 @@ export function ThemeConfig({ open, onOpenChange }: { open?: boolean, onOpenChan
     }
   }, [primaryColor, mounted])
 
+  // 更新页面留白比例
+  useEffect(() => {
+    if (mounted) {
+      // 保存到本地存储
+      localStorage.setItem("ui-container-style", containerStyle)
+      
+      // 应用到页面 - 直接修改容器类
+      const applyContainerStyle = () => {
+        // 查找页面中的主要容器元素
+        const containerElements = document.querySelectorAll(
+          '.container, [class*="max-w-6xl"], [class*="max-w-full"], [class*="min-h-screen"]'
+        )
+        
+        containerElements.forEach(element => {
+          const el = element as HTMLElement
+          const classList = el.classList
+          
+          // 移除所有容器相关的类
+          classList.remove(
+            'container', 
+            'max-w-6xl', 
+            'max-w-7xl', 
+            'max-w-full', 
+            'max-w-screen-xl',
+            'mx-auto'
+          )
+          
+          // 根据选择添加相应的类
+          switch(containerStyle) {
+            case 'full':
+              classList.add('max-w-full', 'mx-auto')
+              break
+            case 'auto':
+              classList.add('container', 'mx-auto')
+              break
+            case 'small':
+              classList.add('max-w-6xl', 'mx-auto')
+              break
+            default:
+              classList.add('container', 'mx-auto')
+          }
+        })
+      }
+      
+      // 延迟执行以确保DOM完全加载
+      setTimeout(applyContainerStyle, 100)
+    }
+  }, [containerStyle, mounted])
+
   if (!mounted) {
     return null
   }
@@ -307,10 +370,11 @@ export function ThemeConfig({ open, onOpenChange }: { open?: boolean, onOpenChan
         </DialogHeader>
         
         <Tabs defaultValue="mode" className="mt-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="mode">浅色/深色</TabsTrigger>
             <TabsTrigger value="color">主题色</TabsTrigger>
             <TabsTrigger value="radius">圆角半径</TabsTrigger>
+            <TabsTrigger value="container">页面宽度</TabsTrigger>
           </TabsList>
           
           <TabsContent value="mode" className="py-4">
@@ -428,6 +492,55 @@ export function ThemeConfig({ open, onOpenChange }: { open?: boolean, onOpenChan
               <div className="mt-2 flex justify-between text-xs text-muted-foreground">
                 <span>直角</span>
                 <span>圆角</span>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="container" className="py-4">
+            <div className="mb-4">
+              <Label>页面宽度</Label>
+              <div className="mt-4 grid grid-cols-3 gap-4">
+                <div
+                  className={cn(
+                    "flex flex-col items-center justify-between rounded-md border-2 p-4 cursor-pointer",
+                    containerStyle === "full" 
+                      ? "border-primary bg-primary/10" 
+                      : "border-muted bg-popover hover:bg-accent"
+                  )}
+                  onClick={() => setContainerStyle("full")}
+                >
+                  <Square className="mb-3 h-6 w-6" />
+                  <span className="text-sm font-medium">铺满</span>
+                  <span className="text-xs text-muted-foreground mt-1">全屏宽度</span>
+                </div>
+                
+                <div
+                  className={cn(
+                    "flex flex-col items-center justify-between rounded-md border-2 p-4 cursor-pointer",
+                    containerStyle === "auto" 
+                      ? "border-primary bg-primary/10" 
+                      : "border-muted bg-popover hover:bg-accent"
+                  )}
+                  onClick={() => setContainerStyle("auto")}
+                >
+                  <Monitor className="mb-3 h-6 w-6" />
+                  <span className="text-sm font-medium">自动</span>
+                  <span className="text-xs text-muted-foreground mt-1">响应式宽度</span>
+                </div>
+                
+                <div
+                  className={cn(
+                    "flex flex-col items-center justify-between rounded-md border-2 p-4 cursor-pointer",
+                    containerStyle === "small" 
+                      ? "border-primary bg-primary/10" 
+                      : "border-muted bg-popover hover:bg-accent"
+                  )}
+                  onClick={() => setContainerStyle("small")}
+                >
+                  <Columns className="mb-3 h-6 w-6" />
+                  <span className="text-sm font-medium">偏小</span>
+                  <span className="text-xs text-muted-foreground mt-1">固定宽度</span>
+                </div>
               </div>
             </div>
           </TabsContent>

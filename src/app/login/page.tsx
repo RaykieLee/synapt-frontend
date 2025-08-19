@@ -1,20 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+// 移除未使用的 Card 相关组件（原布局已自定义容器）
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { saveLoginInfo } from "@/services/auth";
 import { secureLogin } from "@/utils/secure-auth";
 import { useToast } from "@/components/ui/use-toast";
-import FaceRecognition from "@/components/shared/face-recognition";
-import FaceRecognitionSimple from "@/components/shared/face-recognition-simple";
-import { faceLogin, mockFaceLogin } from "@/services/faceRecognition";
+import FaceRecognitionSimple, { FaceRecognitionSimpleHandle } from "@/components/shared/face-recognition-simple";
+import { faceLogin as faceLoginService } from "@/services/faceRecognition";
 import { User, Camera } from "lucide-react";
 
 export default function LoginPage() {
@@ -24,6 +22,10 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [redirectPath, setRedirectPath] = useState("/dashboard");
   const [loginMethod, setLoginMethod] = useState<"password" | "face">("password");
+  const faceRef = useRef<FaceRecognitionSimpleHandle | null>(null);
+  const faceRetryTimer = useRef<NodeJS.Timeout | null>(null);
+  const faceAttempting = useRef(false);
+  const FACE_RETRY_INTERVAL = 2000; // 2s
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -81,47 +83,56 @@ export default function LoginPage() {
     }
   };
 
-  // 人脸识别成功回调
-  const handleFaceRecognitionSuccess = async (faceData: string) => {
+  const attemptFaceLogin = useCallback(async () => {
+    if (faceAttempting.current) return; // avoid overlap
+    const frame = faceRef.current?.capture();
+    if (!frame) return; // camera not ready yet
+    faceAttempting.current = true;
     setIsLoading(true);
-    
     try {
-      let data;
-      
-      try {
-        // 首先尝试调用真实的人脸识别登录API
-        data = await faceLogin(faceData);
-      } catch (error) {
-        // 如果API不存在或失败，使用模拟登录
-        console.log('使用模拟人脸登录:', error);
-        data = await mockFaceLogin(faceData);
-      }
-      
-      // 保存登录信息
+      const data = await faceLoginService(frame);
       saveLoginInfo(data);
-      
-      // 显示成功提示
-      toast({
-        title: "人脸登录成功",
-        description: `欢迎回来，${data.user_info.nickName || data.user_info.userName}`,
-      });
-      
-      // 清除保存的重定向路径
+      toast({ title: "人脸登录成功", description: `欢迎回来，${data.user_info.nickName || data.user_info.userName}` });
       localStorage.removeItem("redirectAfterLogin");
-      
-      // 跳转到保存的路径或默认的dashboard
       router.push(redirectPath);
-      
+      // success: stop retries
+      if (faceRetryTimer.current) clearTimeout(faceRetryTimer.current);
+      faceRetryTimer.current = null;
     } catch (err) {
       console.error('Face login error:', err);
-      toast({
-        title: "人脸登录失败",
-        description: err instanceof Error ? err.message : "人脸登录时发生错误",
-        variant: "destructive",
-      });
+  toast({ title: "人脸登录失败", description: err instanceof Error ? err.message : "人脸登录时发生错误", variant: "destructive" });
+      // schedule retry
+      faceRetryTimer.current = setTimeout(() => {
+        faceAttempting.current = false; // allow next attempt
+        attemptFaceLogin();
+      }, FACE_RETRY_INTERVAL);
     } finally {
+      faceAttempting.current = false;
       setIsLoading(false);
     }
+  }, [redirectPath, router, toast]);
+
+  // 初次进入“人脸识别”tab 2 秒后开始第一次尝试
+  useEffect(() => {
+    if (loginMethod === 'face') {
+      if (faceRetryTimer.current) clearTimeout(faceRetryTimer.current);
+      faceRetryTimer.current = setTimeout(() => {
+        attemptFaceLogin();
+      }, FACE_RETRY_INTERVAL);
+    } else {
+      // 切换走时清理
+      if (faceRetryTimer.current) clearTimeout(faceRetryTimer.current);
+      faceRetryTimer.current = null;
+      faceAttempting.current = false;
+    }
+    return () => {
+      if (faceRetryTimer.current) clearTimeout(faceRetryTimer.current);
+    };
+  }, [loginMethod, attemptFaceLogin]);
+
+  // 供旧组件自动回调一次的兼容：如果组件内部 autoCapture 触发 onSuccess，可忽略，改为我们统一调度
+  const handleFaceRecognitionSuccess = (_faceData: string) => {
+    // 不直接登录，等待调度器 attemptFaceLogin 捕获
   };
 
   // 人脸识别错误回调
@@ -131,90 +142,66 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-6">
-            <h2 className="text-2xl font-bold">顺畅人工智能应用平台</h2>
+    <div className="flex h-screen w-full items-center justify-center bg-gray-50 px-4">
+      <div className="flex w-full max-w-5xl rounded-2xl overflow-hidden shadow-xl bg-white ring-1 ring-gray-200">
+        {/* 左侧：图片展示 */}
+        <div className="relative hidden md:block md:w-1/2 bg-gray-100">
+          <Image
+            src="/images/data-reliability-verification/login.png"
+            alt="平台功能展示图"
+            fill
+            priority
+            sizes="(max-width: 768px) 0px, 50vw"
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-tr from-black/30 via-black/10 to-transparent" />
+          <div className="absolute bottom-4 left-4 right-4 text-white drop-shadow-md text-sm leading-relaxed">
+            如需更换图片：替换文件{" "}
+            <code className="bg-black/40 px-1 rounded">public/images/data-reliability-verification/login.png</code>{" "}
+            或修改{" "}
+            <code className="bg-black/40 px-1 rounded">src/app/login/page.tsx</code>{" "}中 Image 的 src。
           </div>
-          <CardTitle className="text-xl">登录系统</CardTitle>
-          <CardDescription>选择您偏好的登录方式</CardDescription>
-        </CardHeader>
-        
-        <CardContent>
+        </div>
+        {/* 右侧：表单 */}
+        <div className="flex flex-col md:w-1/2 w-full p-8 md:p-12">
+          <div className="mb-8 text-center md:text-left">
+            <h1 className="text-2xl font-bold tracking-wide">顺畅人工智能应用平台</h1>
+            <p className="mt-2 text-sm text-gray-500">请选择登录方式</p>
+          </div>
           <Tabs value={loginMethod} onValueChange={(value) => setLoginMethod(value as "password" | "face")} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-2 mb-2">
               <TabsTrigger value="password" className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                密码登录
+                <User className="w-4 h-4" /> 密码登录
               </TabsTrigger>
               <TabsTrigger value="face" className="flex items-center gap-2">
-                <Camera className="w-4 h-4" />
-                人脸识别
+                <Camera className="w-4 h-4" /> 人脸识别
               </TabsTrigger>
             </TabsList>
-            
             <TabsContent value="password" className="space-y-4 mt-4">
               <form onSubmit={handlePasswordLogin}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">用户名</Label>
-                <Input
-                  id="username"
-                  name="username"
-                  placeholder="请输入用户名"
-                  required
-                  value={formData.username}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">密码</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="请输入密码"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                />
-              </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "登录中..." : "登录"}
-              </Button>
-            </div>
-          </form>
-            </TabsContent>
-            
-            <TabsContent value="face" className="mt-4">
-              <div className="space-y-4">
-                <div className="text-sm text-gray-600 text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Camera className="w-4 h-4 text-blue-600" />
-                    <span className="font-medium text-blue-800">使用提示</span>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="username">用户名</Label>
+                    <Input id="username" name="username" placeholder="请输入用户名" required value={formData.username} onChange={handleChange} />
                   </div>
-                  <p>• 确保光线充足，面部清晰可见</p>
-                  <p>• 请正面面对摄像头，保持自然表情</p>
-                  <p>• 移除遮挡物如口罩、墨镜等</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">密码</Label>
+                    <Input id="password" name="password" type="password" placeholder="请输入密码" required value={formData.password} onChange={handleChange} />
+                  </div>
+                  {error && <p className="text-sm text-red-500">{error}</p>}
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "登录中..." : "登录"}
+                  </Button>
                 </div>
-                
-                <FaceRecognitionSimple
-                  onSuccess={handleFaceRecognitionSuccess}
-                  onError={handleFaceRecognitionError}
-                />
-              </div>
+              </form>
+            </TabsContent>
+            <TabsContent value="face" className="mt-2">
+              <FaceRecognitionSimple ref={faceRef} onSuccess={handleFaceRecognitionSuccess} onError={handleFaceRecognitionError} autoCapture={false} />
             </TabsContent>
           </Tabs>
-        </CardContent>
-        
-        <CardFooter className="flex flex-col">
-          <p className="text-sm text-center text-gray-500 mt-4">
-            © {new Date().getFullYear()} 顺畅人工智能应用平台. 版权所有.
-          </p>
-        </CardFooter>
-      </Card>
+          <div className="mt-auto pt-8 text-center text-xs text-gray-400">© {new Date().getFullYear()} 顺畅人工智能应用平台. 版权所有.</div>
+        </div>
+      </div>
     </div>
   );
 } 

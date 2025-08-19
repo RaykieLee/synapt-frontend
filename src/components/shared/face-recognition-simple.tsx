@@ -1,185 +1,100 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, CameraOff, User } from "lucide-react";
+import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
-interface FaceRecognitionSimpleProps {
-  onSuccess?: (faceData: string) => void;
-  onError?: (error: string) => void;
+export interface FaceRecognitionSimpleHandle {
+  /** 手动截取当前帧 (返回 base64 或 null 若未就绪) */
+  capture: () => string | null;
 }
 
-export default function FaceRecognitionSimple({
-  onSuccess,
-  onError,
-}: FaceRecognitionSimpleProps) {
+interface FaceRecognitionSimpleProps {
+  onSuccess?: (faceData: string) => void; // 自动/手动截取成功回调
+  onError?: (error: string) => void;
+  /** 是否在视频可播放时立即截取一次 (默认 true) */
+  autoCapture?: boolean;
+}
+
+const FaceRecognitionSimple = forwardRef<FaceRecognitionSimpleHandle, FaceRecognitionSimpleProps>(
+  ({ onSuccess, onError, autoCapture = true }, ref) => {
   const { toast } = useToast();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [error, setError] = useState<string>("");
+  const autoCapturedRef = useRef(false); // 仅限制自动截取; 手动可多次
+  const [hasError, setHasError] = useState(false);
 
-  // 启动摄像头 - 简化版本
   const startCamera = useCallback(async () => {
     try {
-      setError("");
-      console.log('启动摄像头...');
-      
-      // 检查浏览器支持
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('您的浏览器不支持摄像头功能');
-      }
-      
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: false
-      });
-      
-      console.log('获取到视频流:', stream);
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error("浏览器不支持摄像头");
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       streamRef.current = stream;
-      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        
-        // 立即设置状态
-        setIsStreaming(true);
-        
-        // 尝试播放
-        videoRef.current.play().catch(err => {
-          console.error('播放视频失败:', err);
-        });
-        
-        console.log('视频设置完成');
+        await videoRef.current.play().catch(() => {});
       }
-    } catch (error) {
-      console.error('启动摄像头失败:', error);
-      const errorMessage = error instanceof Error ? error.message : '启动摄像头失败';
-      setError(errorMessage);
-      onError?.(errorMessage);
-      toast({
-        title: "摄像头启动失败",
-        description: errorMessage,
-        variant: "destructive",
-      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "启动摄像头失败";
+      setHasError(true);
+      onError?.(msg);
+      toast({ title: "摄像头错误", description: msg, variant: "destructive" });
     }
   }, [onError, toast]);
 
-  // 停止摄像头
-  const stopCamera = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => {
-        track.stop();
-        console.log('停止摄像头轨道:', track);
-      });
-      streamRef.current = null;
-    }
-    setIsStreaming(false);
-    setError("");
-  }, []);
+  const doCapture = useCallback((markAuto = false): string | null => {
+    if (!videoRef.current) return null;
+    const v = videoRef.current;
+    if (!v.videoWidth) return null; // metadata not ready
+    if (markAuto && autoCapturedRef.current) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = v.videoWidth;
+    canvas.height = v.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(v, 0, 0);
+    const data = canvas.toDataURL("image/jpeg", 0.85);
+    if (markAuto) autoCapturedRef.current = true;
+    onSuccess?.(data);
+    return data;
+  }, [onSuccess]);
 
-  // 测试拍照
-  const capturePhoto = useCallback(() => {
-    if (videoRef.current) {
-      const canvas = document.createElement('canvas');
-      const video = videoRef.current;
-      
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-      
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0);
-        const imageData = canvas.toDataURL('image/jpeg', 0.8);
-        
-        toast({
-          title: "拍照成功",
-          description: "图像已捕获",
-        });
-        
-        onSuccess?.(imageData);
-      }
-    }
-  }, [onSuccess, toast]);
+  // 提供给父组件的手动截取方法
+  useImperativeHandle(ref, () => ({
+    capture: () => doCapture(false),
+  }), [doCapture]);
 
-  // 组件卸载时清理
+  // 启动摄像头
   useEffect(() => {
+    startCamera();
     return () => {
-      stopCamera();
+      streamRef.current?.getTracks().forEach(t => t.stop());
     };
-  }, [stopCamera]);
+  }, [startCamera]);
+
+  // 当视频可以播放时自动截取（可关闭）
+  const handleCanPlay = () => {
+    if (autoCapture) doCapture(true);
+  };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="text-center">
-        <CardTitle className="flex items-center justify-center gap-2">
-          <User className="w-5 h-5" />
-          摄像头测试
-        </CardTitle>
-        <CardDescription>简化的摄像头功能测试</CardDescription>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        {/* 视频预览区域 */}
-        <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200">
-          {!isStreaming ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center text-gray-500">
-                <Camera className="w-12 h-12 mx-auto mb-2" />
-                <p>点击下方按钮启动摄像头</p>
-                {error && (
-                  <p className="text-red-500 text-sm mt-2">{error}</p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="relative w-full h-full">
-              <video
-                ref={videoRef}
-                className="w-full h-full object-cover"
-                playsInline
-                muted
-                autoPlay
-              />
-              <div className="absolute top-2 left-2">
-                <div className="flex items-center gap-2 px-2 py-1 bg-green-500 text-white text-xs rounded">
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                  直播中
-                </div>
-              </div>
-            </div>
-          )}
+    <div className="relative w-full max-w-xs mx-auto aspect-square rounded-full overflow-hidden bg-black ring-2 ring-black/20 animate-fade-in">
+      <video
+        ref={videoRef}
+        className="w-full h-full object-cover"
+        playsInline
+        muted
+        autoPlay
+        onCanPlay={handleCanPlay}
+      />
+      {!hasError && <div className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-white/20" />}
+      {hasError && (
+        <div className="absolute inset-0 flex items-center justify-center text-sm text-red-400 bg-red-950/40 rounded-full">
+          摄像头不可用
         </div>
-
-        {/* 控制按钮 */}
-        <div className="space-y-2">
-          {!isStreaming ? (
-            <Button onClick={startCamera} className="w-full" size="lg">
-              <Camera className="w-4 h-4 mr-2" />
-              启动摄像头
-            </Button>
-          ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <Button onClick={capturePhoto} className="w-full">
-                拍照测试
-              </Button>
-              <Button onClick={stopCamera} variant="outline" className="w-full">
-                <CameraOff className="w-4 h-4 mr-2" />
-                停止
-              </Button>
-            </div>
-          )}
-        </div>
-        
-        {/* 调试信息 */}
-        <div className="text-xs text-gray-500 space-y-1">
-          <p>状态: {isStreaming ? '摄像头已启动' : '摄像头未启动'}</p>
-          <p>流对象: {streamRef.current ? '已获取' : '未获取'}</p>
-          <p>视频元素: {videoRef.current ? '已创建' : '未创建'}</p>
-        </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
-} 
+});
+
+FaceRecognitionSimple.displayName = "FaceRecognitionSimple";
+
+export default FaceRecognitionSimple;

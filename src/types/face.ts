@@ -79,6 +79,9 @@ export interface FacePerson {
   status: string
   remark?: string
   library?: FaceLibrary
+  user_id?: number
+  user_name?: string
+  nick_name?: string
   create_time?: string
   create_by?: string
   update_time?: string

@@ -83,8 +83,10 @@ export const facePersonAPI = {
   },
 
   // 获取所有启用的人员（用于下拉选择）
-  getAll: (library_id?: string) =>
-    apiRequest<FacePerson[]>(`/api/v1/platform/face/person/all${library_id ? `?library_id=${library_id}` : ''}`, "GET"),
+  getAll: (library_id?: string) => {
+    const url = library_id ? `/api/v1/platform/face/person/all?library_id=${library_id}` : "/api/v1/platform/face/person/all";
+    return apiRequest<FacePerson[]>(url, "GET");
+  },
 
   // 获取人员详情
   getDetail: (person_id: string) =>
@@ -105,6 +107,18 @@ export const facePersonAPI = {
   // 批量删除人员
   batchDelete: (person_ids: string[]) =>
     apiRequest<void>("/api/v1/platform/face/person/batch-delete", "POST", { person_ids }),
+
+  // 绑定用户
+  bindUser: (person_id: string, user_id: number) =>
+    apiRequest<any>(`/api/v1/platform/face/person/${person_id}/bind-user`, "POST", { user_id }),
+
+  // 解绑用户
+  unbindUser: (person_id: string) =>
+    apiRequest<boolean>(`/api/v1/platform/face/person/${person_id}/unbind-user`, "DELETE"),
+
+  // 获取绑定用户信息
+  getBoundUser: (person_id: string) =>
+    apiRequest<any>(`/api/v1/platform/face/person/${person_id}/user`, "GET"),
 };
 
 // 人脸图片API
