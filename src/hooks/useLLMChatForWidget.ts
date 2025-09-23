@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { getAuthToken } from '@/services/auth';
 import { ChatMessage, ConnectionState, ChatEvents } from '@/types/chat';
 import { buildLLMChatWebSocketUrl } from '@/utils/websocket-config';
+import { useAuth } from '@/contexts/auth-context';
 
 interface UserInfo {
   userId: number;
@@ -35,7 +36,8 @@ interface UseLLMChatForWidgetReturn {
 
 export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): UseLLMChatForWidgetReturn {
   const { maxMessages = 100, events } = options;
-  const [user, setUser] = useState<UserInfo | null>(null);
+  // 从全局认证上下文获取用户与令牌，避免本地存储读取导致的连接延迟
+  const { user: authUser, token: authToken } = useAuth();
   
   const [isOpen, setIsOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -52,7 +54,6 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
 
   const updateConnectionState = useCallback((state: ConnectionState) => {
     setIsConnected(state === 'connected');
-
     // 设置连接错误信息
     switch (state) {
       case 'connecting':
@@ -69,6 +70,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
         break;
       default:
         setConnectionError(undefined);
+        break;
     }
 
     events?.onConnectionStateChange?.(state);
@@ -77,7 +79,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
   const addMessage = useCallback((message: Omit<ChatMessage, 'id'>) => {
     const newMessage: ChatMessage = {
       ...message,
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
     };
 
     setMessages(prev => {
@@ -102,13 +104,13 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
     });
 
     // 如果聊天窗口未打开，增加未读计数
-    if (!isOpen && message.userId !== user?.userId?.toString()) {
+    if (!isOpen && message.userId !== authUser?.userId?.toString()) {
       setUnreadCount(prev => prev + 1);
     }
 
     events?.onMessage?.(newMessage);
     return newMessage;
-  }, [maxMessages, isOpen, user?.userId, events]);
+  }, [maxMessages, isOpen, authUser?.userId, events]);
 
   const updateLastMessage = useCallback((updates: Partial<ChatMessage>) => {
     setMessages(prev => {
@@ -132,7 +134,8 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
       return;
     }
 
-    const token = getAuthToken();
+    // 优先使用 AuthContext 中的 token，回退到存储中的 token
+    const token = authToken || getAuthToken();
     if (!token) {
       console.error('认证令牌未找到');
       setConnectionError('认证令牌未找到');
@@ -145,7 +148,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
 
     try {
       // 使用LLM聊天WebSocket接口
-      const wsUrl = buildLLMChatWebSocketUrl(userId, token);
+  const wsUrl = buildLLMChatWebSocketUrl(userId, token);
       console.log('连接WebSocket URL:', wsUrl);
       const ws = new WebSocket(wsUrl);
 
@@ -185,38 +188,115 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
 
             case 'assistant_streaming':
               setIsTyping(true);
-              // 更新或创建流式消息
+              // 更新或创建当前回答的流式消息（不覆盖前面已经产生的工具消息）
               setMessages(prev => {
                 const newMessages = [...prev];
-                const lastMessage = newMessages[newMessages.length - 1];
-                
-                if (lastMessage && lastMessage.userId === '0' && lastMessage.isStreaming) {
-                  // 更新现有的流式消息
-                  lastMessage.content = data.message;
+                // 从末尾向前查找最后一条处于流式状态的 AI 消息；
+                // 允许跨越工具消息与系统消息，但一旦遇到“用户”消息则停止，避免跨越到上一轮对话。
+                let idx = newMessages.length - 1;
+                let lastStreaming: ChatMessage | undefined;
+                for (; idx >= 0; idx--) {
+                  const m = newMessages[idx];
+                  if (m.userId === '0' && (m.isStreaming || m.type === 'assistant_streaming')) {
+                    lastStreaming = m;
+                    break;
+                  }
+                  if (m.type === 'user') {
+                    break; // 不跨越用户消息边界
+                  }
+                }
+                if (lastStreaming && (lastStreaming.isStreaming || lastStreaming.type === 'assistant_streaming')) {
+                  lastStreaming.content = data.message;
+                  lastStreaming.type = 'assistant_streaming';
+                  lastStreaming.isStreaming = true;
                 } else {
-                  // 创建新的流式消息
                   newMessages.push({
-                    id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
                     content: data.message,
                     userId: '0',
                     username: 'AI助手',
                     timestamp: new Date(data.timestamp),
-                    type: 'assistant',
+                    type: 'assistant_streaming',
                     isStreaming: true
                   });
                 }
-                
                 return newMessages;
               });
               break;
 
             case 'assistant':
               setIsTyping(false);
-              // 标记最后一条消息为完成状态
-              updateLastMessage({
-                content: data.message,
-                isStreaming: false
+              // 将最近一条流式AI消息标记为完成，保留内容
+              setMessages(prev => {
+                const newMessages = [...prev];
+                const isSummary = typeof data.message === 'string' && /^\s*工具调用完成[:：]/.test(data.message || '');
+                for (let i = newMessages.length - 1; i >= 0; i--) {
+                  const m = newMessages[i];
+                  if (m.userId === '0' && (m.isStreaming || m.type === 'assistant_streaming')) {
+                    // 如果是“工具调用完成”类的总结行，并且已有流式正文，保留原有正文而不覆盖
+                    const contentToUse = isSummary && (m.content?.trim()?.length ?? 0) > 0 ? m.content : data.message;
+                    newMessages[i] = { ...m, content: contentToUse, isStreaming: false, type: 'assistant' };
+                    return newMessages;
+                  }
+                  if (m.type === 'user') break; // 不跨越上一轮用户消息
+                }
+                // 如果没有找到流式消息：仅当不是总结行时才追加，避免一个只含“工具调用完成”的尾部泡泡
+                if (!isSummary) {
+                  newMessages.push({
+                    id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+                    content: data.message,
+                    userId: '0',
+                    username: 'AI助手',
+                    timestamp: new Date(data.timestamp),
+                    type: 'assistant',
+                  });
+                }
+                return newMessages;
               });
+              break;
+
+            case 'tool_start':
+              // 专门处理工具开始事件，按系统型工具步骤呈现
+              addMessage({
+                content: data.message,
+                userId: '0',
+                username: '系统',
+                timestamp: new Date(data.timestamp),
+                type: 'tool_start',
+                // @ts-ignore
+                metadata: data.metadata || {},
+              } as any);
+              break;
+
+            case 'tool_progress':
+            case 'tool_success':
+            case 'tool_error':
+            case 'tool_complete':
+              // 这些系统型工具状态作为独立的“思考/步骤”消息追加
+              addMessage({
+                content: data.message,
+                userId: '0',
+                username: '系统',
+                timestamp: new Date(data.timestamp),
+                type: data.type,
+                // @ts-ignore 附带元数据以便 UI 呈现“第x/y个工具”等
+                metadata: data.metadata || {},
+              } as any);
+              break;
+
+            case 'tool_result':
+              // 工具执行的输出，独立一条消息，方便展开查看
+              addMessage({
+                content: data.message,
+                userId: '0',
+                username: data.username || '工具调用',
+                timestamp: new Date(data.timestamp),
+                type: 'tool_result',
+                // @ts-ignore
+                toolName: data.tool_name,
+                // @ts-ignore
+                metadata: data.metadata || {},
+              } as any);
               break;
 
             case 'error':
@@ -275,8 +355,8 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
           console.log(`尝试重连 (${reconnectCountRef.current}/5)...`);
 
           reconnectTimeoutRef.current = setTimeout(() => {
-            if (user?.userId) {
-              connectToWebSocket(user.userId);
+            if (authUser?.userId) {
+              connectToWebSocket(authUser.userId);
             }
           }, 3000 * reconnectCountRef.current);
         } else {
@@ -297,15 +377,15 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
       updateConnectionState('disconnected');
       setConnectionError('创建WebSocket连接失败');
     }
-  }, [updateConnectionState, addMessage, updateLastMessage, user?.userId]);
+  }, [updateConnectionState, addMessage, updateLastMessage, authUser?.userId, authToken]);
 
   const connect = useCallback(() => {
-    if (user?.userId) {
-      connectToWebSocket(user.userId);
+    if (authUser?.userId) {
+      connectToWebSocket(authUser.userId);
     } else {
       setConnectionError('用户ID未提供');
     }
-  }, [user?.userId, connectToWebSocket]);
+  }, [authUser?.userId, connectToWebSocket]);
 
   const disconnect = useCallback(() => {
     isManualDisconnectRef.current = true;
@@ -351,50 +431,28 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
     setUnreadCount(0);
   }, []);
 
-  // 获取用户信息
-  useEffect(() => {
-    console.log('获取用户信息...');
-    const userInfoStr = localStorage.getItem('userInfo');
-    if (userInfoStr) {
-      try {
-        const userInfo = JSON.parse(userInfoStr);
-        console.log('用户信息获取成功:', userInfo);
-        setUser(userInfo);
-      } catch (error) {
-        console.error("Failed to parse user info:", error);
-        setConnectionError('用户信息解析失败');
-      }
-    } else {
-      console.log('未找到用户信息');
-      setConnectionError('请先登录');
-    }
-  }, []);
+  // 不再从本地存储拉取用户信息，直接依赖 AuthContext 提供的用户信息
 
   // 自动连接 - 只在用户ID变化时触发
   useEffect(() => {
-    console.log('useLLMChatForWidget useEffect triggered, user:', user);
+    console.log('useLLMChatForWidget useEffect triggered, user/token:', authUser, !!authToken);
 
-    if (user?.userId) {
-      console.log('用户ID存在:', user.userId, '开始连接WebSocket...');
-      connectToWebSocket(user.userId);
-    } else {
+    if (authUser?.userId && authToken) {
+      console.log('用户与令牌存在，开始预连接WebSocket...', authUser.userId);
+      connectToWebSocket(authUser.userId);
+    } else if (!authUser?.userId) {
       console.log('用户ID不存在，无法连接');
-      if (user === null) {
-        // 还在加载用户信息
-        setConnectionError('加载用户信息中...');
-      } else {
-        setConnectionError('用户未登录');
-      }
+      setConnectionError('用户未登录');
     }
 
-    // 清理函数：只在用户变化时断开连接
+    // 清理函数：当用户登出或丢失时断开连接
     return () => {
-      if (!user?.userId) {
+      if (!authUser?.userId) {
         console.log('用户信息清空，断开连接');
         disconnect();
       }
     };
-  }, [user?.userId, connectToWebSocket, disconnect, user]);
+  }, [authUser?.userId, authToken, connectToWebSocket, disconnect]);
 
   // 清理定时器
   useEffect(() => {
@@ -412,7 +470,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
     unreadCount,
     isTyping,
     connectionError,
-    user,
+    user: authUser as UserInfo | null,
     sendMessage,
     toggleOpen,
     markAsRead,

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useLLMChatForWidget } from './useLLMChatForWidget';
+import { useChatConnection } from '@/contexts/chat-connection-context';
 import { ModernMessage } from '@/components/ui/modern-chat';
 import { ChatMessage } from '@/types/chat';
 
@@ -10,7 +10,6 @@ interface UseChatAdapterOptions {
 
 export function useChatAdapter(options: UseChatAdapterOptions = {}) {
   const {
-    isOpen,
     isConnected,
     messages: chatMessages,
     unreadCount,
@@ -18,23 +17,31 @@ export function useChatAdapter(options: UseChatAdapterOptions = {}) {
     connectionError,
     user,
     sendMessage: originalSendMessage,
-    toggleOpen,
     markAsRead,
     connect,
     disconnect
-  } = useLLMChatForWidget(options);
+  } = useChatConnection();
 
   // 转换消息格式从 ChatMessage 到 ModernMessage
   const messages: ModernMessage[] = useMemo(() => {
-    return chatMessages.map((msg: ChatMessage) => ({
-      id: msg.id,
-      role: msg.type === 'user' ? 'user' as const : 
-            msg.type === 'system' ? 'system' as const : 
-            'assistant' as const,
-      content: msg.content,
-      timestamp: msg.timestamp,
-      isStreaming: msg.isStreaming
-    }));
+    return chatMessages.map((msg: ChatMessage) => {
+      let role: 'user' | 'assistant' | 'system' = 'assistant';
+      if (msg.type === 'user') {
+        role = 'user';
+      } else if (msg.type === 'system') {
+        role = 'system';
+      }
+      return {
+        id: msg.id,
+        role,
+        content: msg.content,
+        timestamp: msg.timestamp,
+        isStreaming: msg.isStreaming,
+        type: msg.type as any,
+        metadata: (msg as any).metadata,
+        toolName: (msg as any).toolName,
+      };
+    });
   }, [chatMessages]);
 
   // 适配 handleSubmit 函数
@@ -63,13 +70,11 @@ export function useChatAdapter(options: UseChatAdapterOptions = {}) {
     setMessages: () => {}, // 可以后续实现
     
     // 额外的状态
-    isOpen,
     isConnected,
     unreadCount,
     isTyping,
     connectionError,
     user,
-    toggleOpen,
     markAsRead,
     connect,
     disconnect,

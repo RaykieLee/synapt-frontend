@@ -147,7 +147,7 @@ export default function LoginPage() {
         {/* 左侧：图片展示 */}
         <div className="relative hidden md:block md:w-1/2 bg-gray-100">
           <Image
-            src="/images/data-reliability-verification/login.png"
+            src="/images/20221025.jpg"
             alt="平台功能展示图"
             fill
             priority
@@ -155,12 +155,6 @@ export default function LoginPage() {
             className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-tr from-black/30 via-black/10 to-transparent" />
-          <div className="absolute bottom-4 left-4 right-4 text-white drop-shadow-md text-sm leading-relaxed">
-            如需更换图片：替换文件{" "}
-            <code className="bg-black/40 px-1 rounded">public/images/data-reliability-verification/login.png</code>{" "}
-            或修改{" "}
-            <code className="bg-black/40 px-1 rounded">src/app/login/page.tsx</code>{" "}中 Image 的 src。
-          </div>
         </div>
         {/* 右侧：表单 */}
         <div className="flex flex-col md:w-1/2 w-full p-8 md:p-12">

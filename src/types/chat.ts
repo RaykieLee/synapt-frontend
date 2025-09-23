@@ -7,9 +7,11 @@ export interface ChatMessage {
   username?: string; // 兼容后端返回的字段名
   content: string;
   timestamp: Date;
-  type: 'text' | 'system' | 'error' | 'user' | 'assistant';
+  type: 'text' | 'system' | 'error' | 'user' | 'assistant' | 'tool_start' | 'tool_progress' | 'tool_success' | 'tool_error' | 'tool_complete' | 'tool_result' | 'assistant_streaming';
   isOwn?: boolean;
   isStreaming?: boolean; // 用于标识流式消息
+  toolName?: string; // 用于工具消息的显示
+  metadata?: Record<string, any>;
 }
 
 export interface ChatState {

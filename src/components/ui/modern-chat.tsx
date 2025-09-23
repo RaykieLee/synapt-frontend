@@ -2,7 +2,6 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageInput } from './message-input';
 import { MessageList } from './message-list';
@@ -15,6 +14,10 @@ export interface ModernMessage {
   content: string;
   timestamp?: Date;
   isStreaming?: boolean;
+  // Extended metadata to support tool/think rendering
+  type?: 'text' | 'system' | 'error' | 'user' | 'assistant' | 'tool_start' | 'tool_progress' | 'tool_success' | 'tool_error' | 'tool_complete' | 'tool_result' | 'assistant_streaming';
+  metadata?: Record<string, any>;
+  toolName?: string;
 }
 
 export interface ModernChatProps {
@@ -41,6 +44,7 @@ export interface ChatMessagesProps {
   messages: ModernMessage[];
   isTyping?: boolean;
   onRateResponse?: (messageId: string, rating: 'thumbs-up' | 'thumbs-down') => void;
+  showToolSteps?: boolean;
 }
 
 export interface ChatFormProps {
@@ -51,7 +55,7 @@ export interface ChatFormProps {
 }
 
 // ChatContainer Component
-export function ChatContainer({ children, className }: ChatContainerProps) {
+export function ChatContainer({ children, className }: Readonly<ChatContainerProps>) {
   return (
     <div className={cn("flex flex-col h-full max-h-[600px] w-full overflow-hidden", className)}>
       {children}
@@ -60,7 +64,7 @@ export function ChatContainer({ children, className }: ChatContainerProps) {
 }
 
 // ChatMessages Component
-export function ChatMessages({ messages, isTyping, onRateResponse }: ChatMessagesProps) {
+export function ChatMessages({ messages, isTyping, onRateResponse, showToolSteps }: Readonly<ChatMessagesProps>) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -75,7 +79,7 @@ export function ChatMessages({ messages, isTyping, onRateResponse }: ChatMessage
   return (
     <ScrollArea ref={scrollAreaRef} className="flex-1 px-4 min-h-0 max-h-full">
       <div className="py-4 space-y-4">
-        <MessageList messages={messages} onRateResponse={onRateResponse} />
+        <MessageList messages={messages} onRateResponse={onRateResponse} showToolSteps={showToolSteps} />
         {isTyping && <TypingIndicator />}
       </div>
     </ScrollArea>
@@ -83,7 +87,7 @@ export function ChatMessages({ messages, isTyping, onRateResponse }: ChatMessage
 }
 
 // ChatForm Component
-export function ChatForm({ isPending, handleSubmit, className, children }: ChatFormProps) {
+export function ChatForm({ isPending, handleSubmit, className, children }: Readonly<ChatFormProps>) {
   const [files, setFiles] = useState<File[] | null>(null);
 
   return (
@@ -107,10 +111,12 @@ export function ModernChat({
   onRateResponse,
   className,
   transcribeAudio
-}: ModernChatProps) {
+}: Readonly<ModernChatProps>) {
   const isEmpty = messages.length === 0;
   const lastMessage = messages.at(-1);
   const isTyping = lastMessage?.role === "user" && isGenerating;
+  // Always show tool steps per UX requirement
+  const showToolSteps = true;
 
   return (
     <ChatContainer className={className}>
@@ -128,6 +134,7 @@ export function ModernChat({
           messages={messages} 
           isTyping={isTyping}
           onRateResponse={onRateResponse}
+          showToolSteps={true}
         />
       ) : null}
 
