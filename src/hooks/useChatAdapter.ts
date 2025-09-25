@@ -19,17 +19,29 @@ export function useChatAdapter(options: UseChatAdapterOptions = {}) {
     sendMessage: originalSendMessage,
     markAsRead,
     connect,
-    disconnect
+    disconnect,
+    clearMessages
   } = useChatConnection();
 
   // 转换消息格式从 ChatMessage 到 ModernMessage
   const messages: ModernMessage[] = useMemo(() => {
     return chatMessages.map((msg: ChatMessage) => {
-      let role: 'user' | 'assistant' | 'system' = 'assistant';
+      // 基于后端 userId/消息类型更加精细地映射角色：
+      // - user: 用户消息
+      // - system: 系统状态、工具进度、工具结果 (包括后端 user_id = -1)
+      // - assistant: 纯模型回答/思考
+      let role: 'user' | 'assistant' | 'system';
+      const numericUserId = Number(msg.userId);
       if (msg.type === 'user') {
         role = 'user';
-      } else if (msg.type === 'system') {
+      } else if (
+        msg.type === 'system' ||
+        msg.type?.startsWith('tool_') ||
+        numericUserId === -1
+      ) {
         role = 'system';
+      } else {
+        role = 'assistant';
       }
       return {
         id: msg.id,
@@ -40,6 +52,9 @@ export function useChatAdapter(options: UseChatAdapterOptions = {}) {
         type: msg.type as any,
         metadata: (msg as any).metadata,
         toolName: (msg as any).toolName,
+        // 额外保留原始 userId 以便后续逻辑必要时使用
+        // @ts-ignore
+        userId: msg.userId,
       };
     });
   }, [chatMessages]);
@@ -68,6 +83,7 @@ export function useChatAdapter(options: UseChatAdapterOptions = {}) {
     stop: () => {}, // 可以后续实现停止功能
     append,
     setMessages: () => {}, // 可以后续实现
+    clearMessages,
     
     // 额外的状态
     isConnected,

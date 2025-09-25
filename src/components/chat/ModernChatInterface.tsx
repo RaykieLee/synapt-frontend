@@ -24,18 +24,18 @@ export function ModernChatInterface({
   onRateResponse,
   maxMessages = 100,
   events
-}: ModernChatInterfaceProps) {
+}: Readonly<ModernChatInterfaceProps>) {
   const [input, setInput] = useState('');
   
   const {
     messages,
-    handleSubmit: originalHandleSubmit,
     isLoading,
     stop,
     append,
     sendMessage,
     isConnected,
-    connectionError
+    connectionError,
+    clearMessages
   } = useChatAdapter({ maxMessages, events });
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -79,19 +79,11 @@ export function ModernChatInterface({
 
   return (
     <div className={cn("h-full flex flex-col overflow-hidden", className)}>
-      {/* 连接状态指示器 */}
+      {/* 顶部连接/状态栏已移除，清空后直接显示建议 */}
       {connectionError && (
         <div className="px-4 py-2 bg-destructive/10 border-b border-destructive/20 shrink-0">
           <div className="text-sm text-destructive text-center">
             {connectionError}
-          </div>
-        </div>
-      )}
-      
-      {!isConnected && !connectionError && (
-        <div className="px-4 py-2 bg-muted/50 border-b shrink-0">
-          <div className="text-sm text-muted-foreground text-center">
-            连接中...
           </div>
         </div>
       )}
@@ -110,6 +102,7 @@ export function ModernChatInterface({
           onRateResponse={onRateResponse}
           transcribeAudio={transcribeAudio}
           className="h-full"
+          clearMessages={clearMessages}
         />
       </div>
     </div>

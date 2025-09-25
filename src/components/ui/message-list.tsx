@@ -49,13 +49,13 @@ function CodeBlockRenderer({ inline, className, children, ...props }: any) {
 function ToolMessage({ message }: Readonly<{ message: ModernMessage }>) {
   if (message.type === 'tool_result') {
     return (
-      <Collapsible defaultOpen={true} className="border rounded-md">
+      <Collapsible defaultOpen={false} className="border rounded-md">
         <CollapsibleTrigger className="w-full flex items-center justify-between px-2 py-1.5 text-xs">
-          <span className="font-medium">工具结果{message.toolName ? ` · ${message.toolName}` : ''}</span>
-          <div className="flex items-center gap-1 text-muted-foreground">
-            <ChevronRight className="h-3.5 w-3.5 data-[state=open]:hidden" />
-            <ChevronDown className="h-3.5 w-3.5 hidden data-[state=open]:block" />
-          </div>
+            <span className="font-medium">工具结果{message.toolName ? ` · ${message.toolName}` : ''}</span>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <ChevronRight className="h-3.5 w-3.5 data-[state=open]:hidden" />
+              <ChevronDown className="h-3.5 w-3.5 hidden data-[state=open]:block" />
+            </div>
         </CollapsibleTrigger>
         <CollapsibleContent className="px-2 pb-2">
           <div className="prose prose-sm max-w-none dark:prose-invert">
@@ -115,9 +115,9 @@ function groupForRender(messages: ModernMessage[]): RenderItem[] {
   const isTool = (m: ModernMessage) => (m.type?.startsWith('tool_') ?? false);
   const isAssistantMsg = (m: ModernMessage) => m.role === 'assistant';
   const isToolSummarySystem = (m: ModernMessage) =>
-    m.role === 'system' && typeof m.content === 'string' && /^\s*工具调用完成[:：]/.test(m.content || ' ');
+    m.role === 'system' && typeof m.content === 'string' && /^\s*(?:🎯\s*)?工具调用完成[:：]/.test(m.content || ' ');
   const isUserOrSystemBoundary = (m: ModernMessage) =>
-    m.role === 'user' || (m.role === 'system' && !isToolSummarySystem(m));
+    m.role === 'user' || (m.role === 'system' && !isToolSummarySystem(m) && !isTool(m));
 
   const collectUntilNextUserOrSystem = (start: number) => {
     const tools: ModernMessage[] = [];
@@ -247,30 +247,38 @@ function StepRow({ m, isLast }: Readonly<{ m: ModernMessage; isLast: boolean }>)
 function ToolCallCard({ tools }: Readonly<{ tools: ModernMessage[] }>) {
   const toolNames = Array.from(new Set(tools.map(t => t.toolName).filter(Boolean))) as string[];
 
+  if (tools.length === 0) return null;
+
   return (
-    <div className="w-full rounded-lg border bg-card">
-      <div className="px-3 py-2 text-xs text-muted-foreground border-b bg-muted/50 flex items-center gap-2">
-        <span className="inline-flex items-center gap-1">
-          <Wrench className="h-3.5 w-3.5" />
-          工具调用
-        </span>
-        {toolNames.length > 0 && (
-          <div className="flex items-center gap-1 flex-wrap">
-            {toolNames.map((name) => (
-              <span key={name} className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                {name}
-              </span>
-            ))}
-          </div>
-        )}
-        <span className="ml-auto">步骤 {tools.length}</span>
-      </div>
-      <div className="p-3">
+    <Collapsible defaultOpen={false} className="w-full rounded-lg border bg-card">
+      <CollapsibleTrigger className="px-3 py-2 text-xs text-muted-foreground bg-muted/50 flex items-center gap-2 w-full text-left">
+        <div className="flex items-center gap-2 flex-1">
+          <span className="inline-flex items-center gap-1">
+            <Wrench className="h-3.5 w-3.5" />
+            工具调用
+          </span>
+          {toolNames.length > 0 && (
+            <div className="flex items-center gap-1 flex-wrap">
+              {toolNames.map((name) => (
+                <span key={name} className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                  {name}
+                </span>
+              ))}
+            </div>
+          )}
+          <span className="ml-auto">步骤 {tools.length}</span>
+        </div>
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <ChevronRight className="h-3.5 w-3.5 data-[state=open]:hidden" />
+          <ChevronDown className="h-3.5 w-3.5 hidden data-[state=open]:block" />
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="p-3 border-t">
         {tools.map((m, idx) => (
           <StepRow key={m.id} m={m} isLast={idx === tools.length - 1} />
         ))}
-      </div>
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -376,7 +384,7 @@ function AnswerBlock({ entry, onRateResponse }: Readonly<{ entry: Extract<Render
   ).toLowerCase();
   const assistantText = (lastAssistant?.content || '').trim().toLowerCase();
   // Also treat summary-only lines (e.g., "工具调用完成:") as non-renderable assistant bubbles
-  const isSummaryAssistant = !!lastAssistant && /^\s*工具调用完成[:：]/.test(lastAssistant.content || '');
+  const isSummaryAssistant = !!lastAssistant && /^\s*(?:🎯\s*)?工具调用完成[:：]/.test(lastAssistant.content || '');
   // Simple heuristic: if assistant includes a sizable prefix of tool result or vice versa, consider duplicate
   const sampleTool = toolResultText.slice(0, Math.min(160, toolResultText.length));
   const sampleAsst = assistantText.slice(0, Math.min(160, assistantText.length));
@@ -392,7 +400,7 @@ function AnswerBlock({ entry, onRateResponse }: Readonly<{ entry: Extract<Render
         </AvatarFallback>
       </Avatar>
       <div className="flex flex-col max-w-[80%] items-start w-full">
-        <ToolCallCard tools={entry.tools} />
+  {entry.tools.length > 0 && <ToolCallCard tools={entry.tools} />}
 
         {lastAssistant && !isDuplicate && !isSummaryAssistant && (
           <div className="mt-1">
@@ -421,9 +429,11 @@ export function MessageList({ messages, onRateResponse, className, currentUser, 
     }).format(new Date(timestamp));
   };
 
+  // 过滤掉前端不希望展示的系统提示，比如 对话已清空
+  const filteredMessages = messages.filter(m => !(m.type === 'system' && /对话已清空/.test(m.content)));
   const renderItems: RenderItem[] = showToolSteps
-    ? groupForRender(messages)
-    : messages.map((m) => ({ kind: 'message', message: m } as RenderItem));
+    ? groupForRender(filteredMessages)
+    : filteredMessages.map((m) => ({ kind: 'message', message: m } as RenderItem));
 
   return (
     <TooltipProvider>

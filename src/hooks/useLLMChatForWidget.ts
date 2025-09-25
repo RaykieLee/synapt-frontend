@@ -32,6 +32,7 @@ interface UseLLMChatForWidgetReturn {
   markAsRead: () => void;
   connect: () => void;
   disconnect: () => void;
+  clearMessages: () => void;
 }
 
 export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): UseLLMChatForWidgetReturn {
@@ -164,12 +165,15 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
         try {
           const data = JSON.parse(event.data);
           console.log('LLM WebSocket message:', data);
+          // 统一的“工具调用完成”总结行匹配（允许前置🎯 emoji 与空白）
+          const TOOL_COMPLETE_REGEX = /^\s*(?:🎯\s*)?工具调用完成[:：]/;
 
           switch (data.type) {
             case 'system':
               addMessage({
                 content: data.message,
-                userId: '0',
+                // 保留后端的 user_id（避免一律用'0'而丢失 -1 等语义）
+                userId: (data.user_id ?? 0).toString(),
                 username: '系统',
                 timestamp: new Date(data.timestamp),
                 type: 'system'
@@ -229,7 +233,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
               // 将最近一条流式AI消息标记为完成，保留内容
               setMessages(prev => {
                 const newMessages = [...prev];
-                const isSummary = typeof data.message === 'string' && /^\s*工具调用完成[:：]/.test(data.message || '');
+                const isSummary = typeof data.message === 'string' && TOOL_COMPLETE_REGEX.test(data.message || '');
                 for (let i = newMessages.length - 1; i >= 0; i--) {
                   const m = newMessages[i];
                   if (m.userId === '0' && (m.isStreaming || m.type === 'assistant_streaming')) {
@@ -259,7 +263,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
               // 专门处理工具开始事件，按系统型工具步骤呈现
               addMessage({
                 content: data.message,
-                userId: '0',
+                userId: (data.user_id ?? 0).toString(),
                 username: '系统',
                 timestamp: new Date(data.timestamp),
                 type: 'tool_start',
@@ -275,7 +279,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
               // 这些系统型工具状态作为独立的“思考/步骤”消息追加
               addMessage({
                 content: data.message,
-                userId: '0',
+                userId: (data.user_id ?? 0).toString(),
                 username: '系统',
                 timestamp: new Date(data.timestamp),
                 type: data.type,
@@ -288,7 +292,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
               // 工具执行的输出，独立一条消息，方便展开查看
               addMessage({
                 content: data.message,
-                userId: '0',
+                userId: (data.user_id ?? -1).toString(),
                 username: data.username || '工具调用',
                 timestamp: new Date(data.timestamp),
                 type: 'tool_result',
@@ -303,7 +307,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
               setIsTyping(false);
               addMessage({
                 content: data.message,
-                userId: '0',
+                userId: (data.user_id ?? 0).toString(),
                 username: '系统',
                 timestamp: new Date(data.timestamp),
                 type: 'error'
@@ -475,6 +479,18 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
     toggleOpen,
     markAsRead,
     connect,
-    disconnect
+    disconnect,
+    clearMessages: () => {
+      // 本地清空
+      setMessages([]);
+      // 通知后端清空
+      try {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send("__CLEAR__");
+        }
+      } catch (e) {
+        console.warn('发送__CLEAR__失败', e);
+      }
+    }
   };
 }

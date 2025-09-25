@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowUp, Info, Loader2, Mic, Paperclip, Square, X } from "lucide-react"
+import { ArrowUp, Info, Loader2, Mic, Paperclip, Square, X, Trash2 } from "lucide-react"
 import { omit } from "remeda"
 
 import { cn } from "@/lib/utils"
@@ -21,6 +21,8 @@ interface MessageInputBaseProps
   isGenerating: boolean
   enableInterrupt?: boolean
   transcribeAudio?: (blob: Blob) => Promise<string>
+  onClear?: () => void
+  canClear?: boolean
 }
 
 interface MessageInputWithoutAttachmentProps extends MessageInputBaseProps {
@@ -38,7 +40,7 @@ type MessageInputProps =
   | MessageInputWithAttachmentsProps
 
 export function MessageInput({
-  placeholder = "Ask AI...",
+  placeholder = "",
   className,
   onKeyDown: onKeyDownProp,
   submitOnEnter = true,
@@ -46,6 +48,8 @@ export function MessageInput({
   isGenerating,
   enableInterrupt = true,
   transcribeAudio,
+  onClear,
+  canClear,
   ...props
 }: MessageInputProps) {
   const [isDragging, setIsDragging] = useState(false)
@@ -259,6 +263,18 @@ export function MessageInput({
             }}
           >
             <Paperclip className="h-4 w-4" />
+          </Button>
+        )}
+        {onClear && canClear && (
+          <Button
+            type="button"
+            variant="outline"
+            className="h-8 w-8"
+            aria-label="清空对话"
+            size="icon"
+            onClick={onClear}
+          >
+            <Trash2 className="h-4 w-4" />
           </Button>
         )}
         {isSpeechSupported && (

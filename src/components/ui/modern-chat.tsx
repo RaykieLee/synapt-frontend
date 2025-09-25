@@ -28,6 +28,7 @@ export interface ModernChatProps {
   isGenerating?: boolean;
   stop?: () => void;
   setMessages?: (messages: ModernMessage[]) => void;
+  clearMessages?: () => void;
   append?: (message: ModernMessage) => void;
   suggestions?: string[];
   onRateResponse?: (messageId: string, rating: 'thumbs-up' | 'thumbs-down') => void;
@@ -106,20 +107,22 @@ export function ModernChat({
   isGenerating = false,
   stop,
   setMessages,
+  clearMessages,
   append,
   suggestions = [],
   onRateResponse,
   className,
   transcribeAudio
 }: Readonly<ModernChatProps>) {
-  const isEmpty = messages.length === 0;
+  // 会话是否为空：允许后端返回的“对话已清空”系统提示不阻挡建议显示
+  const isEmpty = messages.length === 0 || messages.every(m => m.type === 'system' && /对话已清空/.test(m.content));
   const lastMessage = messages.at(-1);
   const isTyping = lastMessage?.role === "user" && isGenerating;
   // Always show tool steps per UX requirement
   const showToolSteps = true;
 
   return (
-    <ChatContainer className={className}>
+  <ChatContainer className={className + ' relative'}>
       {isEmpty && suggestions.length > 0 ? (
         <div className="flex-1 flex items-center justify-center p-4">
           <PromptSuggestions
@@ -151,6 +154,8 @@ export function ModernChat({
             stop={stop}
             isGenerating={isGenerating}
             transcribeAudio={transcribeAudio}
+            onClear={() => (clearMessages?.() ?? setMessages?.([]))}
+            canClear={messages.length > 0}
           />
         )}
       </ChatForm>

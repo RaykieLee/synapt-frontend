@@ -21,6 +21,7 @@ interface ChatConnectionContextValue {
   markAsRead: () => void;
   connect: () => void;
   disconnect: () => void;
+  clearMessages: () => void;
 }
 
 const ChatConnectionContext = createContext<ChatConnectionContextValue | undefined>(undefined);
@@ -37,6 +38,7 @@ export function ChatConnectionProvider({ children, maxMessages = 100, events }: 
     markAsRead,
     connect,
     disconnect,
+    clearMessages,
   } = useLLMChatForWidget({ maxMessages, events });
 
   const value = useMemo<ChatConnectionContextValue>(() => ({
@@ -50,6 +52,7 @@ export function ChatConnectionProvider({ children, maxMessages = 100, events }: 
     markAsRead,
     connect,
     disconnect,
+    clearMessages,
   }), [
     isConnected,
     messages,
@@ -61,6 +64,7 @@ export function ChatConnectionProvider({ children, maxMessages = 100, events }: 
     markAsRead,
     connect,
     disconnect,
+    clearMessages,
   ]);
 
   return (
