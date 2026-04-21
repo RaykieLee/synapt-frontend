@@ -23,7 +23,6 @@ import {
 import { AlertCircle, Battery, Calendar, Camera, ChevronUp, Clock, Database, Zap } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { VideoPlayer } from "@/components/video-player";
-import { RealTimeAlerts } from "./components/real-time-alerts";
 import { useQuery } from "@tanstack/react-query";
 import { 
   ChargingPileChartData, 
@@ -420,7 +419,7 @@ export default function ChargingPileDetectionPage() {
 
         {/* 右侧告警列表 */}
         <div className="col-span-1 h-full">
-          <RealTimeAlerts />
+          {/* RealTimeAlerts component removed - depends on deleted alert module */}
         </div>
       </div>
     </div>

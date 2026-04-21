@@ -267,7 +267,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
                 username: '系统',
                 timestamp: new Date(data.timestamp),
                 type: 'tool_start',
-                // @ts-ignore
+                // @ts-expect-error any type needed
                 metadata: data.metadata || {},
               } as any);
               break;
@@ -283,7 +283,7 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
                 username: '系统',
                 timestamp: new Date(data.timestamp),
                 type: data.type,
-                // @ts-ignore 附带元数据以便 UI 呈现“第x/y个工具”等
+                // @ts-expect-error 附带元数据以便 UI 呈现“第x/y个工具”等
                 metadata: data.metadata || {},
               } as any);
               break;
@@ -296,9 +296,9 @@ export function useLLMChatForWidget(options: UseLLMChatForWidgetOptions = {}): U
                 username: data.username || '工具调用',
                 timestamp: new Date(data.timestamp),
                 type: 'tool_result',
-                // @ts-ignore
+                // @ts-expect-error any type needed
                 toolName: data.tool_name,
-                // @ts-ignore
+                // @ts-expect-error any type needed
                 metadata: data.metadata || {},
               } as any);
               break;

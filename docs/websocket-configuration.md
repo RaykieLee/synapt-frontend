@@ -8,7 +8,7 @@
 
 ### 1. 环境变量配置
 
-在 `synapt-frontend/.env.local` 文件中配置：
+在 `synapse-frontend/.env.local` 文件中配置：
 
 ```bash
 # 后端服务地址
@@ -67,7 +67,7 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ### Docker Compose 环境
 
 ```bash
-NEXT_PUBLIC_BACKEND_URL=http://synaptic-backend:8000
+NEXT_PUBLIC_BACKEND_URL=http://synapse-backend:8000
 ```
 
 ### 生产环境
