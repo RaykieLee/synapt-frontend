@@ -36,7 +36,7 @@ export default function FacePage() {
   });
 
   // 从响应中提取数据
-  const faceLibrariesData = (response?.data || response || {}) as PageResult<FaceLibrary>;
+  const faceLibrariesData = (response || {}) as PageResult<FaceLibrary>;
   const list = faceLibrariesData.list || [];
   const total = faceLibrariesData.total || 0;
   const pages = faceLibrariesData.pages || 1;

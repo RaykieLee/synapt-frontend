@@ -69,8 +69,8 @@ export function CreateEditDialog({
 
   // 更新表单默认值 (编辑模式)
   useEffect(() => {
-    if (isEditMode && libraryData?.data) {
-      const library = libraryData.data;
+    if (isEditMode && libraryData) {
+      const library = libraryData;
       form.reset({
         library_code: library.library_code,
         library_name: library.library_name,

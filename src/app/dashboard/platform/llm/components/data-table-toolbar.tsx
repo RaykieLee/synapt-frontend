@@ -240,7 +240,7 @@ export function DataTableToolbar<TData>({
 
         {/* 更多筛选 */}
         <Popover open={moreFiltersOpen} onOpenChange={setMoreFiltersOpen}>
-          <PopoverTrigger asChild>
+          <PopoverTrigger>
             <Button variant="outline" size="sm" className="h-8 border-dashed relative">
               <Filter className="mr-2 h-4 w-4" />
               更多筛选

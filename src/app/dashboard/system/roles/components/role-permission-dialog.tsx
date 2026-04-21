@@ -51,8 +51,8 @@ export function RolePermissionDialog({
 
   // 更新角色权限mutation
   const updatePermissionMutation = useMutation({
-    mutationFn: (data: { roleId: number; role: RoleUpdateDto }) =>
-      roleApi.update(data.roleId, data.role),
+    mutationFn: (data: { roleId: number; role: Partial<RoleUpdateDto> }) =>
+      roleApi.update(data.roleId, data.role as RoleUpdateDto),
     onSuccess: () => {
       toast({
         title: "权限更新成功",
@@ -88,7 +88,7 @@ export function RolePermissionDialog({
   const handleSavePermission = async () => {
     if (!role) return
 
-    const updateData: RoleUpdateDto = {
+    const updateData: Partial<RoleUpdateDto> = {
       menu_ids: selectedMenuIds
     }
 

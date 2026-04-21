@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useRef, useEffect, useMemo } from 'react';
+import NextImage from 'next/image';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import VideoPlayer from '../components/VideoPlayer';
 
@@ -202,10 +203,12 @@ export default function DataReliabilityVerificationPage() {
                   if (currentModule?.image) {
                     return (
                       <div className="relative w-full bg-white dark:bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center cursor-pointer group" style={{ height: '400px' }}>
-                        <img
+                        <NextImage
                           src={currentModule.image}
                           alt={`${currentModule.title}效果图`}
-                          className="max-w-full max-h-full object-contain transition-transform duration-200 group-hover:scale-105"
+                          fill
+                          style={{ objectFit: 'contain' }}
+                          className="transition-transform duration-200 group-hover:scale-105"
                           onClick={() => setEnlargedImage(currentModule.image)}
                           onError={(e) => {
                             console.error(`图片加载失败: ${currentModule.image}`, e);
@@ -213,7 +216,7 @@ export default function DataReliabilityVerificationPage() {
                           onLoad={() => {
                             console.log(`图片加载成功: ${currentModule.image}`);
                           }}
-                          loading="eager"
+                          unoptimized
                         />
                         <div className="absolute top-4 left-4 bg-black/70 text-white px-3 py-1 rounded-md text-sm">
                           {currentModule.title}效果图
@@ -603,11 +606,13 @@ export default function DataReliabilityVerificationPage() {
           onClick={() => setEnlargedImage(null)}
         >
           <div className="relative max-w-screen-lg max-h-screen">
-            <img
+            <NextImage
               src={enlargedImage}
               alt="放大图片"
-              className="max-w-full max-h-full object-contain"
+              fill
+              style={{ objectFit: 'contain' }}
               onClick={(e) => e.stopPropagation()}
+              unoptimized
             />
             <Button
               className="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white border-none"

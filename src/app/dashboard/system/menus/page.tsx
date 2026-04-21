@@ -49,7 +49,7 @@ import {
   FilePlus,
   FileCheck,
   FileX,
-  Image,
+  Image as ImageIcon,
   Video,
   Music,
   Download,
@@ -244,7 +244,7 @@ const IconSelector = ({
     'archive': <Archive className="h-4 w-4" />,
     
     // 媒体
-    'image': <Image className="h-4 w-4" />,
+    'image': <ImageIcon className="h-4 w-4" />,
     'video': <Video className="h-4 w-4" />,
     'music': <Music className="h-4 w-4" />,
     'camera': <Camera className="h-4 w-4" />,
@@ -997,7 +997,7 @@ export default function MenusPage() {
       'archive': <Archive className="h-4 w-4" />,
       
       // 媒体
-      'image': <Image className="h-4 w-4" />,
+      'image': <ImageIcon className="h-4 w-4" />,
       'video': <Video className="h-4 w-4" />,
       'music': <Music className="h-4 w-4" />,
       'camera': <Camera className="h-4 w-4" />,

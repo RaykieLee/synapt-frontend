@@ -36,6 +36,8 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
   const reconnectCountRef = useRef(0);
   const isManualDisconnectRef = useRef(false);
   const isConnectingRef = useRef(false);
+  const connectWebSocketRef = useRef<() => void>(() => {});
+  const scheduleReconnectRef = useRef<() => void>(() => {});
 
   const updateConnectionState = useCallback((state: ConnectionState) => {
     setConnectionState(state);
@@ -59,7 +61,7 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     reconnectTimeoutRef.current = setTimeout(() => {
       if (!isManualDisconnectRef.current && !isConnectingRef.current) {
         // 直接调用连接逻辑，避免循环依赖
-        connectWebSocket();
+        connectWebSocketRef.current();
       }
     }, delay);
   }, [reconnectAttempts, reconnectInterval]);
@@ -155,7 +157,7 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
             onError?.(errorMessage);
           } else {
             updateConnectionState('reconnecting');
-            scheduleReconnect();
+            scheduleReconnectRef.current();
           }
         } else {
           updateConnectionState('disconnected');
@@ -180,7 +182,13 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
       updateConnectionState('disconnected');
       onError?.('创建WebSocket连接失败');
     }
-  }, [userId, reconnectAttempts, onMessage, onError, updateConnectionState, scheduleReconnect]);
+  }, [userId, reconnectAttempts, onMessage, onError, updateConnectionState]);
+
+  // 保持 refs 同步
+  useEffect(() => {
+    connectWebSocketRef.current = connectWebSocket;
+    scheduleReconnectRef.current = scheduleReconnect;
+  }, [connectWebSocket, scheduleReconnect]);
 
   const connect = useCallback(() => {
     connectWebSocket();

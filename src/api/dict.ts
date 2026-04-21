@@ -1,7 +1,7 @@
 import { DictData, DictDataCreateDto, DictDataQuery, DictDataUpdateDto, DictOption, DictType, DictTypeCreateDto, DictTypeQuery, DictTypeUpdateDto } from '@/types/dict';
 import { PaginationResult } from '@/types/pagination';
 import { apiRequest } from '@/lib/api';
-import { Dict, DictCreateDto, DictQuery, DictResponse, DictUpdateDto } from "@/types/dict"
+import { Dict, DictCreateDto, DictQuery, DictUpdateDto } from "@/types/dict"
 
 /**
  * 字典API

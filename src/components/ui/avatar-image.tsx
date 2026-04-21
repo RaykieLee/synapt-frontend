@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from 'next/image';
 import { User } from "lucide-react";
 import { attachmentApi } from "@/api/attachment";
 

@@ -53,8 +53,7 @@ export function useChatAdapter(options: UseChatAdapterOptions = {}) {
         metadata: (msg as any).metadata,
         toolName: (msg as any).toolName,
         // 额外保留原始 userId 以便后续逻辑必要时使用
-        // @ts-expect-error any type needed for legacy property
-        userId: msg.userId,
+        userId: (msg as any).userId,
       };
     });
   }, [chatMessages]);

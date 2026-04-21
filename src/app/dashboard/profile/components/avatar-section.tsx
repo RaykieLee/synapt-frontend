@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Image from 'next/image';
 import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -152,10 +153,12 @@ export default function AvatarSection({ profileInfo, onUpdate, isLoading }: Avat
               onClick={handleEdit}
             >
               {previewUrl ? (
-                <img
+                <Image
                   src={previewUrl}
                   alt="新头像预览"
-                  className="w-full h-full object-cover"
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  unoptimized
                 />
               ) : profileInfo?.avatar ? (
                 <AvatarImage

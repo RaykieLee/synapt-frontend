@@ -56,6 +56,7 @@ export function FaceRecognitionTest({
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRefs = useRef<{ [key: string]: HTMLCanvasElement }>({});
+  const drawFaceBoxesRef = useRef<(fileId: string, result: FaceRecognitionResult) => void>(() => {});
 
   const maxFiles = 5;
   const maxSize = useMemo(() => 10 * 1024 * 1024, []); // 10MB
@@ -287,6 +288,11 @@ export function FaceRecognitionTest({
     console.log('设置图片源:', uploadedFile.previewUrl);
     img.src = uploadedFile.previewUrl;
   }, [uploadedFiles]);
+
+  // 保持 drawFaceBoxesRef 同步更新
+  useEffect(() => {
+    drawFaceBoxesRef.current = drawFaceBoxes;
+  }, [drawFaceBoxes]);
 
   // 监听识别结果变化，确保绘制成功
   useEffect(() => {

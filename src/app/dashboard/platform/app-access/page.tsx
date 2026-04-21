@@ -39,7 +39,7 @@ export default function AppAccessPage() {
   });
 
   // 从响应中提取数据
-  const appAccessData = (response?.data || response || {}) as PageResult<AppAccess>;
+  const appAccessData = (response || {}) as PageResult<AppAccess>;
   const list = appAccessData.list || [];
   const total = appAccessData.total || 0;
   const pages = appAccessData.pages || 1;

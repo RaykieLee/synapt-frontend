@@ -161,7 +161,7 @@ export function AppDialog({ app, mode, open, onOpenChange, onSuccess }: AppDialo
       // 安全关闭弹窗
       safeCloseDialog(() => {
         if (onSuccess) {
-          onSuccess(response.data)
+          onSuccess(response)
         }
       })
     },
@@ -185,7 +185,7 @@ export function AppDialog({ app, mode, open, onOpenChange, onSuccess }: AppDialo
       // 安全回调
       safeCloseDialog(() => {
         if (onSuccess) {
-          onSuccess(response.data)
+          onSuccess(response)
         }
       })
     },

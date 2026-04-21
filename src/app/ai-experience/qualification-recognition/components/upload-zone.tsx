@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -243,13 +244,16 @@ export function UploadZone({
                         }}
                         transition={{ duration: 0.3 }}
                       >
-                        <img 
-                          src={previewUrl} 
-                          alt="预览" 
+                        <Image
+                          src={previewUrl}
+                          alt="预览"
+                          width={isImageExpanded ? 460 : 160}
+                          height={isImageExpanded ? 460 : 160}
                           className={cn(
                             "object-contain rounded-lg shadow-md border group-hover:opacity-80 transition-all duration-300",
                             isImageExpanded ? "max-w-full max-h-[460px] w-auto h-auto" : "h-40 w-40 object-cover"
                           )}
+                          unoptimized
                         />
                         <motion.div
                           initial={{ scale: 0 }}
@@ -525,10 +529,12 @@ export function UploadZone({
                           }}
                         >
                           {examplePreviews[attachment.id] ? (
-                            <img 
-                              src={examplePreviews[attachment.id]} 
+                            <Image
+                              src={examplePreviews[attachment.id]}
                               alt={attachment.file_name}
-                              className="w-full h-full object-cover"
+                              fill
+                              style={{ objectFit: 'cover' }}
+                              unoptimized
                             />
                           ) : (
                             <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -615,10 +621,13 @@ export function UploadZone({
               </Button>
               
               {/* 图片 */}
-              <img
+              <Image
                 src={previewExampleImage.url}
                 alt={previewExampleImage.name}
-                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                fill
+                style={{ objectFit: 'contain' }}
+                className="rounded-lg shadow-2xl"
+                unoptimized
               />
               
               {/* 文件信息 */}

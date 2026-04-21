@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { DataTableViewOptions } from "@/components/shared/data-table"
-import { LLMConfigSearchParams } from "@/types/llm-config"
+import { LLMConfigSearchParams } from "@/types/llm"
 import { mcpAPI, MCPServerStatus } from "@/api/mcp"
 
 interface DataTableToolbarProps<TData> {
@@ -240,7 +240,7 @@ export function DataTableToolbar<TData>({
 
         {/* 更多筛选 */}
         <Popover open={moreFiltersOpen} onOpenChange={setMoreFiltersOpen}>
-          <PopoverTrigger asChild>
+          <PopoverTrigger>
             <Button variant="outline" size="sm" className="h-8 border-dashed relative">
               <Filter className="mr-2 h-4 w-4" />
               更多筛选

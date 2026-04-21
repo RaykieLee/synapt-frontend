@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Image from 'next/image';
 import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -138,10 +139,12 @@ export default function AvatarUploadTab({ profileInfo, onUpdate, isLoading }: Av
           <div className="relative">
             <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-border">
               {profileInfo?.avatar ? (
-                <img 
-                  src={profileInfo.avatar} 
-                  alt="当前头像" 
-                  className="w-full h-full object-cover"
+                <Image
+                  src={profileInfo.avatar}
+                  alt="当前头像"
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  unoptimized
                 />
               ) : (
                 <User className="h-12 w-12 text-muted-foreground" />
@@ -165,10 +168,12 @@ export default function AvatarUploadTab({ profileInfo, onUpdate, isLoading }: Av
             <h4 className="text-md font-medium">预览新头像</h4>
             <div className="flex items-center space-x-6">
               <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-primary">
-                <img 
-                  src={previewUrl} 
-                  alt="新头像预览" 
-                  className="w-full h-full object-cover"
+                <Image
+                  src={previewUrl}
+                  alt="新头像预览"
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  unoptimized
                 />
               </div>
               <div className="flex-1">

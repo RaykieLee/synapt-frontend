@@ -50,7 +50,7 @@ export function DataTableToolbar<TData extends object>({
     queryFn: () => faceLibraryAPI.getAll(),
   })
   
-  const libraries = Array.isArray(librariesResponse?.data) ? librariesResponse.data : [];
+  const libraries = Array.isArray(librariesResponse) ? librariesResponse : [];
   
   // 生成人脸库选项
   const libraryOptions = libraries.map((library) => ({

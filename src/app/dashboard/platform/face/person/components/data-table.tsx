@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from 'next/image'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -355,13 +356,16 @@ function FaceImagesDisplay({ person }: { person: FacePerson }) {
                   onClick={() => handleImageClick(image)}
                 >
                   {image.image_id && previewUrls[image.image_id] && !errorImages.has(image.image_id) ? (
-                    <img
+                    <Image
                       src={previewUrls[image.image_id]}
                       alt="人脸图片"
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      className="transition-transform group-hover:scale-105"
                       onError={() => {
                         setErrorImages(prev => new Set(prev).add(image.image_id!))
                       }}
+                      unoptimized
                     />
                   ) : loadingImages.has(image.image_id!) ? (
                     <div className="w-full h-full bg-gray-100 flex items-center justify-center">

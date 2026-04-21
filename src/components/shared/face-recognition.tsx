@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -233,10 +234,12 @@ export default function FaceRecognition({
           
           {capturedImage && (
             <div className="relative w-full h-full">
-              <img
+              <Image
                 src={capturedImage}
                 alt="拍摄的照片"
-                className="w-full h-full object-cover"
+                fill
+                style={{ objectFit: 'cover' }}
+                unoptimized
               />
               <div className="absolute top-2 right-2">
                 {recognitionStatus === 'success' && (

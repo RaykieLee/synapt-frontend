@@ -39,7 +39,7 @@ export default function FacePersonPage() {
   });
 
   // 从响应中提取数据
-  const facePersonsData = (response?.data || response || {}) as PageResult<FacePerson>;
+  const facePersonsData = (response || {}) as PageResult<FacePerson>;
   const list = facePersonsData.list || [];
   const total = facePersonsData.total || 0;
   const pages = facePersonsData.pages || 1;
