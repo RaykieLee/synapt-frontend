@@ -137,12 +137,12 @@ export default function LLMChatPage() {
           <div
             className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
               isUser
-                ? 'bg-blue-500 text-white'
+                ? 'bg-blue-500 text-white dark:bg-blue-600 dark:text-gray-100'
                 : isSystem
-                ? 'bg-gray-500 text-white'
+                ? 'bg-gray-500 text-white dark:bg-gray-600 dark:text-gray-200'
                 : isError
-                ? 'bg-red-500 text-white'
-                : 'bg-green-500 text-white'
+                ? 'bg-red-500 text-white dark:bg-red-600 dark:text-gray-100'
+                : 'bg-green-500 text-white dark:bg-green-600 dark:text-gray-100'
             }`}
           >
             {isUser ? (
@@ -158,12 +158,12 @@ export default function LLMChatPage() {
           <div
             className={`rounded-lg px-4 py-2 ${
               isUser
-                ? 'bg-blue-500 text-white'
+                ? 'bg-blue-500 text-white dark:bg-blue-600 dark:text-gray-100'
                 : isSystem
-                ? 'bg-gray-100 text-gray-800 border'
+                ? 'bg-gray-100 text-gray-800 border dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700'
                 : isError
-                ? 'bg-red-100 text-red-800 border border-red-200'
-                : 'bg-white text-gray-800 border'
+                ? 'bg-red-100 text-red-800 border border-red-200 dark:bg-red-900 dark:text-red-200 dark:border-red-800'
+                : 'bg-white text-gray-800 border dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700'
             }`}
           >
             <div className="whitespace-pre-wrap break-words">

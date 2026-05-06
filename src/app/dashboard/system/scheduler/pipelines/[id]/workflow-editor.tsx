@@ -53,7 +53,7 @@ const TaskNode = ({ data }: { data: TaskNodeData }) => {
   }
 
   return (
-    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-gray-200 min-w-[200px] relative">
+    <div className="px-4 py-2 shadow-md rounded-md bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 min-w-[200px] relative">
       {/* 输入手柄 - 左侧 */}
       <Handle
         type="target"
@@ -152,7 +152,7 @@ const TaskListSidebar = ({ tasks, onDragStart, isCollapsed, onToggleCollapse }: 
 
   if (isCollapsed) {
     return (
-      <div className="w-12 bg-white border-r border-gray-200 h-full flex flex-col items-center py-4">
+      <div className="w-12 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-full flex flex-col items-center py-4">
         <Button
           variant="ghost"
           size="sm"
@@ -170,8 +170,8 @@ const TaskListSidebar = ({ tasks, onDragStart, isCollapsed, onToggleCollapse }: 
   }
 
   return (
-    <div className="w-80 bg-white border-r border-gray-200 h-full flex flex-col">
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+    <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-full flex flex-col">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-gray-800">任务列表</h3>
           <p className="text-xs text-gray-500 mt-1">拖拽任务到流程图</p>
@@ -192,7 +192,7 @@ const TaskListSidebar = ({ tasks, onDragStart, isCollapsed, onToggleCollapse }: 
           <div key={type} className="mb-3">
             <button
               onClick={() => toggleType(type)}
-              className="w-full flex items-center justify-between p-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 rounded-md transition-colors"
+              className="w-full flex items-center justify-between p-2 text-sm font-semibold text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md transition-colors"
             >
               <div className="flex items-center">
                 {expandedTypes.has(type) ? (
@@ -216,7 +216,7 @@ const TaskListSidebar = ({ tasks, onDragStart, isCollapsed, onToggleCollapse }: 
                     key={task.id}
                     draggable
                     onDragStart={(e: React.DragEvent) => onDragStart(e, task)}
-                    className="p-2 text-xs bg-gray-50 hover:bg-blue-50 border border-gray-200 rounded-md cursor-move transition-colors group"
+                    className="p-2 text-xs bg-gray-50 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900 border border-gray-200 dark:border-gray-700 rounded-md cursor-move transition-colors group"
                   >
                     <div className="flex items-center">
                       <FileText className="h-3 w-3 text-gray-400 mr-2 group-hover:text-blue-500" />
@@ -523,7 +523,7 @@ function WorkflowEditorContent({ pipelineId, flowConfig, onSave }: WorkflowEdito
             maskColor="rgba(0, 0, 0, 0.1)"
           />
           
-          <Panel position="top-right" className="flex gap-2 p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200">
+          <Panel position="top-right" className="flex gap-2 p-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
             <Button
               variant="destructive"
               size="sm"

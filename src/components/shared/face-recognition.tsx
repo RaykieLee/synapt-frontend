@@ -199,7 +199,7 @@ export default function FaceRecognition({
       
       <CardContent className="space-y-4">
         {/* 视频预览区域 */}
-        <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
+        <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
           {!isStreaming && !capturedImage && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center text-gray-500">
@@ -225,7 +225,7 @@ export default function FaceRecognition({
               {/* 添加状态指示器 */}
               <div className="absolute top-2 left-2">
                 <div className="flex items-center gap-2 px-2 py-1 bg-green-500 text-white text-xs rounded-full">
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-white dark:bg-gray-800 rounded-full animate-pulse"></div>
                   摄像头已启动
                 </div>
               </div>

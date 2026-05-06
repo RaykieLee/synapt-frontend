@@ -142,10 +142,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-gray-50 px-4">
-      <div className="flex w-full max-w-5xl rounded-2xl overflow-hidden shadow-xl bg-white ring-1 ring-gray-200">
+    <div className="flex h-screen w-full items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+      <div className="flex w-full max-w-5xl rounded-2xl overflow-hidden shadow-xl bg-white dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700">
         {/* 左侧：图片展示 */}
-        <div className="relative hidden md:block md:w-1/2 bg-gray-100">
+        <div className="relative hidden md:block md:w-1/2 bg-gray-100 dark:bg-gray-700">
           <Image
             src="/images/20221025.jpg"
             alt="平台功能展示图"

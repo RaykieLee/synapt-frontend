@@ -508,7 +508,7 @@ function ExpandableTableRow({
       {/* 展开的人脸图片行 */}
       {isExpanded && (
         <TableRow>
-          <TableCell colSpan={columns.length} className="p-0 bg-gray-50/50 border-t">
+          <TableCell colSpan={columns.length} className="p-0 bg-gray-50/50 dark:bg-gray-800/50 border-t">
             <FaceImagesDisplay person={person} />
           </TableCell>
         </TableRow>
@@ -641,7 +641,7 @@ export function DataTable<TData extends object, TValue>({
       <div className={`rounded-md ${hasRealData ? 'border' : 'border-t border-l border-r'}`}>
         <div style={{ height: minHeight, maxHeight: minHeight, overflowY: 'auto' }}>
           <Table>
-            <TableHeader className="sticky top-0 bg-white z-10">
+            <TableHeader className="sticky top-0 bg-white dark:bg-gray-800 z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (

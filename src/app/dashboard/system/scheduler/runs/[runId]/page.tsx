@@ -396,7 +396,7 @@ export default function RunDetailPage() {
                       </>
                     ) : (
                       <>
-                        <div className="w-2 h-2 rounded-full bg-gray-500" />
+                        <div className="w-2 h-2 rounded-full bg-gray-500 dark:bg-gray-600" />
                         <span className="text-xs text-muted-foreground">
                           历史日志
                         </span>
@@ -424,7 +424,7 @@ export default function RunDetailPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[600px] w-full border rounded p-4 bg-gray-50">
+                <ScrollArea className="h-[600px] w-full border rounded p-4 bg-gray-50 dark:bg-gray-800">
                   {logs.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       暂无日志数据

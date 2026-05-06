@@ -7,25 +7,25 @@ export default function DashboardPage() {
   return (
     <div className="grid auto-rows-min gap-4 md:grid-cols-3">
       <ContentSequence staggerDelay={0.1}>
-        <Card className="p-6 bg-white shadow-sm rounded-lg">
+        <Card className="p-6 shadow-sm rounded-lg">
           <h3 className="font-medium mb-2">系统概览</h3>
           <div className="text-3xl font-bold">27</div>
           <p className="text-sm text-muted-foreground mt-1">应用总数</p>
         </Card>
-        
-        <Card className="p-6 bg-white shadow-sm rounded-lg">
+
+        <Card className="p-6 shadow-sm rounded-lg">
           <h3 className="font-medium mb-2">用户统计</h3>
           <div className="text-3xl font-bold">143</div>
           <p className="text-sm text-muted-foreground mt-1">活跃用户</p>
         </Card>
-        
-        <Card className="p-6 bg-white shadow-sm rounded-lg">
+
+        <Card className="p-6 shadow-sm rounded-lg">
           <h3 className="font-medium mb-2">系统状态</h3>
           <div className="text-3xl font-bold text-green-600">正常</div>
           <p className="text-sm text-muted-foreground mt-1">所有服务运行良好</p>
         </Card>
-        
-        <Card className="p-6 bg-white shadow-sm rounded-lg md:col-span-3">
+
+        <Card className="p-6 shadow-sm rounded-lg md:col-span-3">
           <h3 className="font-medium mb-4">最近活动</h3>
           <div className="space-y-4">
             <div className="flex justify-between border-b pb-2">

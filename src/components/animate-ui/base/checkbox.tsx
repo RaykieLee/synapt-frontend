@@ -41,7 +41,7 @@ function Checkbox({
       className={cn(
         'peer shrink-0 flex items-center justify-center outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 disabled:cursor-not-allowed disabled:opacity-50 transition-colors duration-500',
         // 基础样式: 边框 + 背景 + 悬停效果
-        'size-5 rounded-sm border border-input bg-white hover:bg-accent/50',
+        'size-5 rounded-sm border border-input bg-white dark:bg-gray-800 hover:bg-accent/50',
         // 深色主题适配
         'dark:bg-gray-950 dark:border-gray-800 dark:hover:bg-gray-900',
         // 选中状态: 主题色背景 + 白色勾选图标

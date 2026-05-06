@@ -25,9 +25,9 @@ export function Providers({ children }: Readonly<ProvidersProps>) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ChatConnectionProvider>
-          <NextThemeProvider 
-            attribute="class" 
-            defaultTheme="system"
+          <NextThemeProvider
+            attribute="class"
+            defaultTheme="light"
             enableSystem
             disableTransitionOnChange
           >

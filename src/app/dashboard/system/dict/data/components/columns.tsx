@@ -94,9 +94,9 @@ export const columns = ({
       cell: ({ row }) => {
         const status = row.getValue("status") as string
         return status === "0" ? (
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">正常</Badge>
+          <Badge variant="outline" className="bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700">正常</Badge>
         ) : (
-          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">停用</Badge>
+          <Badge variant="outline" className="bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700">停用</Badge>
         )
       },
     },
@@ -108,9 +108,9 @@ export const columns = ({
       cell: ({ row }) => {
         const isDefault = row.getValue("is_default") as string
         return isDefault === "Y" ? (
-          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">是</Badge>
+          <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700">是</Badge>
         ) : (
-          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">否</Badge>
+          <Badge variant="outline" className="bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700">否</Badge>
         )
       },
     },

@@ -38,7 +38,7 @@ const getStatusBadge = (status: PipelineRunStatus) => {
     [PipelineRunStatus.COMPLETED]: { 
       variant: "default", 
       text: "已完成",
-      className: "bg-green-100 text-green-800 hover:bg-green-100"
+      className: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30"
     },
     [PipelineRunStatus.FAILED]: { 
       variant: "destructive", 
@@ -175,9 +175,9 @@ export function RunLogs({ pipelineId }: RunLogsProps) {
                   </div>
 
                   {run.error_message && (
-                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
-                      <div className="text-sm font-medium text-red-800 mb-1">错误信息:</div>
-                      <div className="text-sm text-red-700">{run.error_message}</div>
+                    <div className="mt-3 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded">
+                      <div className="text-sm font-medium text-red-800 dark:text-red-300 mb-1">错误信息:</div>
+                      <div className="text-sm text-red-700 dark:text-red-400">{run.error_message}</div>
                     </div>
                   )}
 
@@ -186,7 +186,7 @@ export function RunLogs({ pipelineId }: RunLogsProps) {
                       <div className="text-sm font-medium text-muted-foreground mb-2">任务执行情况:</div>
                       <div className="grid gap-2">
                         {run.tasks_run.map((task, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
                             <span className="text-sm font-medium">{task.task_id}</span>
                             <div className="flex items-center gap-2">
                               {task.status && getStatusBadge(task.status)}

@@ -614,7 +614,7 @@ export function UploadZone({
               <Button
                 variant="outline"
                 size="sm"
-                className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-white text-black"
+                className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-black dark:text-white"
                 onClick={() => setPreviewExampleImage(null)}
               >
                 <X className="h-4 w-4" />

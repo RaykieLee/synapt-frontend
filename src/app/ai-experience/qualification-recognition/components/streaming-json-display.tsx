@@ -108,15 +108,15 @@ export function StreamingJsonDisplay({
   const getProgressColor = (step?: string) => {
     switch (step) {
       case 'encoding':
-        return 'bg-blue-500';
+        return 'bg-blue-500 dark:bg-blue-600';
       case 'ai_request':
-        return 'bg-purple-500';
+        return 'bg-purple-500 dark:bg-purple-600';
       case 'ai_processing':
-        return 'bg-green-500';
+        return 'bg-green-500 dark:bg-green-600';
       case 'parsing':
-        return 'bg-orange-500';
+        return 'bg-orange-500 dark:bg-orange-600';
       default:
-        return 'bg-gray-500';
+        return 'bg-gray-500 dark:bg-gray-600';
     }
   };
 

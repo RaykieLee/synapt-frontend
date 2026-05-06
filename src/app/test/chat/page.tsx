@@ -117,7 +117,7 @@ export default function ChatPage() {
           </Badge>
         </div>
         <p className="text-sm text-gray-600 mb-4">当前用户：{user.nickName || user.userName}</p>
-        <ScrollArea className="h-[400px] border rounded-md p-4 mb-4 bg-gray-50">
+        <ScrollArea className="h-[400px] border rounded-md p-4 mb-4 bg-gray-50 dark:bg-gray-800">
           {messages.length === 0 && (
             <div className="text-center text-gray-500 mt-8">
               暂无消息，开始聊天吧！
@@ -145,7 +145,7 @@ export default function ChatPage() {
                     className={`max-w-[80%] p-3 rounded-lg ${
                       msg.user_id === user?.userId
                         ? "bg-blue-500 text-white"
-                        : "bg-white border"
+                        : "bg-white dark:bg-gray-800 border"
                     }`}
                   >
                     <div className="font-bold text-sm mb-1">

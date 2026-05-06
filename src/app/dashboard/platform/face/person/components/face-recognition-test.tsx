@@ -489,7 +489,7 @@ export function FaceRecognitionTest({
                           {/* 图片预览区域 */}
                           <div className="space-y-2">
                             <p className="text-xs font-medium text-muted-foreground">图片预览（含人脸框）</p>
-                            <div className="relative bg-gray-50 rounded-lg overflow-hidden">
+                            <div className="relative bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden">
                               <canvas
                                 ref={(el) => {
                                   if (el) canvasRefs.current[file.id] = el;
@@ -555,7 +555,7 @@ export function FaceRecognitionTest({
 
                       {/* 错误信息 */}
                       {file.status === 'error' && (
-                        <div className="text-sm text-red-500 bg-red-50 p-2 rounded">
+                        <div className="text-sm text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">
                           {file.error}
                         </div>
                       )}

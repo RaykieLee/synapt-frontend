@@ -404,7 +404,7 @@ const IconSelector = ({
         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Button>
       {open && (
-        <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg max-h-96 overflow-y-auto">
+        <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-96 overflow-y-auto">
           <div className="p-4 space-y-4">
             {/* 基础图标 */}
             <div>
@@ -850,11 +850,11 @@ export default function MenusPage() {
   const renderMenuType = (type: string) => {
     switch (type) {
       case "M":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">目录</Badge>
+        return <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">目录</Badge>
       case "C":
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">菜单</Badge>
+        return <Badge variant="outline" className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">菜单</Badge>
       case "F":
-        return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">按钮</Badge>
+        return <Badge variant="outline" className="bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800">按钮</Badge>
       default:
         return <Badge variant="outline">{type}</Badge>
     }
@@ -863,17 +863,17 @@ export default function MenusPage() {
   // 渲染状态徽章
   const renderStatusBadge = (status: string) => {
     if (status === "0") {
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">正常</Badge>
+      return <Badge variant="outline" className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">正常</Badge>
     }
-    return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">停用</Badge>
+    return <Badge variant="outline" className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800">停用</Badge>
   }
 
   // 渲染可见性
   const renderVisibleBadge = (visible: string) => {
     if (visible === "0") {
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">显示</Badge>
+      return <Badge variant="outline" className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">显示</Badge>
     }
-    return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">隐藏</Badge>
+    return <Badge variant="outline" className="bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700">隐藏</Badge>
   }
 
   // 获取父菜单名称
